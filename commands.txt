@@ -99,3 +99,15 @@ what part of the training loop would have to change to use 10 instead of 21?
     if getitem returns only (21,2) what is effected?
         I don't think it will
 
+mediapipe plam detector might be possible standalone
+require example system to prove it is possible
+
+require simple inference program
+    input checkpoint, image
+    output coord+image overlay image 
+
+we know every image has 2 hands
+currently only 1 us being used
+how does it konw which one to regress?
+This would not be a problem with a detector
+if confusion appears, this is likely the problem
