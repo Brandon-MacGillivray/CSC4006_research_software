@@ -17,6 +17,8 @@ mkdir -p logs
 REPO_DIR="${SLURM_SUBMIT_DIR}"
 RHD_ROOT="/data/RHD_published_v2"
 CHECKPOINT_ROOT="/users/40321491/sharedscratch/training_results"
+CONDA_ROOT="/users/40321491/miniconda"
+CONDA_ENV_NAME="torch"
 
 INPUT_SIZE=256
 HAND="right"
@@ -43,6 +45,9 @@ FREEZE_HEATMAP_STAGE2=0
 
 cd "${REPO_DIR}"
 
+source "${CONDA_SH}"
+conda activate "${CONDA_ENV_NAME}"
+
 echo "===== SLURM JOB INFO ====="
 echo "Job ID:       ${SLURM_JOB_ID}"
 echo "Node:         $(hostname)"
@@ -50,12 +55,14 @@ echo "Start Time:   $(date --iso-8601=seconds)"
 echo "Repo Dir:     ${REPO_DIR}"
 echo "Dataset Root: ${RHD_ROOT}"
 echo "Checkpoint:   ${CHECKPOINT_ROOT}"
-echo "Python:       $(python -V 2>&1)"
+echo "Conda Env:    ${CONDA_ENV_NAME}"
+echo "Python Exec:  ${PYTHON_EXEC}"
+echo "Python:       $("${PYTHON_EXEC}" -V 2>&1)"
 nvidia-smi -L || true
 echo "=========================="
 
 CMD=(
-  python train_1.py
+  "${PYTHON_EXEC}" train_1.py
   --root "${RHD_ROOT}"
   --checkpoint-root "${CHECKPOINT_ROOT}"
   --job-id "${SLURM_JOB_ID}"
