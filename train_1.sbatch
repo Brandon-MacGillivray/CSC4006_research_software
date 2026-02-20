@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:2g.20gb:1
 #SBATCH --mem=32G
-#SBATCH --time=24:00:00
+#SBATCH --time=00:30:00
 #SBATCH --output=logs/train_1_%j.out
 #SBATCH --error=logs/train_1_%j.err
 
@@ -45,7 +45,6 @@ FREEZE_HEATMAP_STAGE2=0
 
 cd "${REPO_DIR}"
 
-source "${CONDA_SH}"
 conda activate "${CONDA_ENV_NAME}"
 
 echo "===== SLURM JOB INFO ====="
@@ -56,13 +55,12 @@ echo "Repo Dir:     ${REPO_DIR}"
 echo "Dataset Root: ${RHD_ROOT}"
 echo "Checkpoint:   ${CHECKPOINT_ROOT}"
 echo "Conda Env:    ${CONDA_ENV_NAME}"
-echo "Python Exec:  ${PYTHON_EXEC}"
-echo "Python:       $("${PYTHON_EXEC}" -V 2>&1)"
+echo "Python:       $(python -V 2>&1)"
 nvidia-smi -L || true
 echo "=========================="
 
 CMD=(
-  "${PYTHON_EXEC}" train_1.py
+  python train_1.py
   --root "${RHD_ROOT}"
   --checkpoint-root "${CHECKPOINT_ROOT}"
   --job-id "${SLURM_JOB_ID}"
