@@ -7,8 +7,8 @@
 #SBATCH --gres=gpu:2g.20gb:1
 #SBATCH --mem=32G
 #SBATCH --time=00:10:00
-#SBATCH --output=jobs/train_1_%j.out
-#SBATCH --error=jobs/train_1_%j.err
+#SBATCH --output=logs/train_1_%j.out
+#SBATCH --error=logs/train_1_%j.err
 
 set -euo pipefail
 
