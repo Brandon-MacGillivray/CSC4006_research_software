@@ -8,12 +8,29 @@ from torch.utils.data import Dataset
 
 
 class RHDDatasetCoords(Dataset):
-    def __init__(self, root, split="training", input_size=256, hand="right", normalize=True):
+    def __init__(
+        self,
+        root,
+        split="training",
+        input_size=256,
+        hand="right",
+        normalize=True,
+        keypoint_indices=None,
+    ):
         self.root = root
         self.split = split
         self.input_size = input_size
         self.hand = hand
         self.normalize = normalize
+        if keypoint_indices is None:
+            keypoint_indices = list(range(21))
+        if len(keypoint_indices) == 0:
+            raise ValueError("keypoint_indices must contain at least one index")
+        if len(set(keypoint_indices)) != len(keypoint_indices):
+            raise ValueError("keypoint_indices must be unique")
+        if min(keypoint_indices) < 0 or max(keypoint_indices) >= 21:
+            raise ValueError("keypoint_indices must be in [0, 20]")
+        self.keypoint_indices = list(keypoint_indices)
 
         anno_path = os.path.join(root, split, f"anno_{split}.pickle")
         with open(anno_path, "rb") as f:
@@ -50,6 +67,7 @@ class RHDDatasetCoords(Dataset):
         uv_data = anno[uv_key]  # expected shape (42, 3)
         hand = self._select_hand(uv_data)
         coords = hand[:, :2]  # (21, 2) in 320x320 pixels
+        coords = coords[self.keypoint_indices]  # (K, 2), K=len(keypoint_indices)
 
         scale = self.input_size / 320.0
         coords = coords * scale

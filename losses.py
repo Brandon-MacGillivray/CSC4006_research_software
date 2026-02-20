@@ -63,7 +63,7 @@ class WingLoss(nn.Module):
         self.C = w - w * torch.log(torch.tensor(1 + w / epsilon))
 
     def forward(self, pred, target):
-        # pred, target: (N, 21, 2)
+        # pred, target: (N, J, 2)
         diff = pred - target
         abs_diff = diff.abs()
 

@@ -160,14 +160,15 @@ class Backbone(nn.Module):
         return x
     
 class Heatmap_reg(nn.Module):
-    def __init__(self):
+    def __init__(self, num_keypoints=21):
         super().__init__()
+        self.num_keypoints = num_keypoints
 
         self.deconvM1 = DeConv2D(288, 192, 3, 2, 1, 1)
         self.deconvM2 = DeConv2D(192, 96, 3, 2, 1, 1)
         self.deconvM3 = DeConv2D(96, 48, 3, 2, 1, 1)
 
-        self.convM = Conv2D(48, 21, 1, 1, 0)
+        self.convM = Conv2D(48, self.num_keypoints, 1, 1, 0)
 
     def forward(self, x, return_feat_64=False):
         x = self.deconvM1(x)
@@ -180,15 +181,16 @@ class Heatmap_reg(nn.Module):
         return x
 
 class coord_reg(nn.Module):
-    def __init__(self):
+    def __init__(self, num_keypoints=21):
         super().__init__()
+        self.num_keypoints = num_keypoints
 
         self.dsconv1 = DSConv2D(48, 96, 3, 1, 1)
         self.dsconv2 = DSConv2D(96, 96, 3, 1, 1)
         self.dsconv3 = DSConv2D(96, 96, 3, 1, 1)
         self.dsconv4 = DSConv2D(96, 96, 3, 1, 1)
         self.dsconv5 = DSConv2D(96, 96, 3, 1, 1)
-        self.dsconv6 = DSConv2D(96, 42, 2, 2, 0)
+        self.dsconv6 = DSConv2D(96, 2 * self.num_keypoints, 2, 2, 0)
 
         self.mp = MaxPool(2,2)
 
@@ -205,7 +207,7 @@ class coord_reg(nn.Module):
         x = self.mp(x)
         x = self.dsconv6(x)
         
-        # (1x1x42) -> (1x21x2)
-        x = x.view(x.size(0), 21, 2)
+        # (1x1x(2K)) -> (1xKx2)
+        x = x.view(x.size(0), self.num_keypoints, 2)
 
         return x

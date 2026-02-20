@@ -111,3 +111,9 @@ currently only 1 us being used
 how does it konw which one to regress?
 This would not be a problem with a detector
 if confusion appears, this is likely the problem
+
+
+srun --pty /bin/bash
+
+
+export PATH="/users/40321491/sharedscratch/miniconda/bin:$PATH"

@@ -11,15 +11,16 @@ from torch.utils.data import DataLoader, Subset
 from dataset import RHDDatasetCoords  
 from losses import WingLoss, HeatmapMSELoss
 from architecture import Backbone, Heatmap_reg, coord_reg  
-from utils import save_checkpoint, EarlyStopper 
+from utils import save_checkpoint, EarlyStopper  
 
 
 class HandPoseNet(nn.Module):
-    def __init__(self):
+    def __init__(self, num_keypoints=21):
         super().__init__()
+        self.num_keypoints = num_keypoints
         self.backbone = Backbone()
-        self.heatmapHead = Heatmap_reg()
-        self.coordhead = coord_reg()
+        self.heatmapHead = Heatmap_reg(num_keypoints=num_keypoints)
+        self.coordhead = coord_reg(num_keypoints=num_keypoints)
 
     def forward_heatmap(self, x):
         heatmaps = self.heatmapHead(self.backbone(x), return_feat_64=False)
@@ -27,13 +28,30 @@ class HandPoseNet(nn.Module):
 
     def forward(self, x):
         heatmaps, feat_64 = self.heatmapHead(self.backbone(x), return_feat_64=True)
-        coords = self.coordhead(feat_64)  # (N,21,2)
+        coords = self.coordhead(feat_64)  # (N,K,2)
         return heatmaps, coords
 
 
 def set_requires_grad(module: nn.Module, flag: bool):
     for p in module.parameters():
         p.requires_grad = flag
+
+
+def parse_keypoint_indices(spec: str):
+    if spec is None or spec.strip() == "":
+        return list(range(21))
+
+    tokens = spec.replace(",", " ").split()
+    indices = [int(t) for t in tokens]
+
+    if len(indices) == 0:
+        raise ValueError("--keypoint-indices must include at least one index")
+    if len(set(indices)) != len(indices):
+        raise ValueError("--keypoint-indices must be unique")
+    if min(indices) < 0 or max(indices) >= 21:
+        raise ValueError("--keypoint-indices values must be in [0, 20]")
+
+    return indices
 
 
 def build_optimizer_stage1(model: HandPoseNet, lr: float):
@@ -193,14 +211,23 @@ def main():
     parser.add_argument("--freeze-heatmap-stage2", action="store_true")
     parser.add_argument("--lambda-hm", type=float, default=1.0)
     parser.add_argument("--lambda-coord", type=float, default=1.0)
+    parser.add_argument(
+        "--keypoint-indices",
+        type=str,
+        default=None,
+        help="Comma/space-separated hand joint indices in [0,20], e.g. '0,1,2,4,8,12,16,17,18,20'",
+    )
 
     args = parser.parse_args()
+    keypoint_indices = parse_keypoint_indices(args.keypoint_indices)
+    num_keypoints = len(keypoint_indices)
 
     print("CUDA available:", torch.cuda.is_available())
     print("CUDA device count:", torch.cuda.device_count())
     if torch.cuda.is_available():
         print("GPU name:", torch.cuda.get_device_name(0))
         print("Current device:", torch.cuda.current_device())
+    print("Selected keypoints:", keypoint_indices)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -211,14 +238,28 @@ def main():
 
     csv_path = os.path.join(run_dir, "losses.csv")
 
-    train_ds = RHDDatasetCoords(args.root, split="training", input_size=args.input_size, hand=args.hand, normalize=True)
-    val_ds = RHDDatasetCoords(args.root, split="evaluation", input_size=args.input_size, hand=args.hand, normalize=True)
+    train_ds = RHDDatasetCoords(
+        args.root,
+        split="training",
+        input_size=args.input_size,
+        hand=args.hand,
+        normalize=True,
+        keypoint_indices=keypoint_indices,
+    )
+    val_ds = RHDDatasetCoords(
+        args.root,
+        split="evaluation",
+        input_size=args.input_size,
+        hand=args.hand,
+        normalize=True,
+        keypoint_indices=keypoint_indices,
+    )
 
     if int(args.train_dataset_length) > 0:
         N = min(int(args.train_dataset_length), len(train_ds))
         train_ds = Subset(train_ds, range(N))
 
-    model = HandPoseNet().to(device)
+    model = HandPoseNet(num_keypoints=num_keypoints).to(device)
     hm_loss_fn = HeatmapMSELoss()
     coord_loss_fn = WingLoss(w=10.0, epsilon=2.0)
 
@@ -249,6 +290,7 @@ def main():
             "val_loss": val_loss,
             "batch_size": args.batch_size_stage1,
             "accum_steps": args.accum_steps_stage1,
+            "keypoint_indices": keypoint_indices,
         }
         save_checkpoint(ckpt, os.path.join(ckpt_dir, f"stage1_epoch_{epoch}.pt"))
 
@@ -317,6 +359,7 @@ def main():
             "lambda_coord": args.lambda_coord,
             "batch_size": args.batch_size_stage2,
             "accum_steps": args.accum_steps_stage2,
+            "keypoint_indices": keypoint_indices,
         }
         save_checkpoint(ckpt, os.path.join(ckpt_dir, f"stage2_epoch_{epoch}.pt"))
 
