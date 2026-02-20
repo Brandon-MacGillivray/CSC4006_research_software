@@ -6,18 +6,18 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:2g.20gb:1
 #SBATCH --mem=32G
-#SBATCH --time=00:30:00
-#SBATCH --output=logs/train_1_%j.out
-#SBATCH --error=logs/train_1_%j.err
+#SBATCH --time=00:10:00
+#SBATCH --output=jobs/train_1_%j.out
+#SBATCH --error=jobs/train_1_%j.err
 
 set -euo pipefail
 
-mkdir -p logs
+mkdir -p jobs
 
 REPO_DIR="${SLURM_SUBMIT_DIR}"
 RHD_ROOT="/data/RHD_published_v2"
 CHECKPOINT_ROOT="/users/40321491/sharedscratch/training_results"
-CONDA_ROOT="/users/40321491/miniconda"
+CONDA_SOURCE="/users/40321491/miniconda/etc/profile.d/conda.sh"
 CONDA_ENV_NAME="torch"
 
 INPUT_SIZE=256
@@ -45,6 +45,7 @@ FREEZE_HEATMAP_STAGE2=0
 
 cd "${REPO_DIR}"
 
+source "${CONDA_SOURCE}"
 conda activate "${CONDA_ENV_NAME}"
 
 echo "===== SLURM JOB INFO ====="
@@ -81,6 +82,18 @@ CMD=(
   --lambda-hm "${LAMBDA_HM}"
   --lambda-coord "${LAMBDA_COORD}"
 )
+
+if [[ -n "${KEYPOINT_INDICES}" ]]; then
+  CMD+=(--keypoint-indices "${KEYPOINT_INDICES}")
+fi
+
+if [[ "${FREEZE_BACKBONE_STAGE2}" == "1" ]]; then
+  CMD+=(--freeze-backbone-stage2)
+fi
+
+if [[ "${FREEZE_HEATMAP_STAGE2}" == "1" ]]; then
+  CMD+=(--freeze-heatmap-stage2)
+fi
 
 set -x
 srun "${CMD[@]}"
