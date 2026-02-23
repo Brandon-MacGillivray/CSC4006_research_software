@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=train
-#SBATCH --partition=k2-gpu-v100
+#SBATCH --partition=k2-gpu-a100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:v100:1
+#SBATCH --gres=gpu:a100:1
 #SBATCH --mem=32G
 #SBATCH --time=24:00:00
 #SBATCH --output=logs/train_%j.out
