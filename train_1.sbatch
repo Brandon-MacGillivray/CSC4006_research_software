@@ -1,21 +1,19 @@
 #!/bin/bash
-#SBATCH --job-name=train_1
+#SBATCH --job-name=train
 #SBATCH --partition=k2-gpu-a100mig
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:2g.20gb:1
+#SBATCH --gres=gpu:3g.30gb:1
 #SBATCH --mem=32G
-#SBATCH --time=00:10:00
-#SBATCH --output=logs/train_1_%j.out
-#SBATCH --error=logs/train_1_%j.err
+#SBATCH --time=24:00:00
+#SBATCH --output=logs/train_%j.out
+#SBATCH --error=logs/train_%j.err
 
 set -euo pipefail
 
-mkdir -p jobs
-
 REPO_DIR="${SLURM_SUBMIT_DIR}"
-RHD_ROOT="/data/RHD_published_v2"
+RHD_ROOT="/users/40321491/data/RHD_published_v2"
 CHECKPOINT_ROOT="/users/40321491/sharedscratch/training_results"
 CONDA_SOURCE="/users/40321491/miniconda/etc/profile.d/conda.sh"
 CONDA_ENV_NAME="torch"
@@ -29,7 +27,7 @@ BATCH_SIZE_STAGE1=64
 BATCH_SIZE_STAGE2=64
 ACCUM_STEPS_STAGE1=1
 ACCUM_STEPS_STAGE2=4
-STAGE1_EPOCHS=100
+STAGE1_EPOCHS=50
 STAGE2_EPOCHS=50
 LR_STAGE1=1e-3
 LR_STAGE2=1e-4
