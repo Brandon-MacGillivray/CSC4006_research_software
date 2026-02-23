@@ -13,6 +13,8 @@ from losses import WingLoss, HeatmapMSELoss
 from architecture import Backbone, Heatmap_reg, coord_reg  
 from utils import save_checkpoint, EarlyStopper  
 
+TIP_BASE_KEYPOINT_INDICES = [1, 4, 5, 8, 9, 12, 13, 16, 17, 20]
+
 
 class HandPoseNet(nn.Module):
     def __init__(self, num_keypoints=21):
@@ -35,23 +37,6 @@ class HandPoseNet(nn.Module):
 def set_requires_grad(module: nn.Module, flag: bool):
     for p in module.parameters():
         p.requires_grad = flag
-
-
-def parse_keypoint_indices(spec: str):
-    if spec is None or spec.strip() == "":
-        return list(range(21))
-
-    tokens = spec.replace(",", " ").split()
-    indices = [int(t) for t in tokens]
-
-    if len(indices) == 0:
-        raise ValueError("--keypoint-indices must include at least one index")
-    if len(set(indices)) != len(indices):
-        raise ValueError("--keypoint-indices must be unique")
-    if min(indices) < 0 or max(indices) >= 21:
-        raise ValueError("--keypoint-indices values must be in [0, 20]")
-
-    return indices
 
 
 def build_optimizer_stage1(model: HandPoseNet, lr: float):
@@ -209,17 +194,19 @@ def main():
     parser.add_argument("--train-dataset-length", default="0")
     parser.add_argument("--freeze-backbone-stage2", action="store_true")
     parser.add_argument("--freeze-heatmap-stage2", action="store_true")
+    parser.add_argument(
+        "--tips-bases-only",
+        action="store_true",
+        help="Use 10 keypoints only: finger tips + finger bases (per hand).",
+    )
     parser.add_argument("--lambda-hm", type=float, default=1.0)
     parser.add_argument("--lambda-coord", type=float, default=1.0)
-    parser.add_argument(
-        "--keypoint-indices",
-        type=str,
-        default=None,
-        help="Comma/space-separated hand joint indices in [0,20], e.g. '0,1,2,4,8,12,16,17,18,20'",
-    )
 
     args = parser.parse_args()
-    keypoint_indices = parse_keypoint_indices(args.keypoint_indices)
+    if args.tips_bases_only:
+        keypoint_indices = list(TIP_BASE_KEYPOINT_INDICES)
+    else:
+        keypoint_indices = list(range(21))
     num_keypoints = len(keypoint_indices)
 
     print("CUDA available:", torch.cuda.is_available())

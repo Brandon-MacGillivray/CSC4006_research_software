@@ -38,8 +38,7 @@ STAGE1_MIN_DELTA=0.0
 LAMBDA_HM=1.0
 LAMBDA_COORD=1.0
 
-# Empty string means "all 21 keypoints".
-KEYPOINT_INDICES=""
+USE_TIPS_BASES_ONLY=0
 FREEZE_BACKBONE_STAGE2=0
 FREEZE_HEATMAP_STAGE2=0
 
@@ -83,8 +82,8 @@ CMD=(
   --lambda-coord "${LAMBDA_COORD}"
 )
 
-if [[ -n "${KEYPOINT_INDICES}" ]]; then
-  CMD+=(--keypoint-indices "${KEYPOINT_INDICES}")
+if [[ "${USE_TIPS_BASES_ONLY}" == "1" ]]; then
+  CMD+=(--tips-bases-only)
 fi
 
 if [[ "${FREEZE_BACKBONE_STAGE2}" == "1" ]]; then
