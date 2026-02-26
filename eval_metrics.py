@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -25,6 +26,11 @@ def build_arg_parser():
         "--shared-10-eval",
         action="store_true",
         help="Evaluate only the shared tip+base 10-keypoint subset for fair 21-vs-10 comparison.",
+    )
+    p.add_argument(
+        "--debug-coords",
+        action="store_true",
+        help="Print GT/pred coordinate differences for the first batch (to stderr).",
     )
     p.add_argument("--out-json", default=None, help="Optional path to write evaluation results as JSON")
     return p
@@ -144,6 +150,7 @@ def evaluate_checkpoint(
     loader,
     device,
     eval_positions,
+    debug_coords: bool = False,
 ):
     """Run model inference over the loader and return counts, SSE, and timing."""
     model.eval()
@@ -158,6 +165,7 @@ def evaluate_checkpoint(
 
     forward_seconds = 0.0
     num_batches = 0
+    debug_printed = False
 
     for imgs, coords in loader:
         # Dataset returns normalized coordinates with the same keypoint order as training.
@@ -183,6 +191,32 @@ def evaluate_checkpoint(
         diff = pred_coords - coords
         sq_per_joint = (diff * diff).sum(dim=-1)   # (N, K_eval), squared 2D error per joint
         sse_per_sample = sq_per_joint.sum(dim=-1)   # (N,), sum over evaluated joints
+
+        if debug_coords and not debug_printed:
+            l2 = torch.sqrt(sq_per_joint)
+            n_show = min(5, int(coords.shape[1]))
+            gt0 = coords[0, :n_show].detach().cpu()
+            pred0 = pred_coords[0, :n_show].detach().cpu()
+            diff0 = diff[0, :n_show].detach().cpu()
+            l20 = l2[0, :n_show].detach().cpu()
+            print("[debug-coords] showing first sample, first", n_show, "joints", file=sys.stderr)
+            print("[debug-coords] gt[0,:n]   =", gt0, file=sys.stderr)
+            print("[debug-coords] pred[0,:n] =", pred0, file=sys.stderr)
+            print("[debug-coords] diff[0,:n] =", diff0, file=sys.stderr)
+            print("[debug-coords] l2[0,:n]   =", l20, file=sys.stderr)
+            print(
+                "[debug-coords] gt range / pred range =",
+                (float(coords.min().item()), float(coords.max().item())),
+                (float(pred_coords.min().item()), float(pred_coords.max().item())),
+                file=sys.stderr,
+            )
+            print(
+                "[debug-coords] mean l2 / max l2 =",
+                float(l2.mean().item()),
+                float(l2.max().item()),
+                file=sys.stderr,
+            )
+            debug_printed = True
 
         batch_size = int(imgs.shape[0])
         total_samples += batch_size
@@ -267,6 +301,7 @@ def main():
         loader=loader,
         device=device,
         eval_positions=eval_positions,
+        debug_coords=bool(args.debug_coords),
     )
 
     results = build_results_payload(
