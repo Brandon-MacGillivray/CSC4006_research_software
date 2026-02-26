@@ -145,7 +145,7 @@ def evaluate_checkpoint(
     device,
     eval_positions,
 ):
-    """Run model inference over the loader and return sample counts + timing only."""
+    """Run model inference over the loader and return counts, SSE, and timing."""
     model.eval()
     index_tensor = None
     if eval_positions is not None:
@@ -154,6 +154,7 @@ def evaluate_checkpoint(
 
     total_samples = 0
     total_points = 0
+    total_sse = 0.0
 
     forward_seconds = 0.0
     num_batches = 0
@@ -178,9 +179,15 @@ def evaluate_checkpoint(
             coords = coords.index_select(1, index_tensor)
             pred_coords = pred_coords.index_select(1, index_tensor)
 
+        # coords/pred_coords are normalized, so this is normalized SSE per sample.
+        diff = pred_coords - coords
+        sq_per_joint = (diff * diff).sum(dim=-1)   # (N, K_eval), squared 2D error per joint
+        sse_per_sample = sq_per_joint.sum(dim=-1)   # (N,), sum over evaluated joints
+
         batch_size = int(imgs.shape[0])
         total_samples += batch_size
         total_points += int(coords.shape[0] * coords.shape[1])
+        total_sse += float(sse_per_sample.sum().item())
 
     if total_samples == 0 or total_points == 0:
         raise RuntimeError("No samples were evaluated")
@@ -189,6 +196,7 @@ def evaluate_checkpoint(
         "num_samples": total_samples,
         "num_points": total_points,
         "num_eval_keypoints": total_points // total_samples,
+        "sse_norm": (total_sse / total_samples),
         "timing": {
             "forward_seconds": forward_seconds,
             "num_batches": num_batches,
@@ -253,7 +261,7 @@ def main():
     model = build_model(num_keypoints=num_keypoints, state_dict=state_dict, device=device)
     loader = build_loader(args=args, device=device, model_keypoint_indices=model_keypoint_indices)
 
-    # Run the skeleton evaluation pass (counts + timing only).
+    # Run the minimal evaluation pass (counts + SSE + timing).
     metrics = evaluate_checkpoint(
         model=model,
         loader=loader,
