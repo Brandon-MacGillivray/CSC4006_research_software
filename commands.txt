@@ -51,7 +51,7 @@ srun -p k2-gpu-a100mig -N 1 -n 1 --gres=gpu:2g.20gb:1 --mem=8G --time=00:10:00 -
 
 srun -p k2-gpu-a100mig -N 1 -n 1 --gres=gpu:2g.20gb:1 --mem=8G --time=00:10:00 --pty bash
 
-srun -p k2-gpu-interactive -N 1 -n 1 --gres=gpu:2g.20gb:1 --mem=8G --time=00:10:00 --pty bash
+srun -p k2-gpu-interactive -N 1 -n 1 --gres=gpu:2g.20gb:1 --mem=8G --time=00:30:00 --pty bash
 
 conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
 
@@ -117,3 +117,7 @@ srun --pty /bin/bash
 
 
 export PATH="/users/40321491/sharedscratch/miniconda/bin:$PATH"
+
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/exp_k21_full.json
+
