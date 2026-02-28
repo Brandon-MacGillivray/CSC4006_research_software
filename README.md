@@ -145,6 +145,22 @@ python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --roo
 
 Keep all settings the same across experiments (`--hand`, input size, dataset split, etc.).
 
+## Single Image Inference
+
+Use `infer_image.py` to run one image through a trained checkpoint and return predicted coordinates.
+
+### Predict coordinates (printed to stdout as JSON)
+
+```bash
+python infer_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png
+```
+
+### Predict coordinates and save overlay image
+
+```bash
+python infer_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
+```
+
 ## Important Notes
 
 - Use stage-2 `best.pt` for coordinate metrics. Stage-1 checkpoints mainly train the heatmap branch.

@@ -121,4 +121,6 @@ export PATH="/users/40321491/sharedscratch/miniconda/bin:$PATH"
 
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/exp_k21_full.json --debug-coords
 
- ssh -p 55890 40321491@login.kelvin.alces.network
+ssh -p 55890 40321491@login.kelvin.alces.network
+
+python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00003.png --overlay --overlay-out infer_results/00003_overlay.png
