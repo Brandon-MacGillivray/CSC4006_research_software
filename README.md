@@ -147,6 +147,29 @@ python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --roo
 
 Keep all settings the same across experiments (`--hand`, input size, dataset split, etc.).
 
+### Paper-Faithful Fusion Eval (21 keypoints only)
+
+Use `--fusion-21-only` to enable DRHand post-processing fusion:
+
+- decode heatmaps to coordinates
+- compute per-sample `alpha` as median predicted knuckle length
+- per joint, choose heatmap coordinate if `d_i < alpha`, else coordinate-branch result
+
+This mode requires full 21-keypoint evaluation (no `--shared-10-eval`, no 10-keypoint checkpoint).
+For this repo, the reported fusion metrics are visibility-masked by default.
+
+Paper-fusion output additionally includes:
+
+- `metrics.fusion.mode` (`fusion_21_only`)
+- `metrics.fusion.alpha_stats` (`mean`, `median`, `p10`, `p90`)
+- `metrics.fusion.alpha_non_positive_count`
+- `metrics.fusion.heatmap_selected_ratio` and `metrics.fusion.heatmap_selected_ratio_per_joint`
+- timing split with `metrics.timing.fusion_postprocess_seconds` and `metrics.timing.ms_per_image_fusion_postprocess_only`
+
+```bash
+python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/exp_k21_paper_fusion.json
+```
+
 ## Single Image Inference
 
 Use `infer_image.py` to run one image through a trained checkpoint and return predicted coordinates.
