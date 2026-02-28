@@ -16,6 +16,7 @@ class RHDDatasetCoords(Dataset):
         hand="right",
         normalize=True,
         keypoint_indices=None,
+        return_visibility=False,
     ):
         self.root = root
         self.split = split
@@ -31,6 +32,7 @@ class RHDDatasetCoords(Dataset):
         if min(keypoint_indices) < 0 or max(keypoint_indices) >= 21:
             raise ValueError("keypoint_indices must be in [0, 20]")
         self.keypoint_indices = list(keypoint_indices)
+        self.return_visibility = return_visibility
 
         anno_path = os.path.join(root, split, f"anno_{split}.pickle")
         with open(anno_path, "rb") as f:
@@ -68,6 +70,8 @@ class RHDDatasetCoords(Dataset):
         hand = self._select_hand(uv_data)
         coords = hand[:, :2]  # (21, 2) in 320x320 pixels
         coords = coords[self.keypoint_indices]  # (K, 2), K=len(keypoint_indices)
+        vis = hand[:, 2]
+        vis = vis[self.keypoint_indices]
 
         scale = self.input_size / 320.0
         coords = coords * scale
@@ -75,5 +79,8 @@ class RHDDatasetCoords(Dataset):
             coords = coords / self.input_size
 
         coords = torch.tensor(coords, dtype=torch.float32)
+        vis = torch.tensor(vis, dtype=torch.float32)
 
+        if self.return_visibility:
+            return img, coords, vis
         return img, coords

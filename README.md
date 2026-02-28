@@ -15,7 +15,7 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 - `architecture.py`: backbone + heatmap head + coordinate head
 - `losses.py`: heatmap MSE and Wing loss
 - `plot_losses.py`: plot train/val losses from `losses.csv`
-- `eval_metrics.py`: checkpoint evaluation (`EPE`, `SSE`, `PCK`, timing)
+- `eval_metrics.py`: checkpoint evaluation (`SSE`, sample counts, forward timing)
 - `commands.txt`: scratch notes / old commands (not source of truth)
 
 ## Requirements
@@ -117,12 +117,13 @@ This reads `training_results/<job-id>/losses.csv` and writes `loss_plot.png` in 
 
 ## Evaluate Trained Models (Metrics)
 
-Use `eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to compute:
+Use `eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
 
-- `EPE` (normalized and pixels)
-- `SSE` (normalized)
-- `PCK` at configurable thresholds
-- forward-only timing / FPS
+- visibility-masked normalized `SSE` per sample (`metrics.sse_norm`)
+- sample/keypoint counts (`num_samples`, `num_points`, `num_visible_points`, `num_eval_keypoints`)
+- forward-only timing (`ms_per_image_forward_only`, `images_per_second_forward_only`)
+
+Note: `EPE` and `PCK` are not implemented in the current `eval_metrics.py`.
 
 ### Example: Evaluate a 21-keypoint model on all 21 keypoints
 

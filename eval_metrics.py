@@ -133,6 +133,7 @@ def build_loader(args, device: torch.device, model_keypoint_indices):
         hand=args.hand,
         normalize=True,
         keypoint_indices=model_keypoint_indices,
+        return_visibility=True,
     )
     loader = DataLoader(
         ds,
@@ -161,16 +162,18 @@ def evaluate_checkpoint(
 
     total_samples = 0
     total_points = 0
+    total_visible_points = 0
     total_sse = 0.0
 
     forward_seconds = 0.0
     num_batches = 0
     debug_printed = False
 
-    for imgs, coords in loader:
+    for imgs, coords, vis in loader:
         # Dataset returns normalized coordinates with the same keypoint order as training.
         imgs = imgs.to(device, non_blocking=True)
         coords = coords.to(device, non_blocking=True)
+        vis = vis.to(device, non_blocking=True)
 
         # Synchronize CUDA so the timing reflects actual forward-pass duration.
         if device.type == "cuda":
@@ -186,11 +189,13 @@ def evaluate_checkpoint(
             # Slice both GT and predictions to the evaluation subset (e.g., shared 10).
             coords = coords.index_select(1, index_tensor)
             pred_coords = pred_coords.index_select(1, index_tensor)
+            vis = vis.index_select(1, index_tensor)
 
-        # coords/pred_coords are normalized, so this is normalized SSE per sample.
+        # coords/pred_coords are normalized. SSE is computed only on visible joints.
         diff = pred_coords - coords
         sq_per_joint = (diff * diff).sum(dim=-1)   # (N, K_eval), squared 2D error per joint
-        sse_per_sample = sq_per_joint.sum(dim=-1)   # (N,), sum over evaluated joints
+        visible_mask = (vis > 0).float()
+        sse_per_sample = (sq_per_joint * visible_mask).sum(dim=-1)   # (N,), sum over visible joints
 
         if debug_coords and not debug_printed:
             l2 = torch.sqrt(sq_per_joint)
@@ -199,11 +204,13 @@ def evaluate_checkpoint(
             pred0 = pred_coords[0, :n_show].detach().cpu()
             diff0 = diff[0, :n_show].detach().cpu()
             l20 = l2[0, :n_show].detach().cpu()
+            vis0 = vis[0, :n_show].detach().cpu()
             print("[debug-coords] showing first sample, first", n_show, "joints", file=sys.stderr)
             print("[debug-coords] gt[0,:n]   =", gt0, file=sys.stderr)
             print("[debug-coords] pred[0,:n] =", pred0, file=sys.stderr)
             print("[debug-coords] diff[0,:n] =", diff0, file=sys.stderr)
             print("[debug-coords] l2[0,:n]   =", l20, file=sys.stderr)
+            print("[debug-coords] vis[0,:n]  =", vis0, file=sys.stderr)
             print(
                 "[debug-coords] gt range / pred range =",
                 (float(coords.min().item()), float(coords.max().item())),
@@ -221,6 +228,7 @@ def evaluate_checkpoint(
         batch_size = int(imgs.shape[0])
         total_samples += batch_size
         total_points += int(coords.shape[0] * coords.shape[1])
+        total_visible_points += int(visible_mask.sum().item())
         total_sse += float(sse_per_sample.sum().item())
 
     if total_samples == 0 or total_points == 0:
@@ -229,6 +237,7 @@ def evaluate_checkpoint(
     results = {
         "num_samples": total_samples,
         "num_points": total_points,
+        "num_visible_points": total_visible_points,
         "num_eval_keypoints": total_points // total_samples,
         "sse_norm": (total_sse / total_samples),
         "timing": {
