@@ -17,25 +17,11 @@ def read_losses(csv_path):
     return stage, epochs, train_losses, val_losses
 
 
-def offset_epochs(stages, epochs):
-    """
-    Make stage-2 epochs continue after stage-1 epochs.
-    If stage 1 ends at epoch e_max (0-indexed), stage-2 epoch 0 becomes e_max+1.
-    """
-    # find stage-1 max epoch (if no stage-1 rows, no offset)
-    stage1_epochs = [e for s, e in zip(stages, epochs) if s == 1]
-    if not stage1_epochs:
-        return epochs
-
-    offset = max(stage1_epochs) + 1
-
-    adjusted = []
-    for s, e in zip(stages, epochs):
-        if s == 2:
-            adjusted.append(e + offset)
-        else:
-            adjusted.append(e)
-    return adjusted
+def stage_series(stages, epochs, train_losses, val_losses, stage_id):
+    x = [e for s, e in zip(stages, epochs) if s == stage_id]
+    y_train = [y for s, y in zip(stages, train_losses) if s == stage_id]
+    y_val = [y for s, y in zip(stages, val_losses) if s == stage_id]
+    return x, y_train, y_val
 
 
 def main():
@@ -54,32 +40,33 @@ def main():
         raise FileNotFoundError(f"Missing {csv_path}")
 
     stages, epochs, train_losses, val_losses = read_losses(csv_path)
-    plot_epochs = offset_epochs(stages, epochs)
+    s1_x, s1_train, s1_val = stage_series(stages, epochs, train_losses, val_losses, stage_id=1)
+    s2_x, s2_train, s2_val = stage_series(stages, epochs, train_losses, val_losses, stage_id=2)
 
-    plt.figure()
-    s1_x = [x for s, x in zip(stages, plot_epochs) if s == 1]
-    s1_train = [y for s, y in zip(stages, train_losses) if s == 1]
-    s1_val = [y for s, y in zip(stages, val_losses) if s == 1]
+    fig, axes = plt.subplots(2, 1, figsize=(7, 8), sharex=False)
 
-    s2_x = [x for s, x in zip(stages, plot_epochs) if s == 2]
-    s2_train = [y for s, y in zip(stages, train_losses) if s == 2]
-    s2_val = [y for s, y in zip(stages, val_losses) if s == 2]
-
+    ax1 = axes[0]
     if s1_x:
-        plt.plot(s1_x, s1_train, label="train_s1")
-        plt.plot(s1_x, s1_val, label="val_s1")
+        ax1.plot(s1_x, s1_train, label="train_s1")
+        ax1.plot(s1_x, s1_val, label="val_s1")
+    else:
+        ax1.text(0.5, 0.5, "No stage 1 data", ha="center", va="center", transform=ax1.transAxes)
+    ax1.set_xlabel("stage 1 epoch")
+    ax1.set_ylabel("loss")
+    ax1.set_title(f"Stage 1 Loss (job {args.job_id})")
+    ax1.legend()
+
+    ax2 = axes[1]
     if s2_x:
-        plt.plot(s2_x, s2_train, label="train_s2")
-        plt.plot(s2_x, s2_val, label="val_s2")
+        ax2.plot(s2_x, s2_train, label="train_s2")
+        ax2.plot(s2_x, s2_val, label="val_s2")
+    else:
+        ax2.text(0.5, 0.5, "No stage 2 data", ha="center", va="center", transform=ax2.transAxes)
+    ax2.set_xlabel("stage 2 epoch")
+    ax2.set_ylabel("loss")
+    ax2.set_title(f"Stage 2 Loss (job {args.job_id})")
+    ax2.legend()
 
-    if s1_x and s2_x:
-        boundary_x = max(s1_x) + 0.5
-        plt.axvline(boundary_x, linestyle="--", linewidth=1.0, color="gray", label="stage 2 starts")
-
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.title(f"Loss curves (job {args.job_id})")
-    plt.legend()
     plt.tight_layout()
     plt.savefig(out_path, dpi=200)
     print(f"saved: {out_path}")
