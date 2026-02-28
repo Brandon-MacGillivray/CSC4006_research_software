@@ -125,3 +125,8 @@ ssh -p 55890 40321491@login.kelvin.alces.network
 
 python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00003.png --overlay --overlay-out infer_results/00003_overlay.png
 python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00000.png --overlay --overlay-out infer_results/00000_overlay.png
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --out-json eval_results/exp_k21_full.json
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562711/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --out-json eval_results/exp_k10_full.json
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --out-json eval_results/exp_k21_full.json --shared-10-eval

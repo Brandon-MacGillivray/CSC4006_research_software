@@ -57,8 +57,25 @@ def main():
     plot_epochs = offset_epochs(stages, epochs)
 
     plt.figure()
-    plt.plot(plot_epochs, train_losses, label="train")
-    plt.plot(plot_epochs, val_losses, label="val")
+    s1_x = [x for s, x in zip(stages, plot_epochs) if s == 1]
+    s1_train = [y for s, y in zip(stages, train_losses) if s == 1]
+    s1_val = [y for s, y in zip(stages, val_losses) if s == 1]
+
+    s2_x = [x for s, x in zip(stages, plot_epochs) if s == 2]
+    s2_train = [y for s, y in zip(stages, train_losses) if s == 2]
+    s2_val = [y for s, y in zip(stages, val_losses) if s == 2]
+
+    if s1_x:
+        plt.plot(s1_x, s1_train, label="train_s1")
+        plt.plot(s1_x, s1_val, label="val_s1")
+    if s2_x:
+        plt.plot(s2_x, s2_train, label="train_s2")
+        plt.plot(s2_x, s2_val, label="val_s2")
+
+    if s1_x and s2_x:
+        boundary_x = max(s1_x) + 0.5
+        plt.axvline(boundary_x, linestyle="--", linewidth=1.0, color="gray", label="stage 2 starts")
+
     plt.xlabel("epoch")
     plt.ylabel("loss")
     plt.title(f"Loss curves (job {args.job_id})")
