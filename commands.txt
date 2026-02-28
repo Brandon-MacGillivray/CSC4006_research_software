@@ -124,3 +124,4 @@ python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_re
 ssh -p 55890 40321491@login.kelvin.alces.network
 
 python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00003.png --overlay --overlay-out infer_results/00003_overlay.png
+python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00000.png --overlay --overlay-out infer_results/00000_overlay.png

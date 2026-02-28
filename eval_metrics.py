@@ -32,6 +32,12 @@ def build_arg_parser():
         action="store_true",
         help="Print GT/pred coordinate differences for the first batch (to stderr).",
     )
+    p.add_argument(
+        "--pck-threshold",
+        type=float,
+        default=0.2,
+        help="Normalized distance threshold sigma used for PCK@sigma (default: 0.2).",
+    )
     p.add_argument("--out-json", default=None, help="Optional path to write evaluation results as JSON")
     return p
 
@@ -151,9 +157,11 @@ def evaluate_checkpoint(
     loader,
     device,
     eval_positions,
+    root_keypoint_local_index,
+    pck_threshold: float,
     debug_coords: bool = False,
 ):
-    """Run model inference over the loader and return counts, SSE, and timing."""
+    """Run model inference over the loader and return counts, SSE/EPE/PCK, and timing."""
     model.eval()
     index_tensor = None
     if eval_positions is not None:
@@ -164,6 +172,10 @@ def evaluate_checkpoint(
     total_points = 0
     total_visible_points = 0
     total_sse = 0.0
+    total_epe = 0.0
+    total_epe_points = 0
+    total_pck_hits = 0
+    total_pck_points = 0
 
     forward_seconds = 0.0
     num_batches = 0
@@ -194,11 +206,25 @@ def evaluate_checkpoint(
         # coords/pred_coords are normalized. SSE is computed only on visible joints.
         diff = pred_coords - coords
         sq_per_joint = (diff * diff).sum(dim=-1)   # (N, K_eval), squared 2D error per joint
+        l2_per_joint = torch.sqrt(sq_per_joint)
         visible_mask = (vis > 0).float()
         sse_per_sample = (sq_per_joint * visible_mask).sum(dim=-1)   # (N,), sum over visible joints
 
+        # PCK@sigma on visible joints.
+        pck_hits = ((l2_per_joint <= pck_threshold).float() * visible_mask).sum()
+        pck_points = visible_mask.sum()
+
+        # EPE from Eq. (4): root-relative 2D error, normalized (coords are already normalized).
+        if root_keypoint_local_index is not None:
+            root_gt = coords[:, root_keypoint_local_index : root_keypoint_local_index + 1, :]
+            root_pred = pred_coords[:, root_keypoint_local_index : root_keypoint_local_index + 1, :]
+            rel_diff = (pred_coords - root_pred) - (coords - root_gt)
+            rel_l2 = torch.sqrt((rel_diff * rel_diff).sum(dim=-1))  # (N, K_eval)
+            total_epe += float((rel_l2 * visible_mask).sum().item())
+            total_epe_points += int(visible_mask.sum().item())
+
         if debug_coords and not debug_printed:
-            l2 = torch.sqrt(sq_per_joint)
+            l2 = l2_per_joint
             n_show = min(5, int(coords.shape[1]))
             gt0 = coords[0, :n_show].detach().cpu()
             pred0 = pred_coords[0, :n_show].detach().cpu()
@@ -230,6 +256,8 @@ def evaluate_checkpoint(
         total_points += int(coords.shape[0] * coords.shape[1])
         total_visible_points += int(visible_mask.sum().item())
         total_sse += float(sse_per_sample.sum().item())
+        total_pck_hits += int(pck_hits.item())
+        total_pck_points += int(pck_points.item())
 
     if total_samples == 0 or total_points == 0:
         raise RuntimeError("No samples were evaluated")
@@ -240,6 +268,10 @@ def evaluate_checkpoint(
         "num_visible_points": total_visible_points,
         "num_eval_keypoints": total_points // total_samples,
         "sse_norm": (total_sse / total_samples),
+        "epe_norm": (total_epe / total_epe_points) if total_epe_points > 0 else None,
+        "epe_root_keypoint_index_in_eval": root_keypoint_local_index,
+        "pck_threshold": float(pck_threshold),
+        "pck": (float(total_pck_hits) / float(total_pck_points)) if total_pck_points > 0 else None,
         "timing": {
             "forward_seconds": forward_seconds,
             "num_batches": num_batches,
@@ -288,6 +320,8 @@ def save_results_json(results: dict, out_json: str):
 def main():
     """CLI entry point: load checkpoint/model, build loader, run skeleton evaluation."""
     args = build_arg_parser().parse_args()
+    if args.pck_threshold < 0:
+        raise ValueError("--pck-threshold must be >= 0")
     device = resolve_device(args.device)
 
     # Load checkpoint and recover which keypoints this model was trained to predict.
@@ -300,16 +334,24 @@ def main():
         model_keypoint_indices=model_keypoint_indices,
         shared_10_eval=args.shared_10_eval,
     )
+    root_keypoint_local_index = eval_keypoint_indices.index(0) if 0 in eval_keypoint_indices else None
+    if root_keypoint_local_index is None:
+        print(
+            "[eval] root keypoint 0 not present in eval set; epe_norm will be null.",
+            file=sys.stderr,
+        )
 
     model = build_model(num_keypoints=num_keypoints, state_dict=state_dict, device=device)
     loader = build_loader(args=args, device=device, model_keypoint_indices=model_keypoint_indices)
 
-    # Run the minimal evaluation pass (counts + SSE + timing).
+    # Run the evaluation pass (counts + SSE/EPE/PCK + timing).
     metrics = evaluate_checkpoint(
         model=model,
         loader=loader,
         device=device,
         eval_positions=eval_positions,
+        root_keypoint_local_index=root_keypoint_local_index,
+        pck_threshold=float(args.pck_threshold),
         debug_coords=bool(args.debug_coords),
     )
 
