@@ -16,6 +16,7 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 - `losses.py`: heatmap MSE and Wing loss
 - `plot_losses.py`: plot train/val losses from `losses.csv`
 - `eval_metrics.py`: checkpoint evaluation (`SSE`, `EPE`, `PCK`, counts, timing)
+- `infer_image.py`: single-image inference + optional keypoint overlay output
 - `commands.txt`: scratch notes / old commands (not source of truth)
 
 ## Requirements
@@ -90,7 +91,7 @@ python train_1.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-onl
 
 ## Slurm (Optional)
 
-Use `train_1.sbatch` and set these variables first:
+Use `train_1.sbatch` and edit these variables in the script first:
 
 - `RHD_ROOT`
 - `CHECKPOINT_ROOT`
@@ -105,6 +106,21 @@ sbatch train_1.sbatch
 ```
 
 Note: `train_1.sbatch` currently runs `python handpose/train_1.py`. If this repo is your working directory root, change it to `python train_1.py`.
+
+## Useful CLI Options
+
+### Training (`train_1.py`)
+
+- `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation steps per stage
+- `--lambda-hm`, `--lambda-coord`: stage-2 loss weights (`total = lambda_hm * heatmap + lambda_coord * coord`)
+- `--freeze-backbone-stage2`, `--freeze-heatmap-stage2`: freeze parts of the model during stage 2
+- `--train-dataset-length N`: train on first `N` training samples (debug/ablation convenience)
+
+### Evaluation (`eval_metrics.py`)
+
+- `--device auto|cpu|cuda`: force evaluation device (default `auto`)
+- `--batch-size`, `--num-workers`: evaluation loader settings
+- `--debug-coords`: print first-batch coordinate diagnostics to `stderr`
 
 ## Plot Training Curves
 
