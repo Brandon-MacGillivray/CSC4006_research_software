@@ -132,3 +132,8 @@ python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_re
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --out-json eval_results/exp_k21_full.json --shared-10-eval
 
 python handpose/plot_losses.py --checkpoint-root /users/40321491/sharedscratch/training_results --job-id 7562710 --out-name loss_plot_stage_split.png
+
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/result_21.json
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/result_21.json

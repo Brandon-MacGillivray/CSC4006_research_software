@@ -19,6 +19,15 @@ HAND_BONE_EDGES_21 = [
     (0, 17), (17, 18), (18, 19), (19, 20),
 ]
 
+# Global-index base->tip pairs used for the minimal 10-joint fusion variant.
+HAND_BONE_EDGES_10_GLOBAL = [
+    (1, 4),
+    (5, 8),
+    (9, 12),
+    (13, 16),
+    (17, 20),
+]
+
 
 def build_arg_parser():
     """CLI args."""
@@ -51,8 +60,9 @@ def build_arg_parser():
         "--fusion-21-only",
         action="store_true",
         help=(
-            "Use paper-faithful post-processing fusion for 21-keypoint evaluation only: "
-            "decode heatmap coords, compute per-sample alpha as median predicted knuckle length, "
+            "Enable post-processing fusion. Paper-faithful for full 21-joint checkpoints; "
+            "for tip/base 10-joint checkpoints it uses a minimal 5-bone alpha variant. "
+            "Fusion decodes heatmap coords, computes per-sample alpha as median predicted bone length, "
             "and fuse each joint by d_i < alpha."
         ),
     )
@@ -187,13 +197,31 @@ def heatmaps_to_coords_argmax(pred_heatmaps: torch.Tensor):
     return torch.stack([x, y], dim=-1)
 
 
-def fuse_coords_paper(pred_heatmaps: torch.Tensor, pred_coords: torch.Tensor):
-    """Fuse heatmap/coord branches using paper rule d_i < alpha."""
+def resolve_fusion_bone_edges(model_keypoint_indices):
+    """Resolve local fusion edges for 21-joint or tip/base 10-joint checkpoints."""
+    keypoints = [int(x) for x in model_keypoint_indices]
+    if len(set(keypoints)) != len(keypoints):
+        raise ValueError(f"Duplicate keypoint indices in checkpoint: {keypoints}")
+
+    index_of = {kp: i for i, kp in enumerate(keypoints)}
+    if set(keypoints) == set(range(21)):
+        return [(index_of[a], index_of[b]) for a, b in HAND_BONE_EDGES_21], "fusion_21"
+    if set(keypoints) == set(TIP_BASE_KEYPOINT_INDICES):
+        return [(index_of[a], index_of[b]) for a, b in HAND_BONE_EDGES_10_GLOBAL], "fusion_10_tip_base"
+
+    raise ValueError(
+        "Fusion supports either full 21-joint checkpoints or tip/base 10-joint checkpoints. "
+        f"Got keypoints: {keypoints}"
+    )
+
+
+def fuse_coords_paper(pred_heatmaps: torch.Tensor, pred_coords: torch.Tensor, bone_edges_local):
+    """Fuse heatmap/coord branches using d_i < alpha."""
     hm_coords = heatmaps_to_coords_argmax(pred_heatmaps)
 
     # Alpha per sample = median predicted bone length.
     bone_lengths = []
-    for a, b in HAND_BONE_EDGES_21:
+    for a, b in bone_edges_local:
         vec = pred_coords[:, a, :] - pred_coords[:, b, :]
         bone_lengths.append(torch.sqrt((vec * vec).sum(dim=-1)))
     bone_lengths = torch.stack(bone_lengths, dim=-1)
@@ -348,11 +376,15 @@ def evaluate_checkpoint_paper_fusion(
     model,
     loader,
     device,
+    model_keypoint_indices,
+    root_keypoint_local_index,
     pck_threshold: float,
     debug_coords: bool = False,
 ):
-    """Evaluate full 21-joint paper-style fusion metrics."""
+    """Evaluate fusion metrics for 21-joint or tip/base 10-joint checkpoints."""
     model.eval()
+    num_keypoints = len(model_keypoint_indices)
+    bone_edges_local, fusion_mode = resolve_fusion_bone_edges(model_keypoint_indices)
 
     # Running totals (masked metrics).
     total_samples = 0
@@ -360,11 +392,12 @@ def evaluate_checkpoint_paper_fusion(
     masked_total_visible_points = 0
     masked_total_sse = 0.0
     masked_total_epe = 0.0
+    masked_total_epe_points = 0
     masked_total_pck_hits = 0
     masked_total_pck_points = 0
 
     alpha_values = []
-    heatmap_selected_per_joint = torch.zeros(21, dtype=torch.float64)
+    heatmap_selected_per_joint = torch.zeros(num_keypoints, dtype=torch.float64)
     total_heatmap_selected = 0
 
     forward_seconds = 0.0
@@ -392,7 +425,11 @@ def evaluate_checkpoint_paper_fusion(
         if device.type == "cuda":
             torch.cuda.synchronize(device)
         tpp = time.perf_counter()
-        fused_coords, hm_coords, alpha, use_heatmap = fuse_coords_paper(pred_heatmaps, pred_coords)
+        fused_coords, hm_coords, alpha, use_heatmap = fuse_coords_paper(
+            pred_heatmaps=pred_heatmaps,
+            pred_coords=pred_coords,
+            bone_edges_local=bone_edges_local,
+        )
         if device.type == "cuda":
             torch.cuda.synchronize(device)
         fusion_postprocess_seconds += time.perf_counter() - tpp
@@ -406,11 +443,13 @@ def evaluate_checkpoint_paper_fusion(
         masked_total_visible_points += int(visible_mask.sum().item())
 
         # Root-relative EPE with same visibility mask.
-        root_gt = coords[:, 0:1, :]
-        root_pred = fused_coords[:, 0:1, :]
-        rel_diff = (fused_coords - root_pred) - (coords - root_gt)
-        rel_l2 = torch.sqrt((rel_diff * rel_diff).sum(dim=-1))
-        masked_total_epe += float((rel_l2 * visible_mask).sum().item())
+        if root_keypoint_local_index is not None:
+            root_gt = coords[:, root_keypoint_local_index : root_keypoint_local_index + 1, :]
+            root_pred = fused_coords[:, root_keypoint_local_index : root_keypoint_local_index + 1, :]
+            rel_diff = (fused_coords - root_pred) - (coords - root_gt)
+            rel_l2 = torch.sqrt((rel_diff * rel_diff).sum(dim=-1))
+            masked_total_epe += float((rel_l2 * visible_mask).sum().item())
+            masked_total_epe_points += int(visible_mask.sum().item())
         masked_total_pck_hits += int(((l2_per_joint <= pck_threshold).float() * visible_mask).sum().item())
         masked_total_pck_points += int(visible_mask.sum().item())
 
@@ -464,12 +503,12 @@ def evaluate_checkpoint_paper_fusion(
         "num_visible_points": masked_total_visible_points,
         "num_eval_keypoints": (num_points // num_samples),
         "sse_norm": (masked_total_sse / num_samples),
-        "epe_norm": (masked_total_epe / masked_total_visible_points) if masked_total_visible_points > 0 else None,
-        "epe_root_keypoint_index_in_eval": 0,
+        "epe_norm": (masked_total_epe / masked_total_epe_points) if masked_total_epe_points > 0 else None,
+        "epe_root_keypoint_index_in_eval": root_keypoint_local_index,
         "pck_threshold": float(pck_threshold),
         "pck": (float(masked_total_pck_hits) / float(masked_total_pck_points)) if masked_total_pck_points > 0 else None,
         "fusion": {
-            "mode": "fusion_21_only",
+            "mode": fusion_mode,
             "alpha_stats": {
                 "mean": alpha_mean,
                 "median": alpha_median,
@@ -546,21 +585,36 @@ def main():
         model_keypoint_indices=model_keypoint_indices,
         shared_10_eval=args.shared_10_eval,
     )
-    root_keypoint_local_index = eval_keypoint_indices.index(0) if 0 in eval_keypoint_indices else None
-    if root_keypoint_local_index is None and not args.fusion_21_only:
+    tip_base_set = set(int(x) for x in TIP_BASE_KEYPOINT_INDICES)
+    model_keypoint_set = set(int(x) for x in model_keypoint_indices)
+    is_tip_base_10_model = (
+        len(model_keypoint_indices) == len(TIP_BASE_KEYPOINT_INDICES)
+        and model_keypoint_set == tip_base_set
+    )
+    if 0 in eval_keypoint_indices:
+        root_keypoint_local_index = eval_keypoint_indices.index(0)
+    elif is_tip_base_10_model and 1 in eval_keypoint_indices:
+        root_keypoint_local_index = eval_keypoint_indices.index(1)
         print(
-            "[eval] root keypoint 0 not present in eval set; epe_norm will be null.",
+            "[eval] using keypoint 1 as EPE root for tip/base 10-joint model.",
+            file=sys.stderr,
+        )
+    else:
+        root_keypoint_local_index = None
+        print(
+            "[eval] no supported EPE root in eval set; epe_norm will be null.",
             file=sys.stderr,
         )
 
     if args.fusion_21_only:
-        # Fusion mode only supports full 21-joint setup.
+        # Keep fusion on full checkpoint keypoint layout (no shared-10 slicing).
         if args.shared_10_eval:
-            raise ValueError("--fusion-21-only requires full 21-joint evaluation (do not use --shared-10-eval)")
-        if eval_keypoint_indices != list(range(21)):
+            raise ValueError("--fusion-21-only requires full checkpoint keypoint eval (do not use --shared-10-eval)")
+        kp_set = set(int(x) for x in eval_keypoint_indices)
+        if kp_set not in (set(range(21)), set(int(x) for x in TIP_BASE_KEYPOINT_INDICES)):
             raise ValueError(
-                "--fusion-21-only requires checkpoint/eval keypoints to be exactly [0..20] "
-                f"(got: {eval_keypoint_indices})"
+                "--fusion-21-only supports only full 21-joint checkpoints or tip/base 10-joint checkpoints. "
+                f"Got keypoints: {eval_keypoint_indices}"
             )
 
     model = build_model(num_keypoints=num_keypoints, state_dict=state_dict, device=device)
@@ -572,6 +626,8 @@ def main():
             model=model,
             loader=loader,
             device=device,
+            model_keypoint_indices=model_keypoint_indices,
+            root_keypoint_local_index=root_keypoint_local_index,
             pck_threshold=float(args.pck_threshold),
             debug_coords=bool(args.debug_coords),
         )

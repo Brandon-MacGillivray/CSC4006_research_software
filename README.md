@@ -125,7 +125,7 @@ Use `eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
 - sample/keypoint counts (`num_samples`, `num_points`, `num_visible_points`, `num_eval_keypoints`)
 - forward-only timing (`ms_per_image_forward_only`, `images_per_second_forward_only`)
 
-Note: `epe_norm` requires root keypoint `0` in the evaluation set. If you use `--shared-10-eval`, `epe_norm` is reported as `null`.
+Note: `epe_norm` uses root keypoint `0` by default. For tip/base 10-joint checkpoints, it uses root keypoint `1`. In shared-10 eval of a 21-joint checkpoint, `epe_norm` is reported as `null`.
 
 ### Example: Evaluate a 21-keypoint model on all 21 keypoints
 
@@ -147,20 +147,22 @@ python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --roo
 
 Keep all settings the same across experiments (`--hand`, input size, dataset split, etc.).
 
-### Paper-Faithful Fusion Eval (21 keypoints only)
+### Fusion Eval (21 or tip/base 10)
 
-Use `--fusion-21-only` to enable DRHand post-processing fusion:
+Use `--fusion-21-only` to enable post-processing fusion:
 
 - decode heatmaps to coordinates
-- compute per-sample `alpha` as median predicted knuckle length
+- compute per-sample `alpha` as median predicted bone length
 - per joint, choose heatmap coordinate if `d_i < alpha`, else coordinate-branch result
 
-This mode requires full 21-keypoint evaluation (no `--shared-10-eval`, no 10-keypoint checkpoint).
+For full 21-joint checkpoints, this matches the paper-style alpha construction.
+For tip/base 10-joint checkpoints, this uses a minimal 5-bone base-to-tip alpha variant.
+This mode requires full checkpoint keypoint evaluation (no `--shared-10-eval`).
 For this repo, the reported fusion metrics are visibility-masked by default.
 
 Paper-fusion output additionally includes:
 
-- `metrics.fusion.mode` (`fusion_21_only`)
+- `metrics.fusion.mode` (`fusion_21` or `fusion_10_tip_base`)
 - `metrics.fusion.alpha_stats` (`mean`, `median`, `p10`, `p90`)
 - `metrics.fusion.alpha_non_positive_count`
 - `metrics.fusion.heatmap_selected_ratio` and `metrics.fusion.heatmap_selected_ratio_per_joint`
@@ -168,6 +170,10 @@ Paper-fusion output additionally includes:
 
 ```bash
 python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/exp_k21_paper_fusion.json
+```
+
+```bash
+python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/exp_k10_fusion.json
 ```
 
 ## Single Image Inference
