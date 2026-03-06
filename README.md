@@ -7,19 +7,17 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 - `21` keypoints (default)
 - `10` keypoints (finger tips + bases) via `--tips-bases-only`
 
-## Files
+## Structure
 
-- `train.py`: main two-stage training script
-- `train_1.sbatch`: Slurm job script
-- `model.py`: reusable `HandPoseNet` model definition + keypoint constants
-- `inference_utils.py`: shared checkpoint loading / keypoint-layout inference helpers
-- `dataset.py`: RHD dataset loader (`left` / `right` / `auto` hand selection)
-- `architecture.py`: backbone + heatmap head + coordinate head
-- `losses.py`: heatmap MSE and Wing loss
-- `plot_losses.py`: plot train/val losses from `losses.csv`
-- `eval_metrics.py`: checkpoint evaluation (`SSE`, `EPE`, `PCK`, counts, timing)
-- `infer_image.py`: single-image inference + optional keypoint overlay output
-- `commands.txt`: scratch notes / old commands (not source of truth)
+- `src/handpose/data/`: dataset loader, hand/keypoint selection, keypoint constants
+- `src/handpose/models/`: network blocks, architecture, model wrapper, losses
+- `src/handpose/training/`: train loops, optimizer policies, runtime helpers
+- `src/handpose/checkpoints.py`: shared checkpoint schema, save/load helpers
+- `src/handpose/evaluation/`: eval pipeline, metrics core, result payload helpers
+- `src/handpose/inference/`: image preprocess + inference + overlay utilities
+- `scripts/`: runnable CLI entrypoints (`train.py`, `eval_metrics.py`, `predict_image.py`, `plot_losses.py`)
+- `slurm/`: Slurm job scripts
+- `docs/`: paper notes / scratch command history
 
 ## Requirements
 
@@ -37,7 +35,7 @@ pip install torch torchvision numpy pillow matplotlib
 
 ## Expected Dataset Layout (RHD)
 
-`dataset.py` expects this structure (default root is `data/RHD_published_v2`):
+`src/handpose/data/dataset.py` expects this structure (default root is `data/RHD_published_v2`):
 
 ```text
 data/RHD_published_v2/
@@ -72,28 +70,28 @@ If `--job-id` is omitted, it uses `local`.
 ### Train (21 keypoints, default)
 
 ```bash
-python train.py --root data/RHD_published_v2 --job-id exp_k21
+python scripts/train.py --root data/RHD_published_v2 --job-id exp_k21
 ```
 
 ### Train (10 keypoints: finger tips + bases)
 
 ```bash
-python train.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-only
+python scripts/train.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-only
 ```
 
 ### Hand Selection
 
-`train.py` supports:
+`scripts/train.py` supports:
 
 - `--hand right` (default)
 - `--hand left`
 - `--hand auto`
 
-`dataset.py` first selects the hand from the 42 RHD landmarks, then applies the active keypoint mode.
+`src/handpose/data/dataset.py` first selects the hand from the 42 RHD landmarks, then applies the active keypoint mode.
 
 ## Slurm (Optional)
 
-Use `train_1.sbatch` and edit these variables in the script first:
+Use `slurm/train_1.sbatch` and edit these variables in the script first:
 
 - `RHD_ROOT`
 - `CHECKPOINT_ROOT`
@@ -104,21 +102,19 @@ Use `train_1.sbatch` and edit these variables in the script first:
 Submit with:
 
 ```bash
-sbatch train_1.sbatch
+sbatch slurm/train_1.sbatch
 ```
-
-Note: `train_1.sbatch` currently runs `python handpose/train.py`. If this repo is your working directory root, change it to `python train.py`.
 
 ## Useful CLI Options
 
-### Training (`train.py`)
+### Training (`scripts/train.py`)
 
 - `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation steps per stage
 - `--lambda-hm`, `--lambda-coord`: stage-2 loss weights (`total = lambda_hm * heatmap + lambda_coord * coord`)
 - `--freeze-backbone-stage2`, `--freeze-heatmap-stage2`: freeze parts of the model during stage 2
 - `--train-dataset-length N`: train on first `N` training samples (debug/ablation convenience)
 
-### Evaluation (`eval_metrics.py`)
+### Evaluation (`scripts/eval_metrics.py`)
 
 - `--device auto|cpu|cuda`: force evaluation device (default `auto`)
 - `--batch-size`, `--num-workers`: evaluation loader settings
@@ -127,28 +123,28 @@ Note: `train_1.sbatch` currently runs `python handpose/train.py`. If this repo i
 ## Plot Training Curves
 
 ```bash
-python plot_losses.py --job-id exp_k21
-python plot_losses.py --job-id exp_k10
+python scripts/plot_losses.py --job-id exp_k21
+python scripts/plot_losses.py --job-id exp_k10
 ```
 
 This reads `training_results/<job-id>/losses.csv` and writes `loss_plot.png` in the same run directory.
 
 ## Evaluate Trained Models (Metrics)
 
-Use `eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
+Use `scripts/eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
 
 - visibility-masked normalized `SSE` per sample (`metrics.sse_norm`)
 - visibility-masked normalized root-relative `EPE` (`metrics.epe_norm`)
 - visibility-masked `PCK@sigma` (`metrics.pck`) with `--pck-threshold` (default `0.2`)
 - sample/keypoint counts (`num_samples`, `num_points`, `num_visible_points`, `num_eval_keypoints`)
-- forward-only timing (`ms_per_image_forward_only`, `images_per_second_forward_only`)
+- fused-prediction timing (`ms_per_image`, `images_per_second`)
 
 Note: `epe_norm` uses root keypoint `0` by default. For tip/base 10-joint checkpoints, it uses root keypoint `1`. In shared-10 eval of a 21-joint checkpoint, `epe_norm` is reported as `null`.
 
 ### Example: Evaluate a 21-keypoint model on all 21 keypoints
 
 ```bash
-python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/exp_k21_full.json
+python scripts/eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/exp_k21_full.json
 ```
 
 ### Fair 21 vs 10 Comparison (recommended)
@@ -156,63 +152,36 @@ python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --roo
 Evaluate both models on the same shared 10 landmarks:
 
 ```bash
-python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k21_shared10.json
+python scripts/eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k21_shared10.json
 ```
 
 ```bash
-python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k10_shared10.json
+python scripts/eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k10_shared10.json
 ```
 
+Predictions in evaluation always use the fusion rule (`d_i < alpha`) from the shared inference pipeline.
 Keep all settings the same across experiments (`--hand`, input size, dataset split, etc.).
-
-### Fusion Eval (21 or tip/base 10)
-
-Use `--fusion-21-only` to enable post-processing fusion:
-
-- decode heatmaps to coordinates
-- compute per-sample `alpha` as median predicted bone length
-- per joint, choose heatmap coordinate if `d_i < alpha`, else coordinate-branch result
-
-For full 21-joint checkpoints, this matches the paper-style alpha construction.
-For tip/base 10-joint checkpoints, this uses a minimal 5-bone base-to-tip alpha variant.
-This mode requires full checkpoint keypoint evaluation (no `--shared-10-eval`).
-For this repo, the reported fusion metrics are visibility-masked by default.
-
-Paper-fusion output additionally includes:
-
-- `metrics.fusion.mode` (`fusion_21` or `fusion_10_tip_base`)
-- `metrics.fusion.alpha_stats` (`mean`, `median`, `p10`, `p90`)
-- `metrics.fusion.alpha_non_positive_count`
-- `metrics.fusion.heatmap_selected_ratio` and `metrics.fusion.heatmap_selected_ratio_per_joint`
-- timing split with `metrics.timing.fusion_postprocess_seconds` and `metrics.timing.ms_per_image_fusion_postprocess_only`
-
-```bash
-python eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/exp_k21_paper_fusion.json
-```
-
-```bash
-python eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/exp_k10_fusion.json
-```
 
 ## Single Image Inference
 
-Use `infer_image.py` to run one image through a trained checkpoint and return predicted coordinates.
+Use `scripts/predict_image.py` to run one image through a trained checkpoint and return fused predicted coordinates.
 
 ### Predict coordinates (printed to stdout as JSON)
 
 ```bash
-python infer_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png
+python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png
 ```
 
 ### Predict coordinates and save overlay image
 
 ```bash
-python infer_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
+python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
 ```
 
 ## Important Notes
 
-- Use stage-2 `best.pt` for coordinate metrics. Stage-1 checkpoints mainly train the heatmap branch.
+- Use stage-2 `best.pt` for fused prediction metrics. Stage-1 checkpoints mainly train the heatmap branch.
 - `21`-keypoint and `10`-keypoint checkpoints are not shape-compatible.
+- Checkpoints must follow the current strict schema (`checkpoint_version`, `model_state`, `num_keypoints`, `keypoint_indices`, `stage`, `epoch`).
 - Do not reuse the same `--job-id` for multiple experiments unless you want files appended/overwritten.
-- `commands.txt` contains old notes and experimental commands; prefer this README and the scripts themselves.
+- `docs/commands.txt` contains old notes and experimental commands; prefer this README and the scripts themselves.
