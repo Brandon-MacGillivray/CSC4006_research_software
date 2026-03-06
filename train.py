@@ -10,28 +10,8 @@ from torch.utils.data import DataLoader, Subset
 
 from dataset import RHDDatasetCoords  
 from losses import WingLoss, HeatmapMSELoss
-from architecture import Backbone, Heatmap_reg, coord_reg  
-from utils import save_checkpoint, EarlyStopper  
-
-TIP_BASE_KEYPOINT_INDICES = [1, 4, 5, 8, 9, 12, 13, 16, 17, 20]
-
-
-class HandPoseNet(nn.Module):
-    def __init__(self, num_keypoints=21):
-        super().__init__()
-        self.num_keypoints = num_keypoints
-        self.backbone = Backbone()
-        self.heatmapHead = Heatmap_reg(num_keypoints=num_keypoints)
-        self.coordhead = coord_reg(num_keypoints=num_keypoints)
-
-    def forward_heatmap(self, x):
-        heatmaps = self.heatmapHead(self.backbone(x), return_feat_64=False)
-        return heatmaps
-
-    def forward(self, x):
-        heatmaps, feat_64 = self.heatmapHead(self.backbone(x), return_feat_64=True)
-        coords = self.coordhead(feat_64)  # (N,K,2)
-        return heatmaps, coords
+from model import HandPoseNet, TIP_BASE_KEYPOINT_INDICES
+from training_utils import save_checkpoint, EarlyStopper  
 
 
 def set_requires_grad(module: nn.Module, flag: bool):
@@ -190,7 +170,6 @@ def main():
     parser.add_argument("--stage1-min-delta", type=float, default=0.0)
     parser.add_argument("--hand", default="right", choices=["left", "right", "auto"])
     parser.add_argument("--num-workers", type=int, default=0)
-    parser.add_argument("--beta", type=float, default=100.0)
     parser.add_argument("--train-dataset-length", default="0")
     parser.add_argument("--freeze-backbone-stage2", action="store_true")
     parser.add_argument("--freeze-heatmap-stage2", action="store_true")

@@ -137,3 +137,19 @@ python handpose/plot_losses.py --checkpoint-root /users/40321491/sharedscratch/t
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/result_21.json
 
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --fusion-21-only --out-json eval_results/result_21.json
+
+
+
+python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00435.png --overlay --overlay-out infer_results/00435_overlay.png
+
+/users/40321491
+
+python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/00048_cropped.png  --overlay --overlay-out infer_results/00048_cropped_overlay.png
+python handpose/infer_image.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --image /users/40321491/data/RHD_published_v2/evaluation/color/00143.png --overlay --overlay-out infer_results/00143_overlay.png
+
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --out-json eval_results/exp_k21_full.json
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --shared-10-eval --out-json eval_results/exp_k21_shared10.json
+
+python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562711/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --shared-10-eval --out-json eval_results/exp_k10_shared10.json

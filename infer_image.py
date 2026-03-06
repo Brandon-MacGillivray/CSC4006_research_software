@@ -6,7 +6,8 @@ import numpy as np
 from PIL import Image, ImageDraw
 import torch
 
-from train_1 import HandPoseNet, TIP_BASE_KEYPOINT_INDICES
+from inference_utils import load_checkpoint, infer_checkpoint_keypoint_indices
+from model import HandPoseNet
 
 
 INPUT_SIZE = 256
@@ -19,37 +20,6 @@ def parse_args():
     p.add_argument("--overlay", action="store_true", help="If set, save image with predicted points drawn")
     p.add_argument("--overlay-out", default=None, help="Optional output path for overlay image")
     return p.parse_args()
-
-
-def load_checkpoint(path: str, device: torch.device):
-    obj = torch.load(path, map_location=device)
-    if not isinstance(obj, dict):
-        raise ValueError(f"Unsupported checkpoint format at {path!r}")
-    if "model_state" in obj:
-        return obj, obj["model_state"]
-    return {}, obj
-
-
-def infer_num_keypoints_from_state(state_dict: dict):
-    key = "heatmapHead.convM.net.0.weight"
-    if key in state_dict:
-        return int(state_dict[key].shape[0])
-    for k, v in state_dict.items():
-        if k.endswith("heatmapHead.convM.net.0.weight"):
-            return int(v.shape[0])
-    raise KeyError("Could not infer num_keypoints from checkpoint state_dict")
-
-
-def infer_checkpoint_keypoint_indices(ckpt_meta: dict, state_dict: dict):
-    if "keypoint_indices" in ckpt_meta and ckpt_meta["keypoint_indices"] is not None:
-        return [int(x) for x in ckpt_meta["keypoint_indices"]]
-
-    k = infer_num_keypoints_from_state(state_dict)
-    if k == 21:
-        return list(range(21))
-    if k == len(TIP_BASE_KEYPOINT_INDICES):
-        return list(TIP_BASE_KEYPOINT_INDICES)
-    raise ValueError(f"Unsupported checkpoint keypoint count: {k}")
 
 
 def load_image_tensor(image_path: Path, device: torch.device):

@@ -9,8 +9,10 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 
 ## Files
 
-- `train_1.py`: main two-stage training script
+- `train.py`: main two-stage training script
 - `train_1.sbatch`: Slurm job script
+- `model.py`: reusable `HandPoseNet` model definition + keypoint constants
+- `inference_utils.py`: shared checkpoint loading / keypoint-layout inference helpers
 - `dataset.py`: RHD dataset loader (`left` / `right` / `auto` hand selection)
 - `architecture.py`: backbone + heatmap head + coordinate head
 - `losses.py`: heatmap MSE and Wing loss
@@ -70,18 +72,18 @@ If `--job-id` is omitted, it uses `local`.
 ### Train (21 keypoints, default)
 
 ```bash
-python train_1.py --root data/RHD_published_v2 --job-id exp_k21
+python train.py --root data/RHD_published_v2 --job-id exp_k21
 ```
 
 ### Train (10 keypoints: finger tips + bases)
 
 ```bash
-python train_1.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-only
+python train.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-only
 ```
 
 ### Hand Selection
 
-`train_1.py` supports:
+`train.py` supports:
 
 - `--hand right` (default)
 - `--hand left`
@@ -105,11 +107,11 @@ Submit with:
 sbatch train_1.sbatch
 ```
 
-Note: `train_1.sbatch` currently runs `python handpose/train_1.py`. If this repo is your working directory root, change it to `python train_1.py`.
+Note: `train_1.sbatch` currently runs `python handpose/train.py`. If this repo is your working directory root, change it to `python train.py`.
 
 ## Useful CLI Options
 
-### Training (`train_1.py`)
+### Training (`train.py`)
 
 - `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation steps per stage
 - `--lambda-hm`, `--lambda-coord`: stage-2 loss weights (`total = lambda_hm * heatmap + lambda_coord * coord`)

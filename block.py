@@ -30,6 +30,27 @@ class DSConv2D(nn.Module):
         x = self.act(x)
         return x
 
+class Conv2DOut(nn.Module):
+
+    def __init__(self, in_ch, out_ch, k, s, p):
+        super().__init__()
+        self.net = nn.Conv2d(in_ch, out_ch, kernel_size=k, stride=s, padding=p, bias=False)
+
+    def forward(self, x):
+        return self.net(x)
+
+class DSConv2DOut(nn.Module):
+
+    def __init__(self, in_ch, out_ch, k, s, p):
+        super().__init__()
+        self.depthwise = nn.Conv2d(in_ch, in_ch, kernel_size=k, stride=s, padding=p, groups=in_ch, bias=False)
+        self.pointwise = nn.Conv2d(in_ch, out_ch, kernel_size=1, bias=False)
+
+    def forward(self, x):
+        x = self.depthwise(x)
+        x = self.pointwise(x)
+        return x
+
 class MaxPool(nn.Module):
 
     def __init__(self, k, s,):
