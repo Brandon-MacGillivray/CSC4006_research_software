@@ -4,15 +4,63 @@ import os
 from torch.utils.data import DataLoader
 
 
+LOSS_CSV_COLUMNS = [
+    "stage",
+    "epoch",
+    "train_loss",
+    "train_loss_hm",
+    "train_loss_coord",
+    "val_loss",
+    "val_loss_hm",
+    "val_loss_coord",
+    "seconds",
+    "lr",
+    "batch_size",
+    "accum_steps",
+    "num_train_steps",
+    "num_val_steps",
+]
+
+
+def _read_existing_header(csv_path):
+    """Return existing CSV header row if the file already has one."""
+    if not os.path.exists(csv_path):
+        return None
+    with open(csv_path, "r", newline="") as f:
+        r = csv.reader(f)
+        return next(r, None)
+
+
+def _normalize_row(row):
+    """Normalize row payloads to the new detailed CSV schema."""
+    if isinstance(row, dict):
+        return dict(row)
+    if isinstance(row, (list, tuple)):
+        if len(row) != 5:
+            raise ValueError("Legacy list rows must contain 5 values: stage, epoch, train_loss, val_loss, seconds")
+        stage, epoch, train_loss, val_loss, seconds = row
+        return {
+            "stage": stage,
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+            "seconds": seconds,
+        }
+    raise TypeError("row must be a dict or a 5-value legacy list/tuple")
+
+
 def append_csv_row(csv_path, row):
     """Append one metrics row to the loss CSV, creating headers if needed."""
-    file_exists = os.path.exists(csv_path)
-    if not file_exists:
-        with open(csv_path, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(["stage", "epoch", "train_loss", "val_loss", "seconds"])
+    existing_header = _read_existing_header(csv_path)
+    file_exists = existing_header is not None
+    fieldnames = existing_header if file_exists else LOSS_CSV_COLUMNS
+    row = _normalize_row(row)
+    row = {k: row.get(k, "") for k in fieldnames}
+
     with open(csv_path, "a", newline="") as f:
-        w = csv.writer(f)
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            w.writeheader()
         w.writerow(row)
 
 

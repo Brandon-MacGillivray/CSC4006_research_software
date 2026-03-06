@@ -1,6 +1,17 @@
 import torch
 
 
+def _build_epoch_metrics(total_loss_sum, hm_loss_sum, coord_loss_sum, num_steps):
+    """Return averaged loss metrics for one epoch."""
+    denom = max(int(num_steps), 1)
+    return {
+        "loss_total": float(total_loss_sum) / denom,
+        "loss_hm": float(hm_loss_sum) / denom,
+        "loss_coord": float(coord_loss_sum) / denom,
+        "num_steps": int(num_steps),
+    }
+
+
 def train_one_epoch(
     model,
     loader,
@@ -15,7 +26,12 @@ def train_one_epoch(
 ):
     """Run one training epoch for stage 1 or stage 2."""
     model.train()
-    total = 0.0
+    total_loss_sum = 0.0
+    hm_loss_sum = 0.0
+    coord_loss_sum = 0.0
+
+    if stage not in (1, 2):
+        raise ValueError("stage must be 1 or 2")
 
     if accum_steps < 1:
         raise ValueError("accum_steps must be >= 1")
@@ -28,29 +44,33 @@ def train_one_epoch(
 
         if stage == 1:
             pred_heatmaps = model.forward_heatmap(imgs)
-            loss = loss_hm_fn(pred_heatmaps, coords)
+            loss_hm = loss_hm_fn(pred_heatmaps, coords)
+            loss_coord = loss_hm.new_tensor(0.0)
+            loss_total = loss_hm
         else:
             pred_heatmaps, pred_coords = model(imgs)
             loss_hm = loss_hm_fn(pred_heatmaps, coords)
             if loss_coord_fn is None:
                 raise ValueError("stage 2 requires loss_coord_fn")
             loss_coord = loss_coord_fn(pred_coords, coords)
-            loss = lambda_hm * loss_hm + lambda_coord * loss_coord
+            loss_total = lambda_hm * loss_hm + lambda_coord * loss_coord
 
-        loss = loss / accum_steps
-        loss.backward()
+        scaled_loss = loss_total / accum_steps
+        scaled_loss.backward()
 
         if (step + 1) % accum_steps == 0:
             optim.step()
             optim.zero_grad(set_to_none=True)
 
-        total += float(loss.item()) * accum_steps
+        total_loss_sum += float(loss_total.item())
+        hm_loss_sum += float(loss_hm.item())
+        coord_loss_sum += float(loss_coord.item())
 
     if len(loader) % accum_steps != 0:
         optim.step()
         optim.zero_grad(set_to_none=True)
 
-    return total / max(len(loader), 1)
+    return _build_epoch_metrics(total_loss_sum, hm_loss_sum, coord_loss_sum, len(loader))
 
 
 @torch.no_grad()
@@ -66,7 +86,12 @@ def validate(
 ):
     """Run one validation epoch for stage 1 or stage 2."""
     model.eval()
-    total = 0.0
+    total_loss_sum = 0.0
+    hm_loss_sum = 0.0
+    coord_loss_sum = 0.0
+
+    if stage not in (1, 2):
+        raise ValueError("stage must be 1 or 2")
 
     for imgs, coords in loader:
         imgs = imgs.to(device, non_blocking=True)
@@ -74,15 +99,19 @@ def validate(
 
         if stage == 1:
             pred_heatmaps = model.forward_heatmap(imgs)
-            loss = loss_hm_fn(pred_heatmaps, coords)
+            loss_hm = loss_hm_fn(pred_heatmaps, coords)
+            loss_coord = loss_hm.new_tensor(0.0)
+            loss_total = loss_hm
         else:
             pred_heatmaps, pred_coords = model(imgs)
             loss_hm = loss_hm_fn(pred_heatmaps, coords)
             if loss_coord_fn is None:
                 raise ValueError("stage 2 requires loss_coord_fn")
             loss_coord = loss_coord_fn(pred_coords, coords)
-            loss = lambda_hm * loss_hm + lambda_coord * loss_coord
+            loss_total = lambda_hm * loss_hm + lambda_coord * loss_coord
 
-        total += float(loss.item())
+        total_loss_sum += float(loss_total.item())
+        hm_loss_sum += float(loss_hm.item())
+        coord_loss_sum += float(loss_coord.item())
 
-    return total / max(len(loader), 1)
+    return _build_epoch_metrics(total_loss_sum, hm_loss_sum, coord_loss_sum, len(loader))

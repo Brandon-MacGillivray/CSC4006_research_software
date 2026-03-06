@@ -110,11 +110,46 @@ def main():
     for epoch in range(args.stage1_epochs):
         t0 = time.time()
 
-        train_loss = train_one_epoch(model, train_loader, hm_loss_fn, optim, device, stage=1, accum_steps=args.accum_steps_stage1)
-        val_loss = validate(model, val_loader, hm_loss_fn, device, stage=1)
+        train_metrics = train_one_epoch(
+            model,
+            train_loader,
+            hm_loss_fn,
+            optim,
+            device,
+            stage=1,
+            accum_steps=args.accum_steps_stage1,
+        )
+        val_metrics = validate(model, val_loader, hm_loss_fn, device, stage=1)
+        train_loss = float(train_metrics["loss_total"])
+        val_loss = float(val_metrics["loss_total"])
 
         elapsed = time.time() - t0
-        append_csv_row(csv_path, [1, epoch, float(train_loss), float(val_loss), float(elapsed)])
+        append_csv_row(
+            csv_path,
+            {
+                "stage": 1,
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "train_loss_hm": float(train_metrics["loss_hm"]),
+                "train_loss_coord": float(train_metrics["loss_coord"]),
+                "val_loss": val_loss,
+                "val_loss_hm": float(val_metrics["loss_hm"]),
+                "val_loss_coord": float(val_metrics["loss_coord"]),
+                "seconds": float(elapsed),
+                "lr": float(optim.param_groups[0]["lr"]),
+                "batch_size": int(args.batch_size_stage1),
+                "accum_steps": int(args.accum_steps_stage1),
+                "num_train_steps": int(train_metrics["num_steps"]),
+                "num_val_steps": int(val_metrics["num_steps"]),
+            },
+        )
+        print(
+            f"[stage 1][epoch {epoch:03d}] "
+            f"train(total={train_loss:.6f}, hm={train_metrics['loss_hm']:.6f}) "
+            f"val(total={val_loss:.6f}, hm={val_metrics['loss_hm']:.6f}) "
+            f"lr={optim.param_groups[0]['lr']:.2e} "
+            f"time={elapsed:.1f}s"
+        )
 
         ckpt = {
             "checkpoint_version": CHECKPOINT_VERSION,
@@ -126,6 +161,10 @@ def main():
             "optim_state": optim.state_dict(),
             "train_loss": train_loss,
             "val_loss": val_loss,
+            "train_loss_hm": float(train_metrics["loss_hm"]),
+            "train_loss_coord": float(train_metrics["loss_coord"]),
+            "val_loss_hm": float(val_metrics["loss_hm"]),
+            "val_loss_coord": float(val_metrics["loss_coord"]),
             "batch_size": args.batch_size_stage1,
             "accum_steps": args.accum_steps_stage1,
         }
@@ -157,7 +196,7 @@ def main():
     for epoch in range(args.stage2_epochs):
         t0 = time.time()
 
-        train_loss = train_one_epoch(
+        train_metrics = train_one_epoch(
             model,
             train_loader,
             hm_loss_fn,
@@ -169,7 +208,7 @@ def main():
             lambda_coord=args.lambda_coord,
             accum_steps=args.accum_steps_stage2,
         )
-        val_loss = validate(
+        val_metrics = validate(
             model,
             val_loader,
             hm_loss_fn,
@@ -179,9 +218,36 @@ def main():
             lambda_hm=args.lambda_hm,
             lambda_coord=args.lambda_coord,
         )
+        train_loss = float(train_metrics["loss_total"])
+        val_loss = float(val_metrics["loss_total"])
 
         elapsed = time.time() - t0
-        append_csv_row(csv_path, [2, epoch, float(train_loss), float(val_loss), float(elapsed)])
+        append_csv_row(
+            csv_path,
+            {
+                "stage": 2,
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "train_loss_hm": float(train_metrics["loss_hm"]),
+                "train_loss_coord": float(train_metrics["loss_coord"]),
+                "val_loss": val_loss,
+                "val_loss_hm": float(val_metrics["loss_hm"]),
+                "val_loss_coord": float(val_metrics["loss_coord"]),
+                "seconds": float(elapsed),
+                "lr": float(optim.param_groups[0]["lr"]),
+                "batch_size": int(args.batch_size_stage2),
+                "accum_steps": int(args.accum_steps_stage2),
+                "num_train_steps": int(train_metrics["num_steps"]),
+                "num_val_steps": int(val_metrics["num_steps"]),
+            },
+        )
+        print(
+            f"[stage 2][epoch {epoch:03d}] "
+            f"train(total={train_loss:.6f}, hm={train_metrics['loss_hm']:.6f}, coord={train_metrics['loss_coord']:.6f}) "
+            f"val(total={val_loss:.6f}, hm={val_metrics['loss_hm']:.6f}, coord={val_metrics['loss_coord']:.6f}) "
+            f"lr={optim.param_groups[0]['lr']:.2e} "
+            f"time={elapsed:.1f}s"
+        )
 
         ckpt = {
             "checkpoint_version": CHECKPOINT_VERSION,
@@ -193,6 +259,10 @@ def main():
             "optim_state": optim.state_dict(),
             "train_loss": train_loss,
             "val_loss": val_loss,
+            "train_loss_hm": float(train_metrics["loss_hm"]),
+            "train_loss_coord": float(train_metrics["loss_coord"]),
+            "val_loss_hm": float(val_metrics["loss_hm"]),
+            "val_loss_coord": float(val_metrics["loss_coord"]),
             "freeze_backbone_stage2": args.freeze_backbone_stage2,
             "freeze_heatmap_stage2": args.freeze_heatmap_stage2,
             "lambda_hm": args.lambda_hm,
