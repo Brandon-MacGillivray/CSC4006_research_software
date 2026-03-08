@@ -15,7 +15,7 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 - `src/handpose/checkpoints.py`: shared checkpoint schema, save/load helpers
 - `src/handpose/evaluation/`: eval pipeline, metrics core, result payload helpers
 - `src/handpose/inference/`: image preprocess + inference + overlay utilities
-- `scripts/`: runnable CLI entrypoints (`train.py`, `eval_metrics.py`, `predict_image.py`, `plot_losses.py`, `jetson_bench.py`)
+- `scripts/`: runnable CLI entrypoints (`train.py`, `eval_metrics.py`, `predict_image.py`, `plot_losses.py`)
 - `slurm/`: Slurm job scripts
 - `docs/`: paper notes / scratch command history
 
@@ -177,48 +177,6 @@ python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best
 ```bash
 python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
 ```
-
-## Jetson Benchmark Driver
-
-Use `scripts/jetson_bench.py` to automate a minimal Jetson benchmarking session around the existing inference and evaluation scripts. For each configured checkpoint, it:
-
-- optionally runs `nvpmodel` and `jetson_clocks`
-- runs one cold-start `predict_image.py` test
-- runs one `eval_metrics.py` test
-- captures `tegrastats` to a log file
-- writes a `summary.csv` plus per-case logs/JSON files in a timestamped output directory
-
-The script expects a JSON file containing benchmark cases. Example:
-
-```json
-[
-  {
-    "name": "21_shared_7660669",
-    "ckpt": "/users/40321491/sharedscratch/training_results/7660669/checkpoints/best.pt",
-    "eval_args": ["--shared-10-eval"]
-  },
-  {
-    "name": "10_full_7660674",
-    "ckpt": "/users/40321491/sharedscratch/training_results/7660674/checkpoints/best.pt",
-    "eval_args": []
-  }
-]
-```
-
-Example run:
-
-```bash
-python scripts/jetson_bench.py --cases-json /users/40321491/cases.json --dataset-root /users/40321491/data/RHD_published_v2 --image /users/40321491/data/RHD_published_v2/evaluation/color/00000.png --results-root /users/40321491/jetson_results
-```
-
-Useful options:
-
-- `--batch-size`, `--num-workers`: forwarded to `eval_metrics.py`
-- `--device`: evaluation device (`cuda` by default)
-- `--skip-power-setup`: do not call `nvpmodel` or `jetson_clocks`
-- `--power-mode`: `nvpmodel` mode to request before benchmarking
-- `--tegrastats-interval-ms`: telemetry sampling interval
-- `--keep-going`: continue to later cases when one case fails
 
 ## Important Notes
 
