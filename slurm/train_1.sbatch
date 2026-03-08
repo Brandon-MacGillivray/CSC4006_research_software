@@ -58,7 +58,7 @@ nvidia-smi -L || true
 echo "=========================="
 
 CMD=(
-  python scripts/train.py
+  python handpose/scripts/train.py
   --root "${RHD_ROOT}"
   --checkpoint-root "${CHECKPOINT_ROOT}"
   --job-id "${SLURM_JOB_ID}"
