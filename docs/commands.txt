@@ -153,3 +153,62 @@ python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_re
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562710/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --shared-10-eval --out-json eval_results/exp_k21_shared10.json
 
 python handpose/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7562711/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --pck-threshold 0.2 --shared-10-eval --out-json eval_results/exp_k10_shared10.json
+
+
+python handpose/scripts/eval_metrics.py \
+  --ckpt /users/40321491/sharedscratch/training_results/7660666/checkpoints/best.pt \
+  --root /users/40321491/data/RHD_published_v2 \
+  --split evaluation \
+  --hand right \
+  --out-json eval_results/7562710_21_full.json
+
+21 kp models:
+7660666
+7660668
+7660669
+7660670
+7660671
+
+10 kp models:
+7660667
+7660672
+7660673
+7660674
+7660675
+
+21
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660666/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660666_21_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660668/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660668_21_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660669/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660669_21_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660670/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660670_21_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660671/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660671_21_full.json
+
+10
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660667/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660667_10_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660672/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660672_10_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660673/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660673_10_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660674/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660674_10_full.json
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660675/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660675_10_full.json
+
+
+21 - shared 10
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660666/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660666_21_full_shared.json --shared-10-eval 
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660668/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660668_21_full_shared.json --shared-10-eval
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660669/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660669_21_full_shared.json --shared-10-eval
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660670/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660670_21_full_shared.json --shared-10-eval
+
+python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660671/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660671_21_full_shared.json --shared-10-eval

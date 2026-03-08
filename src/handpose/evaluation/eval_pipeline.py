@@ -63,6 +63,12 @@ def resolve_root_keypoint_local_index(eval_keypoint_indices, model_keypoint_indi
             file=sys.stderr,
         )
         return eval_keypoint_indices.index(1)
+    if set(int(x) for x in eval_keypoint_indices) == tip_base_set and 1 in eval_keypoint_indices:
+        print(
+            "[eval] using keypoint 1 as EPE root for shared-10 eval.",
+            file=sys.stderr,
+        )
+        return eval_keypoint_indices.index(1)
 
     print(
         "[eval] no supported EPE root in eval set; epe_norm will be null.",
