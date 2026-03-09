@@ -212,3 +212,9 @@ python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/tra
 python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660670/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660670_21_full_shared.json --shared-10-eval
 
 python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/training_results/7660671/checkpoints/best.pt --root /users/40321491/data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/7660671_21_full_shared.json --shared-10-eval
+
+
+
+##
+
+python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --run-label orin_nano_k21

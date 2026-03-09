@@ -178,6 +178,40 @@ python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best
 python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
 ```
 
+## Jetson End-to-End Benchmark
+
+Use `scripts/benchmark_pipeline.py` to benchmark end-to-end single-image latency on the full evaluation dataset.
+The script:
+
+- discovers images automatically from `<root>/evaluation/color/`
+- sorts them by filename
+- benchmarks the full discovered set
+- writes one summary CSV row for the checkpoint
+- saves the resolved image list next to the outputs for reproducibility
+
+Example:
+
+```bash
+python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --run-label orin_nano
+```
+
+Outputs:
+
+- per-image prediction JSON files under `benchmark_results/<run-label>/...`
+- aggregate CSV metrics in `--summary-csv`
+- `resolved_images.txt` showing exactly which dataset files were benchmarked
+
+The minimal benchmark measures:
+
+- `image_read_ms`
+- `preprocess_ms`
+- `host_to_device_ms`
+- `forward_fusion_ms`
+- `write_json_ms`
+- `total_e2e_ms`
+
+One-time model setup is reported separately as `session_setup_ms` in the summary CSV.
+
 ## Important Notes
 
 - Use stage-2 `best.pt` for fused prediction metrics. Stage-1 checkpoints mainly train the heatmap branch.
