@@ -218,3 +218,19 @@ python handpose/scripts/eval_metrics.py --ckpt /users/40321491/sharedscratch/tra
 ##
 
 python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --run-label orin_nano_k21
+
+
+
+Summary Report
+
+Based on [summary.csv](c:/Users/brand/OneDrive/--- Buffer ---/summary.csv), the benchmark was run on the full RHD evaluation split (2728 images) on an NVIDIA Jetson Orin Nano using CUDA, PyTorch 2.10.0, and MAXN_SUPER 2 power mode. The file contains four runs: two early runs and two later runs. The later k21 and k10 runs are the more reliable comparison because their image-read timings are stable and their proc_* fields are populated.
+
+The main result is that the 10-keypoint model is faster than the 21-keypoint model, but the difference is moderate rather than dramatic. In the later pair, forward_fusion_ms_mean drops from 28.05 ms for k21 to 25.14 ms for k10, which is about a 10.4% improvement. End-to-end latency also improves: total_e2e_ms_mean drops from 37.00 ms to 34.01 ms (8.1% faster), and the median drops from 36.38 ms to 32.90 ms (9.6% faster). This corresponds to roughly 27.0 images/sec for k21 versus 29.4 images/sec for k10. However, tail latency is effectively unchanged: total_e2e_ms_p95 is 40.11 ms for k21 and 40.54 ms for k10.
+
+Resource usage is broadly similar between the two models. GPU memory is essentially identical at about 70 MB allocated and 90 MB reserved. Process CPU usage and resident RAM are also nearly unchanged. The 10-keypoint model does appear to drive the Jetson slightly harder: mean GR3D utilization rises from 64.9% to 66.9%, mean power from 12.82 W to 13.51 W, and peak temperature from 54.8 C to 57.6 C. This suggests the speed improvement comes from somewhat more aggressive device utilization rather than a clear reduction in system cost.
+
+Two caveats matter for interpretation. First, the earlier pair of runs showed much slower image-read time for the first k21 run, which indicates cache or storage effects; those rows should not be used as the main comparison. Second, the jetson_clocks field shows a permissions error in every run, so clocks were not confirmed as fixed. For a stronger report-quality comparison, the benchmark should be rerun with fixed clocks and the same run order control.
+
+Conclusion
+
+The benchmark supports the claim that the 10-keypoint model is faster on Jetson Orin Nano, with about an 8-10% improvement in practical latency over the 21-keypoint model. The gain is real in average performance, but it does not materially improve worst-case latency, and it comes with slightly higher GPU utilization, power draw, and temperature.

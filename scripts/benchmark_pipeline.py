@@ -32,6 +32,7 @@ from handpose.models.hand_pose_model import HandPoseNet
 INPUT_SIZE = 256
 DEFAULT_TEGRASTATS_INTERVAL_MS = 200
 
+# One summary CSV row is written for each benchmark run.
 SUMMARY_COLUMNS = [
     "timestamp_utc",
     "run_label",
@@ -120,6 +121,7 @@ class BenchmarkSession:
 
 
 class ProcessSampler:
+    # Lightweight process-level sampling for CPU% and resident memory.
     def __init__(self, interval_s: float):
         self.interval_s = float(interval_s)
         self._stop = threading.Event()
@@ -162,6 +164,7 @@ class ProcessSampler:
 
 
 class TegraStatsSampler:
+    # Jetson-wide sampling is optional; blank fields are expected off-device.
     def __init__(self, interval_ms: int):
         self.interval_ms = int(interval_ms)
         self._stop = threading.Event()
@@ -300,6 +303,7 @@ def maybe_sync(device: torch.device):
 
 
 def discover_images(root: Path):
+    # Benchmark against the full evaluation split so runs are comparable.
     split = "evaluation"
     image_dir = root / split / "color"
     if not image_dir.exists():
@@ -382,6 +386,7 @@ def collect_cuda_memory_peaks(device: torch.device):
 
 
 def load_benchmark_session(ckpt_path: Path, device: torch.device):
+    # Load the checkpoint once and reuse the same model for the whole run.
     ckpt_meta, state_dict = load_checkpoint(str(ckpt_path), device)
     keypoint_indices = infer_checkpoint_keypoint_indices(ckpt_meta)
     model = HandPoseNet(num_keypoints=len(keypoint_indices)).to(device)
@@ -402,11 +407,13 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
     timings = {}
     t_total = time.perf_counter()
 
+    # Stage 1: read the source image from disk.
     t0 = time.perf_counter()
     image = Image.open(image_path).convert("RGB")
     orig_w, orig_h = image.size
     timings["image_read_ms"] = (time.perf_counter() - t0) * 1000.0
 
+    # Stage 2: resize and convert to a normalized CPU tensor.
     t0 = time.perf_counter()
     resized = image.resize((INPUT_SIZE, INPUT_SIZE))
     arr = np.array(resized)
@@ -414,12 +421,14 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
     x_cpu = x_cpu.unsqueeze(0)
     timings["preprocess_ms"] = (time.perf_counter() - t0) * 1000.0
 
+    # Stage 3: move the tensor onto the execution device.
     maybe_sync(session.device)
     t0 = time.perf_counter()
     x = x_cpu.to(session.device)
     maybe_sync(session.device)
     timings["host_to_device_ms"] = (time.perf_counter() - t0) * 1000.0
 
+    # Stage 4: run inference and the existing fusion rule together.
     maybe_sync(session.device)
     t0 = time.perf_counter()
     pred_norm = infer_fused_coords(model=session.model, x=x, fusion_context=session.fusion_context)
@@ -441,6 +450,7 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
     output_dir.mkdir(parents=True, exist_ok=True)
     out_json = output_dir / "pred.json"
 
+    # Stage 5: persist the final prediction payload for this image.
     t0 = time.perf_counter()
     out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     timings["write_json_ms"] = (time.perf_counter() - t0) * 1000.0
@@ -450,6 +460,7 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
 
 
 def write_resolved_image_list(base_dir: Path, selected_images, image_dir: Path):
+    # Save the exact file order used so the run is reproducible later.
     lines = [str(path.relative_to(image_dir.parent.parent)) for path in selected_images]
     resolved_path = base_dir / "resolved_images.txt"
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
@@ -520,6 +531,7 @@ def build_summary_row(
 def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_dir: Path, runtime_metadata: dict):
     device = resolve_device(args.device)
 
+    # Keep model setup out of per-image timings and report it separately.
     t0 = time.perf_counter()
     session = load_benchmark_session(ckpt_path=ckpt_path, device=device)
     session_setup_ms = (time.perf_counter() - t0) * 1000.0
@@ -527,6 +539,7 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
     base_dir = Path(args.output_root) / args.run_label / checkpoint_label(ckpt_path)
     write_resolved_image_list(base_dir=base_dir, selected_images=selected_images, image_dir=image_dir)
 
+    # Resource sampling spans the image loop only, not checkpoint setup.
     reset_cuda_memory_peaks(device)
     process_sampler = ProcessSampler(interval_s=max(args.tegrastats_interval_ms / 1000.0, 0.05))
     tegra_sampler = TegraStatsSampler(interval_ms=args.tegrastats_interval_ms)
@@ -580,6 +593,7 @@ def build_parser():
 def main():
     args = build_parser().parse_args()
     device = resolve_device(args.device)
+    # Discover the full evaluation set once and benchmark it in sorted order.
     _, image_dir, selected_images = discover_images(root=Path(args.root))
     runtime_metadata = collect_runtime_metadata(device)
 
