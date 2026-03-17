@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=drh-smoke
-#SBATCH --partition=k2-serial
+#SBATCH --partition=k2-hipri
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
