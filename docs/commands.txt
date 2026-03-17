@@ -234,3 +234,5 @@ Two caveats matter for interpretation. First, the earlier pair of runs showed mu
 Conclusion
 
 The benchmark supports the claim that the 10-keypoint model is faster on Jetson Orin Nano, with about an 8-10% improvement in practical latency over the 21-keypoint model. The gain is real in average performance, but it does not materially improve worst-case latency, and it comes with slightly higher GPU utilization, power draw, and temperature.
+
+source ~/miniconda/bin/activate
