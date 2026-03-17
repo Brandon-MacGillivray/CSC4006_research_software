@@ -236,3 +236,14 @@ Conclusion
 The benchmark supports the claim that the 10-keypoint model is faster on Jetson Orin Nano, with about an 8-10% improvement in practical latency over the 21-keypoint model. The gain is real in average performance, but it does not materially improve worst-case latency, and it comes with slightly higher GPU utilization, power draw, and temperature.
 
 source ~/miniconda/bin/activate
+
+
+
+python scripts/train.py --root /users/40321491/data/RHD_published_v2 --checkpoint-root /users/40321491/sharedscratch/training_results --job-id drh-b0-k21-right-s101 --seed 101 --input-size 256 --batch-size-stage1 64 --batch-size-stage2 64 --accum-steps-stage1 1 --accum-steps-stage2 4 --stage1-epochs 100 --stage2-epochs 100 --lr-stage1 1e-3 --lr-stage2 1e-4 --hand right --lambda-hm 1.0 --lambda-coord 1.0 --heatmap-sigma 2.0 --wing-w 10.0 --wing-epsilon 2.0
+
+NUM=$(awk 'NF && $0 !~ /^[[:space:]]*#/' handpose/experiment_plan/train_commands.txt | wc -l)
+sbatch --array=1-"${NUM}" handpose/slurm/train_matrix.sbatch
+
+
+sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/train_matrix.sbatch
+sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/eval_matrix.sbatch

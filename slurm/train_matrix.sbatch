@@ -7,11 +7,16 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=32G
 #SBATCH --time=24:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=bmacgillivray01@qub.ac.uk
 #SBATCH --output=logs/%x_%A_%a.out
 #SBATCH --error=logs/%x_%A_%a.err
 
 set -euo pipefail
 
+# Edit the mail address above, or override it at submit time with:
+#   sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/train_matrix.sbatch
+#
 # Run one generated training command per Slurm array task.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${REPO_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
