@@ -109,16 +109,21 @@ sbatch slurm/train_1.sbatch
 
 ### Training (`scripts/train.py`)
 
+- `--seed`: seed Python / NumPy / PyTorch for repeatable experiment runs
 - `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation steps per stage
 - `--lambda-hm`, `--lambda-coord`: stage-2 loss weights (`total = lambda_hm * heatmap + lambda_coord * coord`)
+- `--heatmap-sigma`: Gaussian target sigma used by the heatmap loss
+- `--wing-w`, `--wing-epsilon`: Wing loss shape parameters for the coordinate branch
 - `--freeze-backbone-stage2`, `--freeze-heatmap-stage2`: freeze parts of the model during stage 2
 - `--train-dataset-length N`: train on first `N` training samples (debug/ablation convenience)
 
 ### Evaluation (`scripts/eval_metrics.py`)
 
 - `--device auto|cpu|cuda`: force evaluation device (default `auto`)
+- `--prediction-mode fusion|heatmap|coord`: evaluate fused predictions or one branch alone
 - `--batch-size`, `--num-workers`: evaluation loader settings
 - `--debug-coords`: print first-batch coordinate diagnostics to `stderr`
+- `--with-fusion-diagnostics`: export fusion-selection statistics in the result JSON
 
 ## Plot Training Curves
 
@@ -137,7 +142,7 @@ Use `scripts/eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
 - visibility-masked normalized root-relative `EPE` (`metrics.epe_norm`)
 - visibility-masked `PCK@sigma` (`metrics.pck`) with `--pck-threshold` (default `0.2`)
 - sample/keypoint counts (`num_samples`, `num_points`, `num_visible_points`, `num_eval_keypoints`)
-- fused-prediction timing (`ms_per_image`, `images_per_second`)
+- prediction timing for the selected `--prediction-mode` (`ms_per_image`, `images_per_second`)
 
 Note: `epe_norm` uses root keypoint `0` by default. For tip/base 10-joint checkpoints, it uses root keypoint `1`. In shared-10 eval of a 21-joint checkpoint, `epe_norm` is reported as `null`.
 
@@ -164,12 +169,18 @@ Keep all settings the same across experiments (`--hand`, input size, dataset spl
 
 ## Single Image Inference
 
-Use `scripts/predict_image.py` to run one image through a trained checkpoint and return fused predicted coordinates.
+Use `scripts/predict_image.py` to run one image through a trained checkpoint and return predicted coordinates for the selected `--prediction-mode`.
 
 ### Predict coordinates (printed to stdout as JSON)
 
 ```bash
 python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png
+```
+
+### Predict heatmap-only coordinates
+
+```bash
+python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --prediction-mode heatmap
 ```
 
 ### Predict coordinates and save overlay image
@@ -192,7 +203,7 @@ The script:
 Example:
 
 ```bash
-python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --run-label orin_nano
+python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --prediction-mode fusion --run-label orin_nano
 ```
 
 Outputs:
@@ -206,11 +217,17 @@ The minimal benchmark measures:
 - `image_read_ms`
 - `preprocess_ms`
 - `host_to_device_ms`
-- `forward_fusion_ms`
+- `forward_predict_ms`
 - `write_json_ms`
 - `total_e2e_ms`
 
 One-time model setup is reported separately as `session_setup_ms` in the summary CSV.
+
+## Experiment Helpers
+
+Use `scripts/generate_experiment_matrix.py` to emit a JSON/CSV experiment manifest plus train/eval/benchmark command files for the default research matrix.
+
+Use `scripts/aggregate_results.py` to aggregate evaluation JSON files and benchmark summary CSVs into mean/std tables across seeds.
 
 ## Important Notes
 

@@ -15,6 +15,7 @@ from handpose.evaluation.eval_pipeline import (
     resolve_root_keypoint_local_index,
 )
 from handpose.checkpoints import load_checkpoint, infer_checkpoint_keypoint_indices
+from handpose.inference.predict import SUPPORTED_PREDICTION_MODES
 
 
 def build_arg_parser():
@@ -28,6 +29,12 @@ def build_arg_parser():
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
+    p.add_argument(
+        "--prediction-mode",
+        default="fusion",
+        choices=SUPPORTED_PREDICTION_MODES,
+        help="Select fused, heatmap-only, or coord-only predictions.",
+    )
     p.add_argument(
         "--shared-10-eval",
         action="store_true",
@@ -43,6 +50,11 @@ def build_arg_parser():
         type=float,
         default=0.2,
         help="Normalized distance threshold sigma used for PCK@sigma (default: 0.2).",
+    )
+    p.add_argument(
+        "--with-fusion-diagnostics",
+        action="store_true",
+        help="Include fusion-selection diagnostics in the output payload.",
     )
     p.add_argument("--out-json", default=None, help="Optional path to write evaluation results as JSON")
     return p
@@ -81,7 +93,9 @@ def main():
         eval_positions=eval_positions,
         root_keypoint_local_index=root_keypoint_local_index,
         pck_threshold=float(args.pck_threshold),
+        prediction_mode=args.prediction_mode,
         debug_coords=bool(args.debug_coords),
+        with_fusion_diagnostics=bool(args.with_fusion_diagnostics),
     )
 
     results = build_results_payload(

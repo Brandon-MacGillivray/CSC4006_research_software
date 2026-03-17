@@ -24,8 +24,16 @@ from _bootstrap import bootstrap_src_path
 
 bootstrap_src_path()
 
-from handpose.checkpoints import infer_checkpoint_keypoint_indices, load_checkpoint
-from handpose.inference.predict import build_fusion_context, infer_fused_coords
+from handpose.checkpoints import (
+    get_training_config,
+    infer_checkpoint_keypoint_indices,
+    load_checkpoint,
+)
+from handpose.inference.predict import (
+    SUPPORTED_PREDICTION_MODES,
+    build_fusion_context,
+    infer_coords,
+)
 from handpose.models.hand_pose_model import HandPoseNet
 
 
@@ -39,8 +47,19 @@ SUMMARY_COLUMNS = [
     "checkpoint_path",
     "checkpoint_stage",
     "checkpoint_epoch",
+    "job_id",
+    "experiment_id",
     "num_keypoints",
     "model_keypoint_indices",
+    "prediction_mode",
+    "seed",
+    "train_hand",
+    "train_input_size",
+    "heatmap_sigma",
+    "wing_w",
+    "wing_epsilon",
+    "lambda_hm",
+    "lambda_coord",
     "device",
     "device_name",
     "jetson_model",
@@ -52,6 +71,9 @@ SUMMARY_COLUMNS = [
     "dataset_root",
     "dataset_split",
     "image_dir",
+    "status",
+    "expected_num_images",
+    "completed_num_images",
     "num_images",
     "session_setup_ms",
     "image_read_ms_mean",
@@ -63,9 +85,9 @@ SUMMARY_COLUMNS = [
     "host_to_device_ms_mean",
     "host_to_device_ms_median",
     "host_to_device_ms_p95",
-    "forward_fusion_ms_mean",
-    "forward_fusion_ms_median",
-    "forward_fusion_ms_p95",
+    "forward_predict_ms_mean",
+    "forward_predict_ms_median",
+    "forward_predict_ms_p95",
     "write_json_ms_mean",
     "write_json_ms_median",
     "write_json_ms_p95",
@@ -90,7 +112,7 @@ TIMING_FIELDS = [
     "image_read_ms",
     "preprocess_ms",
     "host_to_device_ms",
-    "forward_fusion_ms",
+    "forward_predict_ms",
     "write_json_ms",
     "total_e2e_ms",
 ]
@@ -111,13 +133,23 @@ RESOURCE_FIELDS = [
 
 
 class BenchmarkSession:
-    def __init__(self, ckpt_path: Path, device: torch.device, ckpt_meta: dict, model, keypoint_indices, fusion_context):
+    def __init__(
+        self,
+        ckpt_path: Path,
+        device: torch.device,
+        ckpt_meta: dict,
+        model,
+        keypoint_indices,
+        fusion_context,
+        training_config: dict,
+    ):
         self.ckpt_path = ckpt_path
         self.device = device
         self.ckpt_meta = ckpt_meta
         self.model = model
         self.keypoint_indices = keypoint_indices
         self.fusion_context = fusion_context
+        self.training_config = training_config
 
 
 class ProcessSampler:
@@ -389,6 +421,7 @@ def load_benchmark_session(ckpt_path: Path, device: torch.device):
     # Load the checkpoint once and reuse the same model for the whole run.
     ckpt_meta, state_dict = load_checkpoint(str(ckpt_path), device)
     keypoint_indices = infer_checkpoint_keypoint_indices(ckpt_meta)
+    training_config = get_training_config(ckpt_meta)
     model = HandPoseNet(num_keypoints=len(keypoint_indices)).to(device)
     model.load_state_dict(state_dict)
     model.eval()
@@ -400,10 +433,16 @@ def load_benchmark_session(ckpt_path: Path, device: torch.device):
         model=model,
         keypoint_indices=keypoint_indices,
         fusion_context=fusion_context,
+        training_config=training_config,
     )
 
 
-def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Path):
+def benchmark_image(
+    session: BenchmarkSession,
+    image_path: Path,
+    output_dir: Path,
+    prediction_mode: str,
+):
     timings = {}
     t_total = time.perf_counter()
 
@@ -431,9 +470,14 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
     # Stage 4: run inference and the existing fusion rule together.
     maybe_sync(session.device)
     t0 = time.perf_counter()
-    pred_norm = infer_fused_coords(model=session.model, x=x, fusion_context=session.fusion_context)
+    pred_norm = infer_coords(
+        model=session.model,
+        x=x,
+        fusion_context=session.fusion_context,
+        prediction_mode=prediction_mode,
+    )
     maybe_sync(session.device)
-    timings["forward_fusion_ms"] = (time.perf_counter() - t0) * 1000.0
+    timings["forward_predict_ms"] = (time.perf_counter() - t0) * 1000.0
 
     pred_px = pred_norm.clone()
     pred_px[:, 0] = pred_px[:, 0] * float(orig_w)
@@ -442,8 +486,9 @@ def benchmark_image(session: BenchmarkSession, image_path: Path, output_dir: Pat
     payload = {
         "checkpoint": str(session.ckpt_path),
         "image": str(image_path),
-        "prediction_mode": "fusion",
+        "prediction_mode": prediction_mode,
         "model_keypoint_indices": session.keypoint_indices,
+        "training_config": session.training_config,
         "pred_coords_pixels_original": pred_px.tolist(),
     }
 
@@ -479,12 +524,25 @@ def summarize_timings(rows):
 
 def append_summary_row(csv_path: Path, row: dict):
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    file_exists = csv_path.exists()
-    with csv_path.open("a", newline="", encoding="utf-8") as f:
+    rows = []
+    if csv_path.exists():
+        with csv_path.open("r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+    unique_fields = ("job_id", "seed", "prediction_mode")
+    row_key = tuple(str(row.get(field, "")) for field in unique_fields)
+    filtered_rows = [
+        existing
+        for existing in rows
+        if tuple(str(existing.get(field, "")) for field in unique_fields) != row_key
+    ]
+    filtered_rows.append({key: row.get(key, "") for key in SUMMARY_COLUMNS})
+
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=SUMMARY_COLUMNS)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow({key: row.get(key, "") for key in SUMMARY_COLUMNS})
+        writer.writeheader()
+        writer.writerows(filtered_rows)
 
 
 def build_summary_row(
@@ -493,6 +551,7 @@ def build_summary_row(
     ckpt_path: Path,
     image_dir: Path,
     num_images: int,
+    expected_num_images: int,
     session_setup_ms,
     session: BenchmarkSession,
     timing_summary: dict,
@@ -506,8 +565,19 @@ def build_summary_row(
         "checkpoint_path": str(ckpt_path),
         "checkpoint_stage": session.ckpt_meta.get("stage", ""),
         "checkpoint_epoch": session.ckpt_meta.get("epoch", ""),
+        "job_id": session.training_config.get("job_id", checkpoint_label(ckpt_path)),
+        "experiment_id": session.training_config.get("experiment_id", ""),
         "num_keypoints": len(session.keypoint_indices),
         "model_keypoint_indices": json.dumps(session.keypoint_indices),
+        "prediction_mode": args.prediction_mode,
+        "seed": session.training_config.get("seed", ""),
+        "train_hand": session.training_config.get("hand", ""),
+        "train_input_size": session.training_config.get("input_size", ""),
+        "heatmap_sigma": session.training_config.get("heatmap_sigma", ""),
+        "wing_w": session.training_config.get("wing_w", ""),
+        "wing_epsilon": session.training_config.get("wing_epsilon", ""),
+        "lambda_hm": session.training_config.get("lambda_hm", ""),
+        "lambda_coord": session.training_config.get("lambda_coord", ""),
         "device": runtime_metadata.get("device", ""),
         "device_name": runtime_metadata.get("device_name", ""),
         "jetson_model": runtime_metadata.get("jetson_model", ""),
@@ -519,6 +589,13 @@ def build_summary_row(
         "dataset_root": str(Path(args.root)),
         "dataset_split": "evaluation",
         "image_dir": str(image_dir),
+        "status": (
+            "ok"
+            if failures == 0 and num_images == int(expected_num_images)
+            else "failed"
+        ),
+        "expected_num_images": int(expected_num_images),
+        "completed_num_images": int(num_images),
         "num_images": num_images,
         "session_setup_ms": session_setup_ms,
         "failures": failures,
@@ -551,7 +628,14 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
     for image_path in selected_images:
         try:
             out_dir = base_dir / image_path.stem
-            rows.append(benchmark_image(session=session, image_path=image_path, output_dir=out_dir))
+            rows.append(
+                benchmark_image(
+                    session=session,
+                    image_path=image_path,
+                    output_dir=out_dir,
+                    prediction_mode=args.prediction_mode,
+                )
+            )
         except Exception:
             failures += 1
 
@@ -569,6 +653,7 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
         ckpt_path=ckpt_path,
         image_dir=image_dir,
         num_images=len(rows),
+        expected_num_images=len(selected_images),
         session_setup_ms=session_setup_ms,
         session=session,
         timing_summary=timing_summary,
@@ -585,6 +670,12 @@ def build_parser():
     parser.add_argument("--summary-csv", required=True, help="Output CSV path for benchmark summaries.")
     parser.add_argument("--output-root", required=True, help="Directory for per-image JSON benchmark outputs.")
     parser.add_argument("--device", default="cuda", choices=["auto", "cpu", "cuda"])
+    parser.add_argument(
+        "--prediction-mode",
+        default="fusion",
+        choices=SUPPORTED_PREDICTION_MODES,
+        help="Select fused, heatmap-only, or coord-only prediction timing.",
+    )
     parser.add_argument("--run-label", default=time.strftime("benchmark_%Y%m%d_%H%M%S", time.localtime()))
     parser.add_argument("--tegrastats-interval-ms", type=int, default=DEFAULT_TEGRASTATS_INTERVAL_MS)
     return parser
@@ -605,6 +696,15 @@ def main():
         runtime_metadata=runtime_metadata,
     )
     append_summary_row(Path(args.summary_csv), summary_row)
+
+    if summary_row.get("status") != "ok":
+        raise RuntimeError(
+            "Benchmark run incomplete: "
+            f"status={summary_row.get('status')} "
+            f"completed={summary_row.get('completed_num_images')} "
+            f"expected={summary_row.get('expected_num_images')} "
+            f"failures={summary_row.get('failures')}"
+        )
 
     return 0
 

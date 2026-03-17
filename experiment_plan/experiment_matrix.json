@@ -1,0 +1,902 @@
+[
+  {
+    "experiment_id": "B0",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-b0-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B0",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-b0-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B0",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-b0-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B0",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-b0-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B0",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-b0-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B1",
+    "num_keypoints": 10,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-b1-k10-right-s101",
+    "hand": "right",
+    "tips_bases_only": true,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B1",
+    "num_keypoints": 10,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-b1-k10-right-s202",
+    "hand": "right",
+    "tips_bases_only": true,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B1",
+    "num_keypoints": 10,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-b1-k10-right-s303",
+    "hand": "right",
+    "tips_bases_only": true,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B1",
+    "num_keypoints": 10,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-b1-k10-right-s404",
+    "hand": "right",
+    "tips_bases_only": true,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "B1",
+    "num_keypoints": 10,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-b1-k10-right-s505",
+    "hand": "right",
+    "tips_bases_only": true,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.5,
+    "lambda_coord": 0.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-l1-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.5,
+    "lambda_coord": 0.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-l1-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.5,
+    "lambda_coord": 0.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-l1-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.5,
+    "lambda_coord": 0.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-l1-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.5,
+    "lambda_coord": 0.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-l1-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L2",
+    "num_keypoints": 21,
+    "lambda_hm": 0.5,
+    "lambda_coord": 1.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-l2-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L2",
+    "num_keypoints": 21,
+    "lambda_hm": 0.5,
+    "lambda_coord": 1.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-l2-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L2",
+    "num_keypoints": 21,
+    "lambda_hm": 0.5,
+    "lambda_coord": 1.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-l2-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L2",
+    "num_keypoints": 21,
+    "lambda_hm": 0.5,
+    "lambda_coord": 1.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-l2-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "L2",
+    "num_keypoints": 21,
+    "lambda_hm": 0.5,
+    "lambda_coord": 1.5,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-l2-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 1.5,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-s1-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 1.5,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-s1-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 1.5,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-s1-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 1.5,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-s1-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 1.5,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-s1-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 3.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-s2-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 3.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-s2-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 3.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-s2-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 3.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-s2-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "S2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 3.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-s2-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 5.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-w1-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 5.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-w1-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 5.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-w1-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 5.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-w1-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 5.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-w1-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 15.0,
+    "wing_epsilon": 2.0,
+    "seed": 101,
+    "job_id": "drh-w2-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 15.0,
+    "wing_epsilon": 2.0,
+    "seed": 202,
+    "job_id": "drh-w2-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 15.0,
+    "wing_epsilon": 2.0,
+    "seed": 303,
+    "job_id": "drh-w2-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 15.0,
+    "wing_epsilon": 2.0,
+    "seed": 404,
+    "job_id": "drh-w2-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "W2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 15.0,
+    "wing_epsilon": 2.0,
+    "seed": 505,
+    "job_id": "drh-w2-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 1.0,
+    "seed": 101,
+    "job_id": "drh-e1-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 1.0,
+    "seed": 202,
+    "job_id": "drh-e1-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 1.0,
+    "seed": 303,
+    "job_id": "drh-e1-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 1.0,
+    "seed": 404,
+    "job_id": "drh-e1-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E1",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 1.0,
+    "seed": 505,
+    "job_id": "drh-e1-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 4.0,
+    "seed": 101,
+    "job_id": "drh-e2-k21-right-s101",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 4.0,
+    "seed": 202,
+    "job_id": "drh-e2-k21-right-s202",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 4.0,
+    "seed": 303,
+    "job_id": "drh-e2-k21-right-s303",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 4.0,
+    "seed": 404,
+    "job_id": "drh-e2-k21-right-s404",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  },
+  {
+    "experiment_id": "E2",
+    "num_keypoints": 21,
+    "lambda_hm": 1.0,
+    "lambda_coord": 1.0,
+    "heatmap_sigma": 2.0,
+    "wing_w": 10.0,
+    "wing_epsilon": 4.0,
+    "seed": 505,
+    "job_id": "drh-e2-k21-right-s505",
+    "hand": "right",
+    "tips_bases_only": false,
+    "prediction_modes": [
+      "fusion",
+      "heatmap",
+      "coord"
+    ]
+  }
+]

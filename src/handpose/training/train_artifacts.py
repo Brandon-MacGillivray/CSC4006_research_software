@@ -1,6 +1,9 @@
 import csv
 import os
+import random
 
+import numpy as np
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -19,6 +22,16 @@ LOSS_CSV_COLUMNS = [
     "accum_steps",
     "num_train_steps",
     "num_val_steps",
+    "seed",
+    "num_keypoints",
+    "hand",
+    "input_size",
+    "tips_bases_only",
+    "lambda_hm",
+    "lambda_coord",
+    "heatmap_sigma",
+    "wing_w",
+    "wing_epsilon",
 ]
 
 
@@ -64,14 +77,36 @@ def append_csv_row(csv_path, row):
         w.writerow(row)
 
 
-def make_loaders(train_ds, val_ds, batch_size, num_workers):
+def _build_worker_init_fn(seed):
+    """Seed DataLoader workers deterministically when a run seed is provided."""
+    if seed is None:
+        return None
+
+    def _init_fn(worker_id):
+        worker_seed = (int(seed) + int(worker_id)) % (2 ** 32)
+        random.seed(worker_seed)
+        np.random.seed(worker_seed)
+        torch.manual_seed(worker_seed)
+
+    return _init_fn
+
+
+def make_loaders(train_ds, val_ds, batch_size, num_workers, seed=None):
     """Create training and validation DataLoaders with shared settings."""
+    generator = None
+    if seed is not None:
+        generator = torch.Generator()
+        generator.manual_seed(int(seed))
+
+    worker_init_fn = _build_worker_init_fn(seed)
     train_loader = DataLoader(
         train_ds,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
         pin_memory=True,
+        generator=generator,
+        worker_init_fn=worker_init_fn,
     )
     val_loader = DataLoader(
         val_ds,
@@ -79,5 +114,6 @@ def make_loaders(train_ds, val_ds, batch_size, num_workers):
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
+        worker_init_fn=worker_init_fn,
     )
     return train_loader, val_loader

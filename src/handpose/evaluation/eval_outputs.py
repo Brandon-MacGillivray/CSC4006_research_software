@@ -11,11 +11,16 @@ def build_results_payload(
     metrics: dict,
 ):
     """Build final JSON payload."""
+    metrics_payload = dict(metrics)
+    fusion_diagnostics = metrics_payload.pop("fusion_diagnostics", None)
     return {
         "checkpoint": str(Path(args.ckpt)),
         "checkpoint_stage": ckpt_meta.get("stage"),
         "checkpoint_epoch": ckpt_meta.get("epoch"),
-        "prediction_mode": "fusion",
+        "job_id": ckpt_meta.get("training_config", {}).get("job_id", ""),
+        "experiment_id": ckpt_meta.get("training_config", {}).get("experiment_id", ""),
+        "prediction_mode": args.prediction_mode,
+        "with_fusion_diagnostics": bool(args.with_fusion_diagnostics),
         "device": str(device),
         "dataset": {
             "root": args.root,
@@ -23,10 +28,12 @@ def build_results_payload(
             "hand": args.hand,
             "input_size": args.input_size,
         },
+        "training_config": ckpt_meta.get("training_config", {}),
         "model_keypoint_indices": model_keypoint_indices,
         "eval_keypoint_indices": eval_keypoint_indices,
         "shared_10_eval": bool(args.shared_10_eval),
-        "metrics": metrics,
+        "metrics": metrics_payload,
+        **({"fusion_diagnostics": fusion_diagnostics} if fusion_diagnostics is not None else {}),
     }
 
 

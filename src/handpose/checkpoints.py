@@ -82,3 +82,12 @@ def infer_checkpoint_keypoint_indices(ckpt_meta: dict):
     """Return checkpoint keypoint index layout from strict metadata."""
     ckpt = validate_checkpoint(ckpt_meta)
     return list(ckpt["keypoint_indices"])
+
+
+def get_training_config(ckpt_meta: dict):
+    """Return stored training metadata when present."""
+    ckpt = validate_checkpoint(ckpt_meta)
+    training_config = ckpt.get("training_config")
+    if not isinstance(training_config, dict):
+        return {}
+    return dict(training_config)
