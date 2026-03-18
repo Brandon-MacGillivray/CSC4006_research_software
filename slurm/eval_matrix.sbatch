@@ -19,7 +19,33 @@ set -euo pipefail
 #
 # Run one generated evaluation command per Slurm array task.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="${REPO_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
+SCRIPT_REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEFAULT_COMMAND_REL="experiment_plan/eval_commands.txt"
+
+if [[ -z "${REPO_DIR:-}" ]]; then
+  REPO_CANDIDATES=()
+  if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
+    REPO_CANDIDATES+=("${SLURM_SUBMIT_DIR}")
+    shopt -s nullglob
+    for CHILD in "${SLURM_SUBMIT_DIR}"/*; do
+      if [[ -d "${CHILD}" ]]; then
+        REPO_CANDIDATES+=("${CHILD}")
+      fi
+    done
+    shopt -u nullglob
+    REPO_CANDIDATES+=("$(cd "${SLURM_SUBMIT_DIR}/.." 2>/dev/null && pwd 2>/dev/null || true)")
+  fi
+  REPO_CANDIDATES+=("${SCRIPT_REPO_DIR}")
+
+  for CANDIDATE in "${REPO_CANDIDATES[@]}"; do
+    if [[ -n "${CANDIDATE}" && -f "${CANDIDATE}/${DEFAULT_COMMAND_REL}" ]]; then
+      REPO_DIR="${CANDIDATE}"
+      break
+    fi
+  done
+fi
+
+REPO_DIR="${REPO_DIR:-${SCRIPT_REPO_DIR}}"
 COMMAND_FILE="${COMMAND_FILE:-${REPO_DIR}/experiment_plan/eval_commands.txt}"
 CONDA_SOURCE="${CONDA_SOURCE:-/users/40321491/miniconda/etc/profile.d/conda.sh}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-torch}"
@@ -34,6 +60,9 @@ conda activate "${CONDA_ENV_NAME}"
 # The matrix must already have been generated into a plain text command file.
 if [[ ! -f "${COMMAND_FILE}" ]]; then
   echo "Missing command file: ${COMMAND_FILE}" >&2
+  echo "Resolved REPO_DIR=${REPO_DIR}" >&2
+  echo "SLURM_SUBMIT_DIR=${SLURM_SUBMIT_DIR:-}" >&2
+  echo "SCRIPT_DIR=${SCRIPT_DIR}" >&2
   exit 1
 fi
 

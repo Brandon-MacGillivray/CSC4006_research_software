@@ -247,3 +247,6 @@ sbatch --array=1-"${NUM}" handpose/slurm/train_matrix.sbatch
 
 sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/train_matrix.sbatch
 sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/eval_matrix.sbatch
+
+
+Missing command file: /var/spool/slurmd/experiment_plan/train_commands.txt
