@@ -250,3 +250,14 @@ sbatch --mail-user=you@example.com --mail-type=END,FAIL handpose/slurm/eval_matr
 
 
 Missing command file: /var/spool/slurmd/experiment_plan/train_commands.txt
+
+cd /users/40321491
+mkdir -p logs eval_results infer_results sharedscratch/training_results sharedscratch/benchmark_results
+python handpose/scripts/generate_experiment_matrix.py --root /users/40321491/data/RHD_published_v2 --checkpoint-root /users/40321491/sharedscratch/training_results --eval-root /users/40321491/eval_results --benchmark-summary-csv /users/40321491/sharedscratch/benchmark_results/orin_maxn_summary.csv --benchmark-output-root /users/40321491/sharedscratch/benchmark_results --out-dir /users/40321491/handpose/experiment_plan
+ls /users/40321491/handpose/experiment_plan/train_commands.txt
+TRAIN_N=$(awk 'NF && $0 !~ /^[[:space:]]*#/' /users/40321491/handpose/experiment_plan/train_commands.txt | wc -l)
+sbatch --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan/train_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch --array=1-"${TRAIN_N}" /users/40321491/handpose/slurm/train_matrix.sbatch
+squeue -u 40321491
+sacct -u 40321491 --format=JobID,JobName,State,ExitCode,Elapsed
+EVAL_N=$(awk 'NF && $0 !~ /^[[:space:]]*#/' /users/40321491/handpose/experiment_plan/eval_commands.txt | wc -l)
+sbatch --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan/eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch --array=1-"${EVAL_N}" /users/40321491/handpose/slurm/eval_matrix.sbatch

@@ -1,68 +1,114 @@
 
-\documentclass[11pt]{article}
+\documentclass[11pt,twocolumn]{article}
 
 \usepackage[a4paper, margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{titlesec}
 \usepackage{hyperref}
-
-\title{Lightweight Hand Pose Tracking on Edge Devices for Real-Time HCI using 2D and Stereo Image Input}
-\author{
-Brandon MacGillivray \\
-School of Electronics, Electrical Engineering and Computer Science \\
-Queen’s University Belfast, Belfast, United Kingdom \\
-\texttt{bmacgillivray01@qub.ac.uk}
-}
-\date{}
+\usepackage{booktabs}
 
 \begin{document}
 
-\maketitle
+\begin{table*}[t]
+\centering
+\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better.}
+\label{tab:main_accuracy}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 baseline & native-21 & 21 & TBD & TBD & TBD \\
+B0 baseline & shared-10 & 21 & TBD & TBD & TBD \\
+B1 reduced & native-10 & 10 & TBD & TBD & TBD \\
+B1 reduced & shared-10 & 10 & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-\section*{Keywords}
-Hand pose estimation; human--computer interaction; edge devices; stereo vision; lightweight deep learning
+\begin{table*}[t]
+\centering
+\caption{Branch ablation for the dual-regression design. Fusion should be compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints.}
+\label{tab:branch_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 & native-21 & fusion & TBD & TBD & TBD \\
+B0 & native-21 & heatmap & TBD & TBD & TBD \\
+B0 & native-21 & coord & TBD & TBD & TBD \\
+B1 & native-10 & fusion & TBD & TBD & TBD \\
+B1 & native-10 & heatmap & TBD & TBD & TBD \\
+B1 & native-10 & coord & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-\section*{Abstract}
-Hand pose tracking can provide a natural feeling, contactless interaction for applications such as AR, VR, medical imaging and touchless control of everyday applications, but many current systems rely on desktop GPUs or become too slow when deployed on edge devices. This project investigates lightweight hand pose tracking for everyday HCI on GPU specific embedded devices such as an NVIDIA Jetson platform combined with a ZED 2 stereo camera.
+\begin{table*}[t]
+\centering
+\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction and JSON write.}
+\label{tab:latency}
+\begin{tabular}{llccc}
+\toprule
+Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
+\midrule
+B0 & fusion & TBD & TBD & TBD \\
+B0 & heatmap & TBD & TBD & TBD \\
+B0 & coord & TBD & TBD & TBD \\
+B1 & fusion & TBD & TBD & TBD \\
+B1 & heatmap & TBD & TBD & TBD \\
+B1 & coord & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-The objectives are to study performance and practical limitations of current hand pose models such as MediaPipe Hands on edge hardware, design and implement potential lightweight pipelines for 2D and stereo RGB input, and assess how pose quality and input type affect usability in interaction tasks.
+\begin{table*}[t]
+\centering
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints.}
+\label{tab:fusion_diagnostics}
+\begin{tabular}{llccccc}
+\toprule
+Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
+\midrule
+B0 & native-21 & TBD & TBD & TBD & TBD & TBD \\
+B0 & shared-10 & TBD & TBD & TBD & TBD & TBD \\
+B1 & native-10 & TBD & TBD & TBD & TBD & TBD \\
+B1 & shared-10 & TBD & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-The methodology combines benchmarking of existing models with development of RGB plus stereo lightweight architectures, using measures such as frame rate, latency, tracking stability and effective operating range. These metrics are complemented by observational feedback from users performing touchless interaction tasks.
+\begin{table*}[t]
+\centering
+\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent.}
+\label{tab:latency_breakdown}
+\begin{tabular}{lcccccc}
+\toprule
+Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
+\midrule
+B0 fusion & TBD & TBD & TBD & TBD & TBD & TBD \\
+B1 fusion & TBD & TBD & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-The expected outcome is an effective prototype and a set of design insights clarifying when hand pose interaction is feasible on edge devices, and where stereo sensing provides advantages over single RGB input.
-
-\section{Introduction}
-Human--computer interaction (HCI) concerns the design, evaluation and implementation of interactive computing systems for human use. It combines computer science with ergonomics to ensure interactions are intuitive and comfortable.
-
-Pose-based HCI focuses on inferring a 2D or 3D skeletal representation of a person from sensors such as RGB or depth cameras, using this representation as the basis for interaction.
-
-Hands are particularly suitable for this form of interaction due to their role in manipulation and communication. Vision-based hand gesture systems offer a natural, contact-free alternative to traditional input devices, especially in sterile or hands-busy environments.
-
-Modern systems such as MediaPipe Hands estimate 2.5D hand landmarks in real time using lightweight architectures. Other approaches aim to further reduce computation while maintaining accuracy, enabling deployment on embedded GPUs.
-
-Applications span medical imaging, AR/VR, rehabilitation, robotics, automotive interfaces and sign language recognition. In AR/VR, hand tracking enables direct manipulation of virtual objects and improves immersion.
-
-Despite progress, challenges remain. Accurate 3D hand pose estimation is difficult due to occlusion, motion blur and limited annotated data. High-accuracy models often require desktop GPUs, while edge deployment introduces latency and memory constraints.
-
-\section{Literature Review}
-Pose tracking research spans multiple domains. Body pose systems such as BlazePose enable real-time full-body tracking on mobile devices, while hand tracking systems like MediaPipe Hands use efficient two-stage pipelines.
-
-Different input modalities include RGB, stereo RGB, and RGB-D, each with trade-offs in accuracy and computational cost.
-
-Model architectures include CNNs, transformers, hybrid approaches, and graph neural networks.
-
-Hardware constraints strongly influence design, with embedded systems requiring lightweight models.
-
-\section{References}
-\begin{enumerate}
-    \item T. T. Hewett et al., ACM SIGCHI curricula, 1992.
-    \item T. Vuletic et al., Gesture review, 2019.
-    \item Y. Li et al., VR interaction, 2019.
-    \item S. Rautaray et al., Gesture recognition, 2015.
-    \item J. Wachs et al., Gesture applications, 2011.
-\end{enumerate}
-
-\section{Appendix}
-Prototype uses ZED 2 camera and MediaPipe Hands for real-time interaction. Observations show performance depends on lighting, distance, and occlusion.
+\begin{table*}[t]
+\centering
+\caption{Hyperparameter ablation relative to the baseline B0 configuration.}
+\label{tab:hyper_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
+\midrule
+L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & TBD & TBD & TBD & TBD \\
+L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & TBD & TBD & TBD & TBD \\
+S1 & $\sigma=1.5$ & TBD & TBD & TBD & TBD \\
+S2 & $\sigma=3.0$ & TBD & TBD & TBD & TBD \\
+W1 & $w=5.0$ & TBD & TBD & TBD & TBD \\
+W2 & $w=15.0$ & TBD & TBD & TBD & TBD \\
+E1 & $\epsilon=1.0$ & TBD & TBD & TBD & TBD \\
+E2 & $\epsilon=4.0$ & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \end{document}

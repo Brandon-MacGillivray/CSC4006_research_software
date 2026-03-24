@@ -8,8 +8,10 @@ import re
 import shutil
 import statistics
 import subprocess
+import sys
 import threading
 import time
+import traceback
 
 import numpy as np
 from PIL import Image
@@ -39,6 +41,7 @@ from handpose.models.hand_pose_model import HandPoseNet
 
 INPUT_SIZE = 256
 DEFAULT_TEGRASTATS_INTERVAL_MS = 200
+MAX_FAILURE_LOG = 1
 
 # One summary CSV row is written for each benchmark run.
 SUMMARY_COLUMNS = [
@@ -558,6 +561,7 @@ def build_summary_row(
     resource_summary: dict,
     runtime_metadata: dict,
     failures: int,
+    first_failure: str = "",
 ):
     row = {
         "timestamp_utc": timestamp_utc(),
@@ -599,6 +603,7 @@ def build_summary_row(
         "num_images": num_images,
         "session_setup_ms": session_setup_ms,
         "failures": failures,
+        "first_failure": first_failure,
     }
     row.update(timing_summary)
     row.update(resource_summary)
@@ -625,22 +630,33 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
 
     rows = []
     failures = 0
-    for image_path in selected_images:
-        try:
-            out_dir = base_dir / image_path.stem
-            rows.append(
-                benchmark_image(
-                    session=session,
-                    image_path=image_path,
-                    output_dir=out_dir,
-                    prediction_mode=args.prediction_mode,
+    first_failure = ""
+    try:
+        for image_path in selected_images:
+            try:
+                out_dir = base_dir / image_path.stem
+                rows.append(
+                    benchmark_image(
+                        session=session,
+                        image_path=image_path,
+                        output_dir=out_dir,
+                        prediction_mode=args.prediction_mode,
+                    )
                 )
-            )
-        except Exception:
-            failures += 1
-
-    tegra_sampler.stop()
-    process_sampler.stop()
+            except Exception as exc:
+                failures += 1
+                if not first_failure:
+                    first_failure = f"{image_path}: {exc}"
+                if failures <= MAX_FAILURE_LOG:
+                    print(
+                        f"[benchmark][error] image={image_path}",
+                        file=sys.stderr,
+                    )
+                    print(traceback.format_exc(), file=sys.stderr)
+                break
+    finally:
+        tegra_sampler.stop()
+        process_sampler.stop()
 
     resource_summary = {
         **process_sampler.summary(),
@@ -660,6 +676,7 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
         resource_summary=resource_summary,
         runtime_metadata=runtime_metadata,
         failures=failures,
+        first_failure=first_failure,
     )
 
 
@@ -698,12 +715,14 @@ def main():
     append_summary_row(Path(args.summary_csv), summary_row)
 
     if summary_row.get("status") != "ok":
+        first_failure = str(summary_row.get("first_failure", "")).strip()
         raise RuntimeError(
             "Benchmark run incomplete: "
             f"status={summary_row.get('status')} "
             f"completed={summary_row.get('completed_num_images')} "
             f"expected={summary_row.get('expected_num_images')} "
             f"failures={summary_row.get('failures')}"
+            + (f" first_failure={first_failure}" if first_failure else "")
         )
 
     return 0
