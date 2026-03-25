@@ -261,3 +261,6 @@ squeue -u 40321491
 sacct -u 40321491 --format=JobID,JobName,State,ExitCode,Elapsed
 EVAL_N=$(awk 'NF && $0 !~ /^[[:space:]]*#/' /users/40321491/handpose/experiment_plan/eval_commands.txt | wc -l)
 sbatch --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan/eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch --array=1-"${EVAL_N}" /users/40321491/handpose/slurm/eval_matrix.sbatch
+
+
+python scripts/aggregate_results.py --eval-json-dir C:/Users/brand/Downloads/eval_results --benchmark-csv C:/Users/brand/Documents/CSC4006_DRHand_replica/docs/orin_maxn_summary.csv --out-dir C:/Users/brand/Documents/CSC4006_DRHand_replica/docs/aggregated_results
