@@ -31,6 +31,7 @@ from handpose.checkpoints import (
     infer_checkpoint_keypoint_indices,
     load_checkpoint,
 )
+from handpose.data import AUTO_DATASET, SUPPORTED_DATASETS, discover_dataset_images, resolve_dataset_name
 from handpose.inference.predict import (
     SUPPORTED_PREDICTION_MODES,
     build_fusion_context,
@@ -39,7 +40,7 @@ from handpose.inference.predict import (
 from handpose.models.hand_pose_model import HandPoseNet
 
 
-INPUT_SIZE = 256
+DEFAULT_INPUT_SIZE = 256
 DEFAULT_TEGRASTATS_INTERVAL_MS = 200
 MAX_FAILURE_LOG = 1
 
@@ -52,6 +53,10 @@ SUMMARY_COLUMNS = [
     "checkpoint_epoch",
     "job_id",
     "experiment_id",
+    "experiment_family",
+    "training_sequence",
+    "train_dataset_name",
+    "benchmark_dataset_name",
     "num_keypoints",
     "model_keypoint_indices",
     "prediction_mode",
@@ -71,6 +76,7 @@ SUMMARY_COLUMNS = [
     "jetson_clocks",
     "python_version",
     "torch_version",
+    "dataset_name",
     "dataset_root",
     "dataset_split",
     "image_dir",
@@ -145,6 +151,7 @@ class BenchmarkSession:
         keypoint_indices,
         fusion_context,
         training_config: dict,
+        dataset_name: str,
     ):
         self.ckpt_path = ckpt_path
         self.device = device
@@ -153,6 +160,7 @@ class BenchmarkSession:
         self.keypoint_indices = keypoint_indices
         self.fusion_context = fusion_context
         self.training_config = training_config
+        self.dataset_name = dataset_name
 
 
 class ProcessSampler:
@@ -337,18 +345,6 @@ def maybe_sync(device: torch.device):
         torch.cuda.synchronize(device)
 
 
-def discover_images(root: Path):
-    # Benchmark against the full evaluation split so runs are comparable.
-    split = "evaluation"
-    image_dir = root / split / "color"
-    if not image_dir.exists():
-        raise FileNotFoundError(f"Missing image directory: {image_dir}")
-    images = sorted(path for path in image_dir.iterdir() if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg"})
-    if not images:
-        raise ValueError(f"No images found under {image_dir}")
-    return split, image_dir, images
-
-
 def collect_runtime_metadata(device: torch.device):
     metadata = {
         "device": str(device),
@@ -420,11 +416,12 @@ def collect_cuda_memory_peaks(device: torch.device):
     }
 
 
-def load_benchmark_session(ckpt_path: Path, device: torch.device):
+def load_benchmark_session(ckpt_path: Path, device: torch.device, dataset_name_arg: str):
     # Load the checkpoint once and reuse the same model for the whole run.
     ckpt_meta, state_dict = load_checkpoint(str(ckpt_path), device)
     keypoint_indices = infer_checkpoint_keypoint_indices(ckpt_meta)
     training_config = get_training_config(ckpt_meta)
+    dataset_name = resolve_dataset_name(dataset_name_arg, training_config=training_config)
     model = HandPoseNet(num_keypoints=len(keypoint_indices)).to(device)
     model.load_state_dict(state_dict)
     model.eval()
@@ -437,6 +434,7 @@ def load_benchmark_session(ckpt_path: Path, device: torch.device):
         keypoint_indices=keypoint_indices,
         fusion_context=fusion_context,
         training_config=training_config,
+        dataset_name=dataset_name,
     )
 
 
@@ -457,7 +455,8 @@ def benchmark_image(
 
     # Stage 2: resize and convert to a normalized CPU tensor.
     t0 = time.perf_counter()
-    resized = image.resize((INPUT_SIZE, INPUT_SIZE))
+    input_size = int(session.training_config.get("input_size", DEFAULT_INPUT_SIZE))
+    resized = image.resize((input_size, input_size))
     arr = np.array(resized)
     x_cpu = torch.from_numpy(arr).permute(2, 0, 1).float() / 255.0
     x_cpu = x_cpu.unsqueeze(0)
@@ -490,6 +489,7 @@ def benchmark_image(
         "checkpoint": str(session.ckpt_path),
         "image": str(image_path),
         "prediction_mode": prediction_mode,
+        "dataset_name": session.dataset_name,
         "model_keypoint_indices": session.keypoint_indices,
         "training_config": session.training_config,
         "pred_coords_pixels_original": pred_px.tolist(),
@@ -533,7 +533,7 @@ def append_summary_row(csv_path: Path, row: dict):
             reader = csv.DictReader(f)
             rows = list(reader)
 
-    unique_fields = ("job_id", "seed", "prediction_mode")
+    unique_fields = ("job_id", "seed", "prediction_mode", "benchmark_dataset_name")
     row_key = tuple(str(row.get(field, "")) for field in unique_fields)
     filtered_rows = [
         existing
@@ -562,7 +562,11 @@ def build_summary_row(
     runtime_metadata: dict,
     failures: int,
     first_failure: str = "",
+    dataset_name: str = "",
+    dataset_split: str = "",
 ):
+    train_dataset_name = session.training_config.get("dataset", "") or dataset_name
+    training_sequence = session.training_config.get("training_sequence", "") or train_dataset_name
     row = {
         "timestamp_utc": timestamp_utc(),
         "run_label": args.run_label,
@@ -571,6 +575,10 @@ def build_summary_row(
         "checkpoint_epoch": session.ckpt_meta.get("epoch", ""),
         "job_id": session.training_config.get("job_id", checkpoint_label(ckpt_path)),
         "experiment_id": session.training_config.get("experiment_id", ""),
+        "experiment_family": session.training_config.get("experiment_family", ""),
+        "training_sequence": training_sequence,
+        "train_dataset_name": train_dataset_name,
+        "benchmark_dataset_name": dataset_name,
         "num_keypoints": len(session.keypoint_indices),
         "model_keypoint_indices": json.dumps(session.keypoint_indices),
         "prediction_mode": args.prediction_mode,
@@ -590,8 +598,9 @@ def build_summary_row(
         "jetson_clocks": runtime_metadata.get("jetson_clocks", ""),
         "python_version": runtime_metadata.get("python_version", ""),
         "torch_version": runtime_metadata.get("torch_version", ""),
+        "dataset_name": dataset_name,
         "dataset_root": str(Path(args.root)),
-        "dataset_split": "evaluation",
+        "dataset_split": dataset_split,
         "image_dir": str(image_dir),
         "status": (
             "ok"
@@ -615,8 +624,17 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
 
     # Keep model setup out of per-image timings and report it separately.
     t0 = time.perf_counter()
-    session = load_benchmark_session(ckpt_path=ckpt_path, device=device)
+    session = load_benchmark_session(
+        ckpt_path=ckpt_path,
+        device=device,
+        dataset_name_arg=args.dataset,
+    )
     session_setup_ms = (time.perf_counter() - t0) * 1000.0
+    dataset_split, image_dir, selected_images = discover_dataset_images(
+        dataset_name=session.dataset_name,
+        root=Path(args.root),
+        split="benchmark",
+    )
 
     base_dir = Path(args.output_root) / args.run_label / checkpoint_label(ckpt_path)
     write_resolved_image_list(base_dir=base_dir, selected_images=selected_images, image_dir=image_dir)
@@ -677,13 +695,21 @@ def run_benchmark_for_checkpoint(args, ckpt_path: Path, selected_images, image_d
         runtime_metadata=runtime_metadata,
         failures=failures,
         first_failure=first_failure,
+        dataset_name=session.dataset_name,
+        dataset_split=dataset_split,
     )
 
 
 def build_parser():
     parser = argparse.ArgumentParser(description="Simple end-to-end latency benchmark for DRHand checkpoints.")
     parser.add_argument("--ckpt", required=True, help="Checkpoint path (.pt).")
-    parser.add_argument("--root", required=True, help="Dataset root containing the RHD split folders.")
+    parser.add_argument("--root", required=True, help="Dataset root containing the dataset split folders.")
+    parser.add_argument(
+        "--dataset",
+        default=AUTO_DATASET,
+        choices=[AUTO_DATASET, *SUPPORTED_DATASETS],
+        help="Dataset loader to use. 'auto' uses checkpoint metadata and falls back to RHD.",
+    )
     parser.add_argument("--summary-csv", required=True, help="Output CSV path for benchmark summaries.")
     parser.add_argument("--output-root", required=True, help="Directory for per-image JSON benchmark outputs.")
     parser.add_argument("--device", default="cuda", choices=["auto", "cpu", "cuda"])
@@ -701,15 +727,13 @@ def build_parser():
 def main():
     args = build_parser().parse_args()
     device = resolve_device(args.device)
-    # Discover the full evaluation set once and benchmark it in sorted order.
-    _, image_dir, selected_images = discover_images(root=Path(args.root))
     runtime_metadata = collect_runtime_metadata(device)
 
     summary_row = run_benchmark_for_checkpoint(
         args=args,
         ckpt_path=Path(args.ckpt),
-        selected_images=selected_images,
-        image_dir=image_dir,
+        selected_images=None,
+        image_dir=None,
         runtime_metadata=runtime_metadata,
     )
     append_summary_row(Path(args.summary_csv), summary_row)

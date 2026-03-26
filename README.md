@@ -1,22 +1,26 @@
-# DRHand Replica (RHD 2D Hand Pose Training)
+# DRHand Replica (RHD / COCO-Hand 2D Hand Pose Training)
 
 PyTorch training code for a dual-branch hand pose model (heatmaps + coordinates), inspired by the DRHand paper (`Dual Regression for Efficient Hand Pose Estimation`).
 
-This repo trains on the RHD dataset and supports two keypoint modes:
+The repo now supports:
 
-- `21` keypoints (default)
-- `10` keypoints (finger tips + bases) via `--tips-bases-only`
+- `rhd` training/evaluation on the RHD dataset
+- `coco_hand` training/evaluation on a COCO-style 21-keypoint hand dataset
+- `21` keypoints (default) or `10` keypoints (`--tips-bases-only`)
+- scratch training and transfer fine-tuning (`C->R`, `R->C`)
 
 ## Structure
 
-- `src/handpose/data/`: dataset loader, hand/keypoint selection, keypoint constants
+- `src/handpose/data/`: shared dataset factory + transforms + dataset-specific loaders
+- `src/handpose/data/rhd/`: RHD parsing, paths, and dataset loader
+- `src/handpose/data/coco_hand/`: COCO-hand parsing, paths, and dataset loader
 - `src/handpose/models/`: network blocks, architecture, model wrapper, losses
 - `src/handpose/training/`: train loops, optimizer policies, runtime helpers
 - `src/handpose/checkpoints.py`: shared checkpoint schema, save/load helpers
 - `src/handpose/evaluation/`: eval pipeline, metrics core, result payload helpers
 - `src/handpose/inference/`: image preprocess + inference + overlay utilities
-- `scripts/`: runnable CLI entrypoints (`train.py`, `eval_metrics.py`, `predict_image.py`, `plot_losses.py`)
-- `slurm/`: Slurm job scripts
+- `scripts/`: runnable CLIs (`train.py`, `eval_metrics.py`, `benchmark_pipeline.py`, matrix generators)
+- `slurm/`: Slurm array wrappers
 - `docs/`: paper notes / scratch command history
 
 ## Requirements
@@ -27,38 +31,56 @@ This repo trains on the RHD dataset and supports two keypoint modes:
 - `Pillow`
 - `matplotlib` (for `plot_losses.py`)
 
-Example install (CPU or CUDA variant as appropriate for your machine):
+Example install:
 
 ```bash
 pip install torch torchvision numpy pillow matplotlib
 ```
 
-## Expected Dataset Layout (RHD)
+## Expected Dataset Layouts
 
-`src/handpose/data/dataset.py` expects this structure (default root is `data/RHD_published_v2`):
+### RHD
+
+Default root: `data/RHD_published_v2`
 
 ```text
 data/RHD_published_v2/
   training/
     color/
       00000.png
-      00001.png
       ...
     anno_training.pickle
   evaluation/
     color/
       00000.png
-      00001.png
       ...
     anno_evaluation.pickle
 ```
 
+### COCO-Hand
+
+Default root: `data/hand_keypoint_dataset`
+
+```text
+data/hand_keypoint_dataset/
+  images/
+    train/
+    val/
+  coco_annotation/
+    train/
+      _annotations.coco.json
+    val/
+      _annotations.coco.json
+```
+
+The repo assumes the COCO-hand dataset uses the same 21-keypoint order as MediaPipe-style hand landmarks.
+
 ## Training
 
-The script uses two stages:
+`scripts/train.py` always uses the same two-stage workflow:
 
 1. Stage 1 trains backbone + heatmap head
-2. Stage 2 trains coordinate head (and optionally fine-tunes other parts)
+2. Stage 2 trains the coordinate branch and optionally fine-tunes the rest
 
 Outputs are written to:
 
@@ -67,17 +89,47 @@ Outputs are written to:
 
 If `--job-id` is omitted, it uses `local`.
 
-### Train (21 keypoints, default)
+### Scratch Training
+
+Train on RHD:
 
 ```bash
-python scripts/train.py --root data/RHD_published_v2 --job-id exp_k21
+python scripts/train.py --dataset rhd --root data/RHD_published_v2 --job-id exp_rhd_k21
 ```
 
-### Train (10 keypoints: finger tips + bases)
+Train on COCO-hand:
 
 ```bash
-python scripts/train.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bases-only
+python scripts/train.py --dataset coco_hand --root data/hand_keypoint_dataset --job-id exp_coco_k21
 ```
+
+Train 10-keypoint mode:
+
+```bash
+python scripts/train.py --dataset rhd --root data/RHD_published_v2 --job-id exp_rhd_k10 --tips-bases-only
+```
+
+### Transfer Fine-Tuning
+
+Transfer runs load an existing `best.pt` and skip stage 1:
+
+```bash
+python scripts/train.py \
+  --dataset rhd \
+  --root data/RHD_published_v2 \
+  --job-id trf-c-to-r-s101 \
+  --experiment-id C_TO_R \
+  --experiment-family transfer \
+  --training-sequence coco_hand->rhd \
+  --init-ckpt transfer_training_results/trf-c-only-s101/checkpoints/best.pt \
+  --skip-stage1
+```
+
+Important:
+
+- transfer runs require the same keypoint layout as the parent checkpoint
+- `--skip-stage1` requires `--init-ckpt`
+- stage-2 optimizer state is rebuilt; transfer runs do not reuse the parent optimizer state
 
 ### Hand Selection
 
@@ -87,152 +139,205 @@ python scripts/train.py --root data/RHD_published_v2 --job-id exp_k10 --tips-bas
 - `--hand left`
 - `--hand auto`
 
-`src/handpose/data/dataset.py` first selects the hand from the 42 RHD landmarks, then applies the active keypoint mode.
-
-## Slurm (Optional)
-
-Use `slurm/train_1.sbatch` and edit these variables in the script first:
-
-- `RHD_ROOT`
-- `CHECKPOINT_ROOT`
-- `CONDA_SOURCE`
-- `CONDA_ENV_NAME`
-- `USE_TIPS_BASES_ONLY=0` or `1`
-
-Submit with:
-
-```bash
-sbatch slurm/train_1.sbatch
-```
+For non-RHD datasets, the stored hand metadata is normalized to `single`.
 
 ## Useful CLI Options
 
 ### Training (`scripts/train.py`)
 
-- `--seed`: seed Python / NumPy / PyTorch for repeatable experiment runs
-- `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation steps per stage
-- `--lambda-hm`, `--lambda-coord`: stage-2 loss weights (`total = lambda_hm * heatmap + lambda_coord * coord`)
-- `--heatmap-sigma`: Gaussian target sigma used by the heatmap loss
-- `--wing-w`, `--wing-epsilon`: Wing loss shape parameters for the coordinate branch
+- `--dataset rhd|coco_hand`: choose the dataset loader
+- `--seed`: seed Python / NumPy / PyTorch for repeatable runs
+- `--accum-steps-stage1`, `--accum-steps-stage2`: gradient accumulation
+- `--lambda-hm`, `--lambda-coord`: stage-2 loss weights
+- `--heatmap-sigma`: Gaussian target sigma
+- `--wing-w`, `--wing-epsilon`: Wing loss shape parameters
 - `--freeze-backbone-stage2`, `--freeze-heatmap-stage2`: freeze parts of the model during stage 2
-- `--train-dataset-length N`: train on first `N` training samples (debug/ablation convenience)
+- `--train-dataset-length N`: train on the first `N` training samples
+- `--experiment-id`, `--experiment-family`, `--training-sequence`: metadata for aggregation/reporting
+- `--init-ckpt`, `--skip-stage1`: transfer fine-tuning controls
 
 ### Evaluation (`scripts/eval_metrics.py`)
 
-- `--device auto|cpu|cuda`: force evaluation device (default `auto`)
-- `--prediction-mode fusion|heatmap|coord`: evaluate fused predictions or one branch alone
+- `--dataset auto|rhd|coco_hand`: choose dataset explicitly or resolve from checkpoint metadata
+- `--device auto|cpu|cuda`: force evaluation device
+- `--prediction-mode fusion|heatmap|coord`: branch selection for evaluation
 - `--batch-size`, `--num-workers`: evaluation loader settings
-- `--debug-coords`: print first-batch coordinate diagnostics to `stderr`
+- `--debug-coords`: print first-batch diagnostics to `stderr`
 - `--with-fusion-diagnostics`: export fusion-selection statistics in the result JSON
 
 ## Plot Training Curves
 
 ```bash
-python scripts/plot_losses.py --job-id exp_k21
-python scripts/plot_losses.py --job-id exp_k10
+python scripts/plot_losses.py --job-id exp_rhd_k21
 ```
 
 This reads `training_results/<job-id>/losses.csv` and writes `loss_plot.png` in the same run directory.
 
-## Evaluate Trained Models (Metrics)
+## Evaluate Trained Models
 
-Use `scripts/eval_metrics.py` on the stage-2 checkpoint (`best.pt`) to report:
+Use `scripts/eval_metrics.py` on a stage-2 checkpoint (`best.pt`) to report:
 
-- visibility-masked normalized `SSE` per sample (`metrics.sse_norm`)
-- visibility-masked normalized root-relative `EPE` (`metrics.epe_norm`)
-- visibility-masked `PCK@sigma` (`metrics.pck`) with `--pck-threshold` (default `0.2`)
-- sample/keypoint counts (`num_samples`, `num_points`, `num_visible_points`, `num_eval_keypoints`)
-- prediction timing for the selected `--prediction-mode` (`ms_per_image`, `images_per_second`)
+- normalized `SSE` per sample (`metrics.sse_norm`)
+- root-relative normalized `EPE` (`metrics.epe_norm`)
+- `PCK@sigma` (`metrics.pck`) with `--pck-threshold` (default `0.2`)
+- sample/keypoint counts
+- timing for the selected `--prediction-mode`
 
-Note: `epe_norm` uses root keypoint `0` by default. For tip/base 10-joint checkpoints, it uses root keypoint `1`. In shared-10 eval of a 21-joint checkpoint, `epe_norm` is reported as `null`.
-
-### Example: Evaluate a 21-keypoint model on all 21 keypoints
+Evaluate on the dataset stored in the checkpoint:
 
 ```bash
-python scripts/eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --out-json eval_results/exp_k21_full.json
+python scripts/eval_metrics.py \
+  --dataset auto \
+  --ckpt training_results/exp_rhd_k21/checkpoints/best.pt \
+  --root data/RHD_published_v2 \
+  --split evaluation \
+  --out-json eval_results/exp_rhd_k21.json
 ```
 
-### Fair 21 vs 10 Comparison (recommended)
-
-Evaluate both models on the same shared 10 landmarks:
+Evaluate a checkpoint cross-dataset:
 
 ```bash
-python scripts/eval_metrics.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k21_shared10.json
+python scripts/eval_metrics.py \
+  --dataset coco_hand \
+  --ckpt transfer_training_results/trf-c-to-r-s101/checkpoints/best.pt \
+  --root data/hand_keypoint_dataset \
+  --split val \
+  --out-json transfer_eval_results/trf-c-to-r-s101.on-coco_hand.json
 ```
+
+Shared-10 evaluation is still available for fair 21-vs-10 comparisons:
 
 ```bash
-python scripts/eval_metrics.py --ckpt training_results/exp_k10/checkpoints/best.pt --root data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/exp_k10_shared10.json
+python scripts/eval_metrics.py \
+  --dataset rhd \
+  --ckpt training_results/exp_rhd_k21/checkpoints/best.pt \
+  --root data/RHD_published_v2 \
+  --split evaluation \
+  --shared-10-eval \
+  --out-json eval_results/exp_rhd_k21_shared10.json
 ```
-
-Predictions in evaluation always use the fusion rule (`d_i < alpha`) from the shared inference pipeline.
-Keep all settings the same across experiments (`--hand`, input size, dataset split, etc.).
 
 ## Single Image Inference
 
-Use `scripts/predict_image.py` to run one image through a trained checkpoint and return predicted coordinates for the selected `--prediction-mode`.
-
-### Predict coordinates (printed to stdout as JSON)
+Use `scripts/predict_image.py` to run one image through a trained checkpoint.
 
 ```bash
-python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png
+python scripts/predict_image.py --ckpt training_results/exp_rhd_k21/checkpoints/best.pt --image path/to/image.png
 ```
 
-### Predict heatmap-only coordinates
+Heatmap-only:
 
 ```bash
-python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --prediction-mode heatmap
+python scripts/predict_image.py --ckpt training_results/exp_rhd_k21/checkpoints/best.pt --image path/to/image.png --prediction-mode heatmap
 ```
 
-### Predict coordinates and save overlay image
+Overlay output:
 
 ```bash
-python scripts/predict_image.py --ckpt training_results/exp_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
+python scripts/predict_image.py --ckpt training_results/exp_rhd_k21/checkpoints/best.pt --image path/to/image.png --overlay --overlay-out infer_results/image_overlay.png
 ```
 
-## Jetson End-to-End Benchmark
+## Benchmarking
 
-Use `scripts/benchmark_pipeline.py` to benchmark end-to-end single-image latency on the full evaluation dataset.
-The script:
+Use `scripts/benchmark_pipeline.py` for end-to-end single-image latency benchmarking.
 
-- discovers images automatically from `<root>/evaluation/color/`
-- sorts them by filename
-- benchmarks the full discovered set
-- writes one summary CSV row for the checkpoint
-- saves the resolved image list next to the outputs for reproducibility
+Image discovery is dataset-aware:
+
+- RHD: `<root>/evaluation/color`
+- COCO-hand: `<root>/images/val`
 
 Example:
 
 ```bash
-python scripts/benchmark_pipeline.py --ckpt training_results/exp_k21/checkpoints/best.pt --root data/RHD_published_v2 --summary-csv benchmark_results/summary.csv --output-root benchmark_results --device cuda --prediction-mode fusion --run-label orin_nano
+python scripts/benchmark_pipeline.py \
+  --dataset auto \
+  --ckpt training_results/exp_rhd_k21/checkpoints/best.pt \
+  --root data/RHD_published_v2 \
+  --summary-csv benchmark_results/summary.csv \
+  --output-root benchmark_results \
+  --device cuda \
+  --prediction-mode fusion \
+  --run-label orin_nano
 ```
 
 Outputs:
 
 - per-image prediction JSON files under `benchmark_results/<run-label>/...`
 - aggregate CSV metrics in `--summary-csv`
-- `resolved_images.txt` showing exactly which dataset files were benchmarked
+- `resolved_images.txt` showing exactly which files were benchmarked
 
-The minimal benchmark measures:
-
-- `image_read_ms`
-- `preprocess_ms`
-- `host_to_device_ms`
-- `forward_predict_ms`
-- `write_json_ms`
-- `total_e2e_ms`
-
-One-time model setup is reported separately as `session_setup_ms` in the summary CSV.
+If a benchmark image fails, the script now prints the first failing traceback and raises a final error that includes `first_failure=...`.
 
 ## Experiment Helpers
 
-Use `scripts/generate_experiment_matrix.py` to emit a JSON/CSV experiment manifest plus train/eval/benchmark command files for the default research matrix.
+### Original Ablation Matrix
 
-Use `scripts/aggregate_results.py` to aggregate evaluation JSON files and benchmark summary CSVs into mean/std tables across seeds.
+Use `scripts/generate_experiment_matrix.py` to emit the original DRHand ablation study into `experiment_plan/`.
+
+### Transfer Matrix
+
+Use `scripts/generate_transfer_experiment_matrix.py` to emit the transfer-learning study into `experiment_plan_transfer/`.
+
+By default it generates:
+
+- `R_ONLY`
+- `C_ONLY`
+- `C_TO_R`
+- `R_TO_C`
+
+across seeds `101 202 303 404 505`, plus train/eval/benchmark command files.
+
+### Aggregate Results
+
+Use `scripts/aggregate_results.py` to aggregate eval JSONs and benchmark summary CSVs into mean/std tables.
+
+Aggregation now separates:
+
+- `experiment_family`
+- `training_sequence`
+- `train_dataset_name`
+- `eval_dataset_name`
+- `benchmark_dataset_name`
+
+so transfer runs do not get mixed with the original ablation study.
+
+## Slurm
+
+The repo includes generic array wrappers plus transfer-specific wrappers.
+
+### Original Matrix Wrappers
+
+- `slurm/train_matrix.sbatch`
+- `slurm/eval_matrix.sbatch`
+
+These default to `experiment_plan/...`.
+
+### Transfer Matrix Wrappers
+
+- `slurm/train_transfer_matrix.sbatch`
+- `slurm/eval_transfer_matrix.sbatch`
+
+These default to `experiment_plan_transfer/...`.
+
+Example submits:
+
+```bash
+sbatch --array=1-20 slurm/train_transfer_matrix.sbatch
+sbatch --array=1-40 slurm/eval_transfer_matrix.sbatch
+```
+
+The transfer train array contains dependencies by design:
+
+- `C_TO_R` needs the matching `C_ONLY` checkpoint for the same seed
+- `R_TO_C` needs the matching `R_ONLY` checkpoint for the same seed
+
+So in practice, run the scratch transfer rows first or split submission into phases.
 
 ## Important Notes
 
-- Use stage-2 `best.pt` for fused prediction metrics. Stage-1 checkpoints mainly train the heatmap branch.
-- `21`-keypoint and `10`-keypoint checkpoints are not shape-compatible.
-- Checkpoints must follow the current strict schema (`checkpoint_version`, `model_state`, `num_keypoints`, `keypoint_indices`, `stage`, `epoch`).
-- Do not reuse the same `--job-id` for multiple experiments unless you want files appended/overwritten.
-- `docs/commands.txt` contains old notes and experimental commands; prefer this README and the scripts themselves.
+- Use stage-2 `best.pt` for fused prediction metrics
+- `21`-keypoint and `10`-keypoint checkpoints are not shape-compatible
+- transfer fine-tuning requires the parent checkpoint to match the requested keypoint layout
+- checkpoints follow the strict schema in `src/handpose/checkpoints.py`
+- do not reuse the same `--job-id` unless you want files overwritten/appended
+- `docs/commands.txt` contains older notes; prefer this README and the current scripts

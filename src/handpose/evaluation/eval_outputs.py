@@ -23,6 +23,7 @@ def build_results_payload(
         "with_fusion_diagnostics": bool(args.with_fusion_diagnostics),
         "device": str(device),
         "dataset": {
+            "name": getattr(args, "dataset", ""),
             "root": args.root,
             "split": args.split,
             "hand": args.hand,

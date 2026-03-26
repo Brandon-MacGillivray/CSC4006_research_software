@@ -3,7 +3,7 @@ import sys
 import torch
 from torch.utils.data import DataLoader
 
-from handpose.data.dataset import RHDDatasetCoords
+from handpose.data import build_dataset
 from handpose.models.hand_pose_model import HandPoseNet
 from handpose.data.keypoints import TIP_BASE_KEYPOINT_INDICES
 
@@ -84,10 +84,11 @@ def build_model(num_keypoints: int, state_dict: dict, device: torch.device):
     return model
 
 
-def build_loader(args, device: torch.device, model_keypoint_indices):
+def build_loader(args, device: torch.device, model_keypoint_indices, dataset_name: str):
     """Build evaluation DataLoader with checkpoint keypoint order."""
-    ds = RHDDatasetCoords(
-        args.root,
+    ds = build_dataset(
+        dataset_name=dataset_name,
+        root=args.root,
         split=args.split,
         input_size=args.input_size,
         hand=args.hand,

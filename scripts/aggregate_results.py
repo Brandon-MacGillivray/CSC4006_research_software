@@ -7,6 +7,10 @@ import statistics
 
 
 EVAL_GROUP_FIELDS = [
+    "experiment_family",
+    "training_sequence",
+    "train_dataset_name",
+    "eval_dataset_name",
     "experiment_id",
     "prediction_mode",
     "shared_10_eval",
@@ -41,6 +45,10 @@ FUSION_DIAGNOSTIC_FIELDS = [
 ]
 
 LATENCY_GROUP_FIELDS = [
+    "experiment_family",
+    "training_sequence",
+    "train_dataset_name",
+    "benchmark_dataset_name",
     "experiment_id",
     "prediction_mode",
     "num_keypoints",
@@ -65,12 +73,14 @@ EVAL_ID_FIELDS = [
     "prediction_mode",
     "shared_10_eval",
     "with_fusion_diagnostics",
+    "eval_dataset_name",
 ]
 
 BENCHMARK_ID_FIELDS = [
     "job_id",
     "seed",
     "prediction_mode",
+    "benchmark_dataset_name",
 ]
 
 
@@ -121,6 +131,25 @@ def infer_experiment_id(job_id: str):
     parts = str(job_id).split("-")
     if len(parts) >= 2 and parts[0] == "drh":
         return str(parts[1]).upper()
+    if len(parts) >= 3 and parts[0] == "trf":
+        tail = list(parts[1:])
+        if tail and tail[-1].startswith("s") and tail[-1][1:].isdigit():
+            tail = tail[:-1]
+        if tail:
+            return "_".join(str(part).upper() for part in tail)
+    return ""
+
+
+def infer_experiment_family(job_id: str, training_config=None):
+    if isinstance(training_config, dict):
+        family = str(training_config.get("experiment_family", "")).strip()
+        if family:
+            return family
+    text = str(job_id)
+    if text.startswith("drh-"):
+        return "ablation"
+    if text.startswith("trf-"):
+        return "transfer"
     return ""
 
 
@@ -218,9 +247,22 @@ def load_eval_rows(eval_json_dir: Path):
             or training_config.get("experiment_id")
             or infer_experiment_id(job_id)
         )
+        train_dataset_name = (
+            training_config.get("dataset")
+            or payload.get("dataset", {}).get("name", "")
+            or "rhd"
+        )
+        eval_dataset_name = payload.get("dataset", {}).get("name", "") or train_dataset_name
+        experiment_family = infer_experiment_family(job_id, training_config=training_config)
+        training_sequence = training_config.get("training_sequence", "") or train_dataset_name
         row = {
             "source_path": str(path),
             "job_id": job_id,
+            "dataset_name": train_dataset_name,
+            "train_dataset_name": train_dataset_name,
+            "eval_dataset_name": eval_dataset_name,
+            "experiment_family": experiment_family,
+            "training_sequence": training_sequence,
             "experiment_id": experiment_id,
             "prediction_mode": payload.get("prediction_mode", ""),
             "shared_10_eval": bool(payload.get("shared_10_eval", False)),
@@ -264,6 +306,17 @@ def load_benchmark_rows(csv_path: Path):
                 row.get("checkpoint_path", "")
             )
             row["job_id"] = job_id
+            benchmark_dataset_name = (
+                row.get("benchmark_dataset_name", "")
+                or row.get("dataset_name", "")
+                or "rhd"
+            )
+            train_dataset_name = row.get("train_dataset_name", "") or benchmark_dataset_name
+            row["dataset_name"] = benchmark_dataset_name
+            row["train_dataset_name"] = train_dataset_name
+            row["benchmark_dataset_name"] = benchmark_dataset_name
+            row["experiment_family"] = row.get("experiment_family", "") or infer_experiment_family(job_id)
+            row["training_sequence"] = row.get("training_sequence", "") or train_dataset_name
             row["experiment_id"] = row.get("experiment_id", "") or infer_experiment_id(job_id)
             row["prediction_mode"] = row.get("prediction_mode", "")
             row["num_keypoints"] = row.get("num_keypoints", "")
@@ -358,6 +411,10 @@ def write_csv(path: Path, rows):
 
 def build_branch_ablation_rows(rows):
     branch_fields = [
+        "experiment_family",
+        "training_sequence",
+        "train_dataset_name",
+        "eval_dataset_name",
         "experiment_id",
         "prediction_mode",
         "train_num_keypoints",

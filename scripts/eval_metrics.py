@@ -5,6 +5,7 @@ from _bootstrap import bootstrap_src_path
 
 bootstrap_src_path()
 
+from handpose.data import AUTO_DATASET, SUPPORTED_DATASETS, resolve_dataset_name, resolve_dataset_split
 from handpose.evaluation.eval_metrics_core import evaluate_checkpoint
 from handpose.evaluation.eval_outputs import build_results_payload, save_results_json
 from handpose.evaluation.eval_pipeline import (
@@ -23,7 +24,17 @@ def build_arg_parser():
     p = argparse.ArgumentParser(description="Evaluate a trained stage-2 model using fused predictions.")
     p.add_argument("--ckpt", required=True, help="Path to checkpoint (.pt), typically stage-2 best.pt")
     p.add_argument("--root", default="data/RHD_published_v2")
-    p.add_argument("--split", default="evaluation", choices=["training", "evaluation"])
+    p.add_argument(
+        "--dataset",
+        default=AUTO_DATASET,
+        choices=[AUTO_DATASET, *SUPPORTED_DATASETS],
+        help="Dataset loader to use. 'auto' uses checkpoint metadata and falls back to RHD.",
+    )
+    p.add_argument(
+        "--split",
+        default="evaluation",
+        help="Split alias resolved per dataset, for example evaluation/val.",
+    )
     p.add_argument("--input-size", type=int, default=256)
     p.add_argument("--hand", default="right", choices=["left", "right", "auto"])
     p.add_argument("--batch-size", type=int, default=64)
@@ -69,6 +80,10 @@ def main():
 
     # Load checkpoint and recover keypoint layout.
     ckpt_meta, state_dict = load_checkpoint(args.ckpt, device)
+    training_config = ckpt_meta.get("training_config", {})
+    dataset_name = resolve_dataset_name(args.dataset, training_config=training_config)
+    args.dataset = dataset_name
+    args.split = resolve_dataset_split(dataset_name, args.split)
     model_keypoint_indices = infer_checkpoint_keypoint_indices(ckpt_meta)
     num_keypoints = len(model_keypoint_indices)
 
@@ -83,7 +98,12 @@ def main():
     )
 
     model = build_model(num_keypoints=num_keypoints, state_dict=state_dict, device=device)
-    loader = build_loader(args=args, device=device, model_keypoint_indices=model_keypoint_indices)
+    loader = build_loader(
+        args=args,
+        device=device,
+        model_keypoint_indices=model_keypoint_indices,
+        dataset_name=dataset_name,
+    )
 
     metrics = evaluate_checkpoint(
         model=model,
