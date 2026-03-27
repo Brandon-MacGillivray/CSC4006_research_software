@@ -1,0 +1,771 @@
+CSC4006 (2025-26)
+Research and Development Project
+A Staff/Student Handbook
+
+DRAFT by Austen Rainer from the original by
+
+Blesson Varghese PhD, MBCS, FHEA
+
+Version 2025.02, 15 September 2025
+
+School of Electronics, Electrical Engineering and Computer Science
+Queen’s University Belfast
+Northern Ireland, UK
+
+2
+
+Contents
+
+1 Module Co-ordinator
+
+2 An Overview
+
+2.1 Module Background . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2 What is a Research and Development Project? . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3 What you have to submit
+. . . . . . . . . . . . .
+2.4 Module organisation, timetabling and submissions
+2.4.1 Advisory sessions . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Submissions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.4.2
+
+3 The Module Details
+
+3.1 Module Contents . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2 Learning Outcomes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.3 Skills . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4 Project Roles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.5 Recommended Time Spent on the Project . . . . . . . . . . . . . . . . . .
+3.6 Recording Meetings
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.7 References (Avoiding Plagiarism) . . . . . . . . . . . . . . . . . . . . . . .
+3.8 Original Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.9 Deadline Extension . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+4 Choice of Projects
+
+5 Assessment and Mark Allocation
+
+5.1 Assessed Components and Mark Allocation . . . . . . . . . . . . . . . . .
+
+4
+
+4
+4
+4
+5
+5
+5
+5
+
+6
+6
+6
+6
+6
+7
+7
+7
+8
+8
+
+9
+
+9
+9
+
+6 Specifications of the Documents to be Submitted
+
+10
+6.1 Preliminary Research Article . . . . . . . . . . . . . . . . . . . . . . . . . 10
+6.2 Research Article
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+6.3 Software Development Report & GitLab repository . . . . . . . . . . . . . 13
+6.3.1 Overview to the Software Development Report & GitLab repository 13
+6.3.2 Guidance for the Software Development Report . . . . . . . . . . . 14
+6.3.3 Guidance for documentation on the GitLab repository . . . . . . . 16
+
+7 Project Demo and Presentation
+
+17
+
+3
+
+1 Module Co-ordinator
+
+Austen Rainer
+03.004 Computer Science Building, 18 Malone Road
+E-mail: a.rainer@qub.ac.uk
+
+2 An Overview
+
+2.1 Module Background
+
+• CSC4006 is a double–semester worth 40 CATS points; one of the conditions for
+the award of a MEng degree in Computer Science is that CSC4006 is passed.
+
+• CSC4006 is a project-based module. Each student is allocated a project and an
+
+academic supervisor; group work is not permitted.
+
+• Marks are allocated for project work submitted on or before the deadlines. To pass
+
+this module, a student must obtain an overall grade of 40% or above.
+
+• Project work is of special interest to employers and is often discussed during in-
+
+terviews etc. Project work is often cited in academic references.
+
+The module aims to provide the student a rich experience of working within a
+strong academic research environment and interacting closely with at least one
+academic researcher.
+
+2.2 What is a Research and Development Project?
+
+Typically, a Research and Development Project will include two parts:
+
+1. Finding an analytic or algorithmic solution to a research problem;
+
+2. Designing and implementing a computational system to evaluate the solution.
+
+The theories/algorithms/evaluation/results/conclusions developed from the project
+should be documented in a Research Article, and the software system developed from
+the project should be documented in a Software Development Report. Both Research
+Article and Software Development Report may be suitable for publication, albeit in
+different ways.
+
+4
+
+Example research areas include:
+
+• High performance computing, and parallel and distributed systems, includ-
+
+ing Cloud computing
+
+• Data science, including Artificial Intelligence
+
+• Speech, image and vision systems, signal processing
+
+• Cybersecurity
+
+• Computer games development
+
+• Software Engineering
+
+• Potentially, research at the intersection with other disciplines, e.g., algorith-
+
+mic biology
+
+2.3 What you have to submit
+
+On completion of the module you are required to deliver three key components (although
+other interim submissions are required, and are detailed later in this handbook).
+
+1. A functioning piece of software, which should demonstrate your skills in creating
+an effective software/hardware system as a solution to the problem you have inves-
+tigated. Note that this software would be used by another researcher or research
+software engineer.
+
+2. A Research Article, which is a formal academic document detailing the problem,
+the original contributions to the problem being studied and academic findings of
+your research. Originality and a well-written publication for a professional jour-
+nal or conference are strong indications of a first-class research and development
+project;
+
+3. A Software Development Report, which is a document detailing how another re-
+searcher or research software engineer can install, execute, maintain and extend
+the software developed during your project for your research.
+
+2.4 Module organisation, timetabling and submissions
+
+2.4.1 Advisory sessions
+
+Visit the CSC4006 Canvas website for up-to-date information on advisory sessions.
+
+2.4.2 Submissions
+
+Visit the CSC4006 Canvas website for up-to-date information on submission deadlines
+and other related dates.
+
+5
+
+“...a deadline should not prevent you from writing, but writing will help prevent
+you from missing your deadline. Then write a word. Then remind yourself of
+that again. And then write another and hey, look at you! You’re spitting in that
+deadline’s eye.” – Courtney Summers
+
+3 The Module Details
+
+3.1 Module Contents
+
+The project will take the form of a research investigation. A research problem should be
+investigated by developing a piece of software that can be used to generate research re-
+sults. The results from the investigation should be analysed and appropriate conclusions
+drawn.
+
+3.2 Learning Outcomes
+
+Following successful completion students will be able to demonstrate:
+
+1. Knowledge and understanding of a given research problem;
+
+2. The ability to investigate a research problem;
+
+3. The ability to develop a substantial software system;
+
+4. The ability to analyse results;
+
+5. The ability to conduct a survey of the literature;
+
+6. The ability to defend the research presented in an article.
+
+3.3 Skills
+
+The ability to apply investigative skills, research skills and general software engineering
+principles to the solution of problems - which may require investigative, practical or
+design skills or a combination of all three.
+
+Originality is encouraged.
+
+3.4 Project Roles
+
+A student is responsible for ensuring that the project is carried out effectively and
+completed satisfactorily on schedule. A student is responsible for submitting the project
+documents on time and proofreading the documents carefully before submission. It is the
+
+6
+
+responsibility of the student to arrange regular meetings with the supervisor throughout
+the project.
+
+A supervisor is responsible for providing guidance on the project being investigated,
+to ensure that the student can complete the project in the time available. A supervisor
+is not responsible for finding solutions to problems encountered when investigating a
+problem and developing or debugging the program code.
+
+Technical queries should be discussed with the project supervisor. Other more general
+queries can be discussed with the Module Co-ordinator and/or with the supervisor as
+appropriate. In addition to face-to-face meetings, students are expected to communicate
+with their supervisors and if required with the Module Co-ordinator via e-mail.
+
+3.5 Recommended Time Spent on the Project
+
+Students should devote the same proportion of their time to the project as they do
+to taught modules. Given that this is a double weighted module spread across two
+semesters, approximately 400 hours of effort is anticipated, including the assessment
+process.
+
+3.6 Recording Meetings
+
+It is a university Master’s level requirement that students keeps minutes of meetings
+with their supervisors. This minute should contain a brief summary of the meeting, the
+matters discussed and any action agreed between you and the supervisor and should be
+emailed to the supervisor before the next meeting. The minute should be emailed to
+your supervisor subsequent to each meeting and the supervisor will reply to the email
+as approved and/or with their comments. The minutes should be appended to the final
+software development report.
+
+Note: A sample template for the minutes is provided on Canvas. However, it is not
+necessary that you only use this template.
+
+3.7 References (Avoiding Plagiarism)
+
+You must always distinguish your own ideas, views, comments and contributions in the
+project from those of the others. To do so requires the high level of intellectual honesty
+which is expected from you and your peers. When you use other researchers’ work,
+thoughts or ideas in helping your own work you are obliged to reference the original
+work. This includes condensing and rephrasing other authors’ work in your own words.
+Code taken from the internet (or elsewhere) must be explicitly acknowledged. This
+includes the code taken from your supervisor.
+
+Note: Reports may be submitted via Turnitin to detect plagiarism.
+
+7
+
+3.8 Original Work
+
+Nowadays, almost every technical advance is built upon some previous work in the same
+or a different discipline. You will only be given credit for the part of the work that’s
+created by you which is original to the project1.
+
+For many students on the MEng pathway, conducting research into an ill-understood
+problem and writing a research article is a challenging experience. You will receive help
+from your supervisors, but research is largely an independent, self-directed process. In
+the other modules of the degree programme you have been set targets and objectives
+through the coursework assignments and deadlines but for this module, you will need
+to set your own deadlines, and manage the experience. You will need perseverance,
+endurance and determination.
+Initially this can seem intimidating, but it is also an
+opportunity for you to learn and grow.
+
+The Research and Development Project is designed to be a learning experience and
+it is highly likely that you will extend your existing knowledge and skills and that you
+will gain some new knowledge and skills. Writing at the Master’s level and developing a
+research software system are specialised skills, which will develop your intellectual, criti-
+cal and problem-solving capabilities. The research article and the software development
+report are the academic work which marks the transition between being a student and a
+researcher (who is more than just a software developer). Writing an article and a report
+will enable you to develop valuable technical writing skills.
+
+Regardless of the career path you have chosen, the process of thinking creatively
+and analytically, assembling a well-reasoned software/hardware solution, writ-
+ing/publishing at professional level and managing your time will all serve you
+well in the future.
+
+3.9 Deadline Extension
+
+Deadline extensions are not normally granted. In some circumstances, such as the con-
+firmation of an exceptional circumstances (following formal application), the supervisor
+may grant an extension.
+
+1Material supplied at the outset or during the project may be the subject of copyright (or other
+industrial property rights) and other such material may be created during the project.
+It is in
+order to make use of this material purely for educational purposes associated with the project. No
+attempt must be made to exploit any of the project material commercially by communicating it to
+organisations or individuals outside the University or otherwise. In general, the policy is that any
+potentially valuable results, whether patentable or not, obtained during the course of a project which
+was carried out during the module, should be exploited for the benefit of the public, the University,
+the student and the supervisor, but subject to any regulations laid down by a grant awarding body or
+the University. Thus, if it appears to the University that a project might be suitable for development
+and commercial exploitation, it will initiate steps to this end. Students who have been involved in
+such projects will be informed and may be required to co-operate in the exercise. In the event of any
+project producing a net profit to the University, ex gratia payments to individuals will be made in
+accordance with University custom and practice.
+
+8
+
+Any extension longer than five days will result in a late graduation as the as-
+sessment of the project cannot be completed in time for the Examination Board
+meeting.
+
+4 Choice of Projects
+
+At the beginning of the module, a list of available research topics will be provided. You
+should carefully study the supplied project options, and then rank your preferred topics
+for project allocation. The choices must be provided on https://selfservice.eeecs.
+qub.ac.uk/projects by the given deadline to facilitate the project allocation. Without
+receiving your preferences by the deadline, you will be assigned a project randomly from
+the (remaining) available projects.
+
+In stating your project preferences, consider among other things the topics that excite
+you, the knowledge/skills you would like to develop through the project, the experience
+you would like to gain, and the usefulness of your project in discussing it with your po-
+tential employers. You should also aim to match your ability to the project, to maximise
+your potential achievement.
+
+If you would like to find out more about a project area for making your decision,
+please contact directly the specific supervisor(s) who set up the project.
+
+While we will do our best to accommodate each student’s choice, we ask your under-
+
+standing in the limited resources and supervisors available in the School.
+
+5 Assessment and Mark Allocation
+
+Each project is assessed independently by the supervisor and a 2nd assessor, for three of
+the four assessments (see details below). For each of these three components (the fourth
+component – the preliminary research article – is assessed exclusively by the supervisor),
+the supervisor and the assessor will assign an agreed mark which will be returned to the
+student as the final mark.
+
+Should there be a significant degree of disagreement between the supervisor and as-
+sessor on the marks of the work, a 3rd and independent assessor will be sought to mark
+the work and to draw a conclusion.
+
+5.1 Assessed Components and Mark Allocation
+
+• Preliminary Research Article - 10%* (marked only by supervisor)
+
+• Final Research Article - 55%*
+
+• Software Development Report - 25%*
+
+9
+
+• Project Demo and Presentation - 10%
+
+* the standard penalties for late submission will apply.
+
+6 Specifications of the Documents to be Submitted
+
+6.1 Preliminary Research Article
+
+Use the Latex template provided, worth 10%
+Approximately 5 pages in length, comprising about one page for the
+preamble (Title, Author Name and Affiliation, Abstract and Keywords), one
+page for the Introduction, one page for the Literature Review, and about two
+pages for References and Appendices.
+
+Please adapt the section titles to suit your specific project, but do not alter the template
+(style, fonts etc). Use of Latex or Word is acceptable, however only a Latex template
+is provided and a Word document should conform to the presentation style and layout
+of the Latex document. All submissions, regardless of whether they are prepared with
+Latex or with Word, should be in PDF format.
+
+The Preliminary Research Article should include the following: Title, Author Name
+and Affiliation, Abstract, Keywords, Introduction, Literature Review, References, and
+an Appendix.
+
+Title – a preliminary title for the research in no more than 10 words.
+
+Author Name and Affiliation – the name of the author and affiliation, including their
+e-mail address.
+
+Abstract – in no more than 225 words a brief summary of the problem to be studied,
+the objectives of the study, the proposed methodology, and the expected results or
+achievements.
+
+Keywords – list up to a maximum of 5 keywords that captures the research.
+
+Introduction – in no more than 1 page of text with no sub-headings introduce the area
+of research, the problem being investigated including how its positions within the area
+of research, and the aim of your research.
+
+You may still be in the early stages of developing an approach (may be a tech-
+nique/methodology/algorithm) to solve the problem, but also include (i) a potential
+approach that will be adopted to solve the problem, (ii) the merits/novelty of the pro-
+posed approach in contrast to existing approaches, (iii) a brief note on the research
+
+10
+
+software that will be developed to realise the approach, and (iv) a potential set of ex-
+periments, and (v) what results are expected.
+
+Literature Review – in no more than 1 page of text include a systematic literature review
+of research articles. You need to make sure with your supervisor that the articles you
+are reviewing are worthy of referencing in an MEng project.
+
+For each article considered in the review you may consider: (i) the approaches used
+by other researchers to solve the problem, (ii) the merit and weakness of the approaches,
+and (iii) any identified gaps, and (iv) how will your approach be different from existing
+approaches and how it will bridge any identified gap.
+
+Note: You may use figures and/or tables in the Introduction and Literature Review
+sections, but must not exceed the page limits.
+
+References – is a complete list of the articles or other information sources that have been
+cited/used in this article, giving the publication details for each reference (e.g., title of
+the paper, name of the journal or conference, time/location it is published, volume/issue
+numbers, page numbers, name of the publisher, etc.). Unless you are solving an age old
+problem, please aim to reference recent papers.
+
+Note: Wikipedia and similar are not acceptable sources to reference. Keep the use of
+web pages to a minimum, use only when necessary.
+
+Recommended method for referencing is the Institute for Electrical and Electronics
+Engineers (IEEE) format - “IEEE citation style includes in-text citations, numbered in
+square brackets, which refer to the full citation listed in the reference list at the end of
+the paper. The reference list is organized numerically, not alphabetically”.
+
+Referencing example:
+
+[1 ] H. Xiu, B. Boris and L. Andor, “A 100 Ways to Write a Research
+Paper,” Journal of Higher Education, Vol. 38, No. 2, 2015, pp. 115-
+126.
+
+[2 ] B. Lamb, N. Norris and S. Subramanian, “Can’t Wait to Finish My
+Research Project,” Proceedings of the 9th International Conference on
+Happiness and Joy, 2018, pp. 12-24.
+
+Appendix – In no more than 500 words the appendix will summarise the progress of the
+research work undertaken, what has been accomplished and how it contributes towards
+the goals of the project, any preliminary software that has been developed to test ideas,
+and any preliminary results obtained. This content will evolve into more substantial and
+
+11
+
+multiple technical sections in the research article.
+
+Any preliminary software code developed should be uploaded to Gitlab: https://
+
+gitlab.eeecs.qub.ac.uk/; the student must provide access to the supervisor.
+
+Note: The supervisor will provide feedback on the preliminary article. The Literature
+Review section and the progress of work highlighted in the Appendix will contribute
+towards the mark.
+
+6.2 Research Article
+
+Maximum 15 pages in template provided, worth 55%
+
+Adapt the following section titles to suit your specific project. For example, you could
+rename your Literature Review section as Related Work. Do not alter the template
+(style, fonts etc). Page limit is absolute. Use of Latex or Word is acceptable, however
+only a Latex template is provided and a Word document should conform to the presen-
+tation style and layout of the Latex document. All submissions, regardless of whether
+they are prepared with Latex or with Word, should be in PDF format.
+
+A Research Article is a formal scientific/technical document providing a concise account
+of a research finding.
+
+The article should be precise and scientific in nature. At the very basic level, spelling
+should be correct, sentences grammatical, and formulae, figures and tables clear and
+accurate. As is usual in academic/technical writing, do not describe things in the first
+person (say what was done, rather than ‘I’ did it). A good article is always determined
+by its quality rather than length.
+
+Because different projects address different problems, it is not possible to define a
+writing structure that applies to all articles. However, an engineering or scientific article
+and to fulfill the requirements of the MEng degree program will need to contain the
+following components:
+
+• Title – a title for the article in no more than 10 words.
+
+• Author Name and Affiliation – similar to Preliminary Research Article.
+
+• Abstract – adapted from Preliminary Research Article.
+
+• Keywords – list up to a maximum of 5 keywords that captures the research.
+
+• Introduction – adapted from Preliminary Research Article.
+
+• Literature Review – adapted from the Preliminary Research Article.
+
+• Appropriate Technical Sections should provide details of the approaches or methods
+that are used in the project to investigate the problem, including, for example, the
+
+12
+
+theories, algorithms, investigative procedures or a combination.
+If the student
+makes any original contribution to the research into the problem this should be
+emphasised clearly in this section.
+
+• Results and Analysis in which the results of the investigation should be presented
+in detail. It is important that the exact conditions under which experiments were
+conducted are documented. The significance of the results should be critically
+analysed ideally through comparing with existing systems or results. Graphs and
+tables are encouraged.
+
+• Conclusions should include a summary of the project work and findings arising
+from the investigation. Finish this section by highlighting the limitations of your
+work and making recommendations on how the work can be further extended.
+
+• Acknowledgements – if appropriate acknowledge any support (funding, comments
+
+from colleagues etc).
+
+• References – up to a maximum of 35 references for the entire article. Guidelines
+
+are similar to the Preliminary Reference Article.
+
+• Appendices (optional, and is included within the maximum page limit) – should
+include other information which is not convenient or is disturbing to be included
+in the main body of the article (e.g. a proof of a mathematical formula that is
+used in the research etc.).
+
+Note: Take advice from your supervisor to make sure your Research Article meets
+acceptable standards.
+
+6.3 Software Development Report & GitLab repository
+
+Maximum 20 pages excluding any title page, single column and
+single line space, font-size 11pt, worth 25%. The minutes from meet-
+ings with your supervisor are not included in the 20-page limit and should
+be included as an appendix to the main report.
+
+6.3.1 Overview to the Software Development Report & GitLab repository
+
+Because CSC4006 is a research and software development project, it can be helpful to
+understand the software you develop as a research artefact and to think of yourself
+as performing two roles: a researcher for the research report, and a research software
+engineer for the software artefact. We illustrate this relationship with an example.
+Figure 1 represents the size, in lines of code, of components of Google’s machine learning
+
+13
+
+(ML)-related software products2. Notice in the figure that only a very small proportion of
+code is actually devoted to learning or prediction (see the black rectangle at the centre).
+This visualisation helps to demonstrate that, for a software development report (and for
+your CSC4006 project) it is not enough to explain an ML system and to evaluate the
+performance of that system (e.g., as one might do in a research report). For a software
+development report, it is also important to explain, as well as the code directly used
+for the ML system, the infrastructure of code that supports the “core code”, and to
+demonstrate how you have quality assured the code and infrastructure.
+
+Figure 1: Visualisation of the lines of code for Google’s AI-related products
+
+Also, software as a research artefact is becoming increasingly accepted in the research
+community, with guidelines on what you should document about the software as research
+artefact, and with conferences that evaluate the quality of that artefact.
+
+Given the preceding, we now move to guidance on the Software Development Report
+
+and on the GitLab repository.
+
+6.3.2 Guidance for the Software Development Report
+
+There is no standard template for the software development report, nor can there be:
+each research project will have a different emphasis. But in general, all project reports
+should contain at least the sections given below. Understanding what sections and
+subsections are required, and what must be stated in those sections and subsections, is
+an important part of the project. The student’s supervisor should be able to provide
+additional specific advice. The module leader should be able to provide more general
+advice.
+
+• Preamble: you should include a title page that clearly states the project title, your
+
+name, student ID, date, and possibly other relevant information
+
+2This example, and the figure, are taken from: Sculley, D., Holt, G., Golovin, D., Davydov, E., Phillips,
+T., Ebner, D., Chaudhary, V., Young, M., Crespo, J.F. and Dennison, D., 2015. Hidden technical
+debt in machine learning systems. Advances in neural information processing systems, 28.
+
+14
+
+SE FOR AIJANUARY/FEBRUARY 2020 |  IEEE SOFTWARE83dictionaries. A better design, which would have had looser coupling, might have been to apply some sort of feature weighting to the data and con-nect only to the features that were the most influential.Stepping back from the details of this example, the more general point to be made is that much has been learned through the decades about how to build software. While not all of that knowl-edge applies to the new generation of AI tools, much of it does. Hence, while the wise AI engineer should study AI algo-rithms, he or she must also study SE.Rule 4: Better SE Leads to Better AIWhile poor SE can lead to problems with AI, the good news is that better SE can lead to better AI. For example, many industrial data scientists make extensive use of the Python scikit-learn toolkit data-mining package.10Started in 2007 as a Google Summer of Code project by David Courna-peau, numerous releases have appeared on a roughly three-month cycle, and a thriving international community has been leading the development ef-fort. At the time of this writing, during the past month, this software has been maintained and extended by dozens of authors from across the planet (spe-cifically, excluding merges, 50 authors have pushed 119 commits to master and 119 commits to all branches to make changes to thousands of lines of code in 279 files). All of this is possible because scikit-learn uses state-of-the-art open source SE meth-ods (continuous integration, cloud-based testing with Travis CI, git, GitHub, and so forth).ModelRequirementsDataCollectionDataCleaningDataLabelingFeatureEngineeringModelTrainingModelEvaluationModelDeploymentModelMonitoringFIGURE 4. The nine-step process used at Microsoft to build and deploy machine-learning applications.8While the wise AI engineer should study AI algorithms, he or she must also study SE.ConfigurationData CollectionData VerificationFeature ExtractionProcess-ManagementToolsAnalysis ToolsMachine-LearningCodeMachine-ResourceManagementServingInfrastructureMonitoringFIGURE 3. The lines of code in Google’s AI-related software. The tiny black box in the middle represents the core AI code, while the rest of the diagram shows support software.7Authorized licensed use limited to: Queens University Belfast. Downloaded on September 09,2022 at 08:41:39 UTC from IEEE Xplore.  Restrictions apply. • Acknowledgements: Acknowledge any assistance or support you have had, e.g.,
+
+from industry.
+
+• Table of contents: you should include at least a table of content as well as, where
+
+appropriate, a table of figures and a table of tables.
+
+• Introduction: You should provide a brief overview to the purpose of the report and
+
+its content.
+
+• Purpose, operation and validation: A section explaining the purpose of the soft-
+ware, how the software can be executed/operated, and how the user knows that
+the software is performing as it should.
+
+• Design and implementation: Your design and implementation would usually cover
+
+items such as:
+
+– A statement of the significant assumptions you made for the design and im-
+
+plementation of the software
+
+– A statement of any languages, packages, frameworks, libraries that are used
+
+in the development or operation of your system.
+
+– An architectural diagram, or other design of the overall system, explaining
+the different components of your system and the interfaces between those
+components. Such a diagram might be a UML class diagram, a pipeline, or
+some other structure.
+
+– A description of the data model or models used, e.g., any significant in-
+memory data structures your software uses, and any significant persistent
+storage (such as the design of a relational database, for example)
+
+– A discussion of significant methods, functions or other low/er-level elements
+
+of your system that are particularly significant.
+
+– Information on important errors and their conditions
+
+– Information on design of the user interface, which may be a graphical user
+
+interface and/or a command line interface.
+
+– Details of the steps you have taken to quality assure your software. This
+
+might include:
+
+∗ Version control and versioning;
+∗ Code style and convention;
+∗ The use of linters to validate code syntax.
+∗ Automated documentation generation;
+∗ Code reviews;
+∗ Automated testing;
+∗ Continuous integration / deployment;
+
+15
+
+∗ Other kinds of testing, such as System Testing, Functional Testing, Ac-
+
+ceptance Testing.
+
+∗ Bug tracking and resolution
+
+– Appendices: Appendices could include copies of the non-code sections/files of
+GitLab, e.g., Readme, requirements file, install file, replication guide, license.
+
+6.3.3 Guidance for documentation on the GitLab repository
+
+The complete program code developed during the research project should be uploaded to
+Gitlab: https://gitlab.eeecs.qub.ac.uk/; the student must provide access to both
+the supervisor and the assessor. The program code must be appropriately annotated
+with comments and each component should have a complete module header. Programs
+should be written in a clear style with good program structure and well-defined data
+structures. The program code should reflect its design.
+
+In addition, and drawing on the guidance from the ACM Joint European Software
+Engineering Conference and Symposium on the Foundations of Software Engineering
+(ESEC/FSE; https://2022.esec-fse.org/track/fse-2022-artifacts), your repos-
+itory should contain the following sections/files:
+
+• A README file describing what the artefact does and where it can be obtained
+(with hidden links and access password if necessary). The subsequent items listed
+below might be linked to from the README, or might be subsections in the
+README file.
+
+• A REQUIREMENTS file covering aspects of hardware environment requirements
+(e.g., performance, storage or non-commodity peripherals) and software environ-
+ments (e.g., Docker, VM, and operating system) but also, if relevant, a require-
+ments.txt with explicit versioning information (e.g.
+for Python-only environ-
+ments).
+
+• An INSTALL file with installation instructions. These instructions should include
+notes illustrating a very basic usage example or a method to test the installation.
+This could be, for instance, on what output to expect that confirms that the code
+is installed and working; and the code is doing something interesting and useful.
+
+• A REPLICATION GUIDE for how to repeat, replicate, or reproduce the results
+presented in the paper. Artifacts which focus on data should, in principle, cover
+aspects relevant to understand the context, data provenance, ethical and legal
+statements (as long as relevant), and storage requirements. Artifacts which focus
+on software should, in principle, cover aspects relevant to how to install and use it
+(and be accompanied by a small example).
+
+• A LICENSE file describing the distribution rights. As an example, score“available”
+or higher at ESEC/FSE, the license needs to be some form of open source license.
+
+16
+
+7 Project Demo and Presentation
+
+Demo and Presentation (worth 10%)
+
+At the end of the project, each student is required to (i) demonstrate their project,
+and (ii) provide an oral presentation of the completed project both to the supervisor
+and assessor in the same session.
+
+Each student will be allocated a 40 minute session for demonstrating and presenting
+their work. The date will be confirmed in the second semester. The sessions will be
+allocated in the second semester. The demo and presentation should last no longer than
+20 minutes, which will be followed by a question and answer session.
+
+The oral presentation should be submitted as PowerPoint slides or in PDF format.
+The student should demonstrate the system developed from the project to the super-
+visor and assessor, and answer further questions to the extent to which the completed
+system meets the original research objectives. If a system is incomplete but partially
+demonstrable then the supervisor and assessor may award marks only for that portion
+of the system.
+
+The assessment criteria will be based on:
+
+• The presentation style, including keeping time
+
+• The work that has been demonstrated and done for the research project
+
+• The responses to technical queries
+
+The student may decide how they utilise the 20 minutes allocated for the demo and
+presentation. For example, consider a project in which the student developed algorithms
+for scheduling applications in the Cloud. The student is likely to have performed a thor-
+ough evaluation of these algorithms. In this case, the student could utilise more time to
+explain the algorithm and present their evaluation and results instead of demonstrating
+the execution of the algorithm.
+
+Note: Please take early advice from your supervisor on the best way to utilise the 20
+minute session for demo and presentation.
+
+17
+
+

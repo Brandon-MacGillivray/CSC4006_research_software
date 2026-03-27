@@ -1,114 +1,307 @@
+\documentclass[10pt,letterpaper,twocolumn]{article}
 
-\documentclass[11pt,twocolumn]{article}
-
-\usepackage[a4paper, margin=1in]{geometry}
-\usepackage{setspace}
-\usepackage{titlesec}
-\usepackage{hyperref}
+\usepackage[
+  letterpaper,
+  top=0.7in,
+  bottom=0.7in,
+  left=0.65in,
+  right=0.65in,
+  columnsep=0.2in
+]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{array}
+\usepackage{cite}
+\usepackage{url}
+
+\setlength{\parindent}{0.14in}
+\setlength{\parskip}{0pt}
+\pagestyle{plain}
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\Alph{subsection}.}
+\renewcommand{\thetable}{\Roman{table}}
+\renewcommand{\refname}{REFERENCES}
+
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {1.3ex plus 1ex minus .2ex}%
+  {0.8ex plus .2ex}%
+  {\centering\normalfont\small\scshape}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {1.0ex plus .8ex minus .2ex}%
+  {0.6ex plus .2ex}%
+  {\normalfont\itshape}}
+\renewcommand{\fnum@table}{\textsc{Table \thetable}}
+\makeatother
 
 \begin{document}
 
+\twocolumn[
+\begin{@twocolumnfalse}
+\begin{center}
+{\LARGE Lightweight Hand Pose Tracking for Edge HCI\par}
+\vspace{0.6em}
+{\large Brandon MacGillivray\par}
+\vspace{0.2em}
+{\normalsize School of Electronics, Electrical Engineering and Computer Science\par}
+{\normalsize Queen's University Belfast, Belfast, UK\par}
+{\normalsize \texttt{bmacgillivray01@qub.ac.uk}\par}
+\end{center}
+
+\vspace{0.6em}
+\noindent\textbf{\textit{Abstract}}---This article presents an initial research-article draft for a project on lightweight hand pose tracking for real-time human-computer interaction on edge devices. The longer-term project aim is to study both efficient RGB and stereo-aware pipelines for touchless interaction, but the current repository results are limited to a DRHand-inspired two-dimensional RGB estimator, its ablation experiments on RHD, and its deployment benchmarks on an NVIDIA Jetson Orin Nano. The implemented system combines a lightweight backbone with heatmap and coordinate regression branches together with a geometric fusion rule. The current experiments compare 21-joint and 10-joint variants, isolate the contribution of fusion against heatmap-only and coordinate-only outputs, and report both predictive accuracy and end-to-end latency. These results provide an initial picture of the present RGB pipeline and establish a baseline for later comparison with broader evaluation, including stereo input, application-level interaction testing, and further model refinement.
+
+\vspace{0.6em}
+\noindent\textbf{\textit{Keywords}}---hand pose estimation, human-computer interaction, edge devices, lightweight deep learning, stereo vision
+\vspace{1.0em}
+\end{@twocolumnfalse}
+]
+
+\section{INTRODUCTION}
+
+Human-computer interaction increasingly extends beyond keyboard, mouse, and touchscreen input toward camera-based, touchless interfaces. Hand pose tracking is attractive in this setting because hands are the main instrument for pointing, manipulation, and expressive gesture, and prior surveys identify hand-based interaction as especially promising for contact-free control, public displays, and sterile environments \cite{vuletic,wachs,li_vr}. Recent systems such as MediaPipe Hands show that near-real-time landmark prediction from RGB input is practical on commodity devices \cite{mediapipe}, which makes hand pose a plausible interface primitive for everyday HCI rather than only a research benchmark.
+
+Despite that promise, reliable hand pose estimation remains hard under self-occlusion, cluttered backgrounds, fast motion, challenging viewpoints, and limited compute budgets. These problems become more severe on edge devices, where latency, memory, power, and thermal limits constrain model choice. Lightweight 2D pipelines such as DRHand, SRHandNet, FastHand, and other efficiency-focused architectures address part of this problem \cite{dualreg,srhandnet,fasthand,attentionlite}, but accuracy-latency trade-offs remain central when a model must support interactive response rather than offline analysis.
+
+Stereo or depth-aware input may improve robustness to distance ambiguity and occlusion, yet practical embedded deployments remain less explored for detailed hand tracking than for broader pose estimation tasks \cite{stereojetson,blazepose}. The wider project that motivates this article therefore targets lightweight hand pose tracking for real-time HCI on embedded NVIDIA hardware, with future comparison between RGB-only and stereo-aware pipelines. The current repository captures the first concrete stage of that agenda: a reproducible RGB 2D hand-pose workflow with training, evaluation, MediaPipe comparison support, and Jetson-oriented benchmarking.
+
+This article reports the current state of that workflow using the aggregated results already present in the repository. As an initial draft, its purpose is to document the present system, summarize the current experiments, and provide a structured basis for later revision. The article therefore focuses on the existing RGB experiments, the current benchmark setup, and the model behaviour visible from the available result tables.
+
+\section{LITERATURE REVIEW}
+
+Related work spans both interaction design and pose estimation. Surveys of gesture-based HCI argue that hand input can be natural and expressive, particularly in virtual and mixed reality, large-display control, and clinical settings where touchless operation is valuable \cite{vuletic,wachs,li_vr}. On-device body-pose systems such as BlazePose further demonstrate how mobile deployment changes model priorities by rewarding low latency and stable tracking over absolute leaderboard performance \cite{blazepose}.
+
+Within hand pose estimation itself, MediaPipe Hands uses a detector-plus-landmark pipeline aimed directly at on-device deployment \cite{mediapipe}. SRHandNet, FastHand, and Attention! each pursue lightweight inference through efficiency-focused architectural choices \cite{srhandnet,fasthand,attentionlite}. DRHand is especially relevant to the present repository because it combines a lightweight backbone with both heatmap and coordinate regression branches, then fuses their outputs geometrically \cite{dualreg}. The repository studied here adopts that same high-level idea and packages it as a modular experimental codebase.
+
+Other methods emphasize structure and generalization. NSRM introduces nonparametric structure regularization for 2D hand pose \cite{nsrm}, while depthwise separable convolution and related efficient backbone design remain common tools for reducing computation \cite{xception}. The coordinate branch in the current repository uses Wing loss, which is designed for precise landmark localization when small residual differences matter \cite{wingloss}. For evaluation, the experiments rely on the RHD benchmark introduced by Zimmermann and Brox, which remains a useful testbed because it contains diverse synthetic poses, viewpoints, and occlusion patterns \cite{rhd}.
+
+Stereo, RGB-D, and egocentric settings highlight the next challenge. Stereo systems on embedded NVIDIA hardware have been demonstrated for real-time pose assessment, but such work typically targets whole-body tasks or generic pose estimation rather than lightweight, fine-grained hand tracking for HCI \cite{stereojetson}. This leaves a practical gap between efficient single-RGB hand tracking and richer multi-view sensing, and it motivates the later stages of the project described in the preliminary article.
+
+\section{TECHNICAL APPROACH}
+
+\subsection{Project Scope and Deployment Context}
+
+The broader project aim is real-time touchless HCI on edge devices, potentially using both monocular RGB and stereo RGB input. The current repository and aggregated results correspond only to the RGB 2D stage. No stereo fusion or ZED-specific training pipeline is presently evaluated in the reported tables. This section therefore documents the currently implemented RGB approach rather than the full planned system.
+
+\subsection{Repository Design}
+
+The repository is organized around a small Python package under \texttt{src/handpose} and a script layer under \texttt{scripts}. Data loading, model definitions, training utilities, evaluation code, and inference helpers are separated into modules so that experiments can be reproduced from command-line entry points. In addition to the DRHand-style model, the codebase includes a MediaPipe evaluation script and an end-to-end benchmark pipeline intended for Jetson-class deployment. The training script follows a fixed two-stage procedure. Stage 1 optimizes the backbone and heatmap head only. Stage 2 adds the coordinate head and optionally freezes earlier components.
+
+The implemented network contains three parts: a shared backbone, a heatmap regression head, and a coordinate regression head. The backbone outputs an $8 \times 8 \times 288$ feature tensor. The heatmap head upsamples this representation to per-joint heatmaps, while the coordinate head regresses normalized $(x,y)$ positions from intermediate features. This organization mirrors the architecture described in DRHand and preserves the intended contrast between dense spatial supervision and direct coordinate prediction \cite{dualreg}.
+
+\subsection{Datasets and Preprocessing}
+
+The repository supports RHD and a COCO-style hand-keypoint dataset through a shared dataset factory. The current article reports only the ablation results available for RHD because the aggregated result files in \texttt{docs/aggregated\_results} are centered on that benchmark. RHD is especially suitable for this analysis because it is challenging, multi-pose, and contains visibility annotations that allow metrics to ignore occluded joints when appropriate \cite{rhd}. At this stage, the evaluation remains benchmark-centric rather than task-centric: no user-study or application-loop dataset is yet part of the reported pipeline.
+
+All reported experiments use full-image resize preprocessing rather than detector-based cropping. Each RGB frame is resized to $256 \times 256$, and all target coordinates are rescaled into normalized image coordinates. This design simplifies the pipeline and makes training, evaluation, and benchmarking consistent, but it also means that the reported results are conditioned on full-frame hand localization rather than an external detection stage.
+
+\subsection{Training Objective and Fusion Rule}
+
+Stage 1 uses mean-squared error between predicted heatmaps and Gaussian targets generated from normalized keypoint coordinates. Stage 2 combines the heatmap loss with Wing loss on the coordinate branch \cite{wingloss}. The repository supports either the full 21-joint layout or a reduced 10-joint layout composed of finger bases and tips.
+
+Inference exposes three prediction modes: \texttt{heatmap}, \texttt{coord}, and \texttt{fusion}. Heatmap mode applies argmax decoding to each predicted heatmap. Coordinate mode returns the direct regression output. Fusion mode compares the disagreement between the two branches for each joint to a threshold $\alpha$, where $\alpha$ is the median predicted bone length in the current hand instance. Heatmap coordinates are selected when the disagreement is smaller than $\alpha$; otherwise coordinate predictions are retained. This rule follows the design rationale of DRHand and aims to combine local precision with better structural stability \cite{dualreg}.
+
+\subsection{Evaluation and Aggregation}
+
+The evaluation pipeline reports three principal metrics: normalized sum of squared error (SSE), root-relative normalized end-point error (EPE), and PCK@0.2. Benchmarking is performed separately on Jetson Orin Nano and reports per-image latency for image read, preprocessing, host-to-device transfer, forward prediction, JSON serialization, and end-to-end runtime. These measurements document the current experimental conditions, but the repository does not yet integrate task-completion or user-study measures. The tables in this article are populated from the aggregated CSV outputs already stored in \texttt{docs/aggregated\_results}. Each table entry is therefore presented as mean $\pm$ standard deviation over five seeds.
+
+\section{RESULTS AND ANALYSIS}
+
+The reported results correspond to the current RGB-only stage of the project. They should be treated as preliminary results for the present implementation rather than as final conclusions about the full project. Unless otherwise stated, the accuracy tables summarize five-seed experiments on RHD and the latency tables summarize Jetson Orin Nano benchmarks exported by the repository benchmark pipeline.
+
+\subsection{Main Accuracy Results}
+
+Table~\ref{tab:main_accuracy} compares the 21-joint baseline (\texttt{B0}) and the reduced 10-joint model (\texttt{B1}). Native evaluation should be interpreted carefully because the models predict different numbers of keypoints. Under native evaluation, the reduced model shows lower SSE and EPE largely because it solves a smaller prediction problem. The fairer comparison is the shared-10 protocol, where the 21-joint checkpoint is evaluated only on the 10 keypoints present in the reduced model. Under this setting, both models are extremely close: \texttt{B0} gives slightly lower SSE, whereas \texttt{B1} gives slightly lower EPE, and the PCK values are almost identical.
+
+This comparison shows that the reduced keypoint layout retains most of the predictive behaviour for the shared subset while reducing the size of the prediction task. It also indicates that native 21-joint and native 10-joint metrics should not be compared directly without considering the number of evaluated points.
+
 \begin{table*}[t]
 \centering
-\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better.}
+\footnotesize
+\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better. Values are mean $\pm$ std over five seeds.}
 \label{tab:main_accuracy}
 \begin{tabular}{llcccc}
 \toprule
 Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
 \midrule
-B0 baseline & native-21 & 21 & TBD & TBD & TBD \\
-B0 baseline & shared-10 & 21 & TBD & TBD & TBD \\
-B1 reduced & native-10 & 10 & TBD & TBD & TBD \\
-B1 reduced & shared-10 & 10 & TBD & TBD & TBD \\
+B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
+B1 reduced & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+B1 reduced & shared-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
+\subsection{Branch Ablation}
+
+Table~\ref{tab:branch_ablation} isolates the behavior of the three output modes. A consistent pattern emerges. Heatmap decoding gives the highest PCK for the 21-joint baseline, which suggests that it often places points inside the acceptance radius for PCK. However, its EPE is clearly worse than either fusion or coordinate regression, which indicates that PCK alone is not sufficient to characterize geometric quality. Fusion obtains the best SSE and EPE for both \texttt{B0} and \texttt{B1}, supporting the central dual-regression idea that the two branches are complementary rather than redundant.
+
+The coordinate branch is comparatively stable, especially in EPE, but does not uniformly outperform fusion. At this stage, this is best treated as a descriptive observation about the current implementation rather than a final claim about the method more generally.
+
 \begin{table*}[t]
 \centering
-\caption{Branch ablation for the dual-regression design. Fusion should be compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints.}
+\footnotesize
+\caption{Branch ablation for the dual-regression design. Fusion is compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints. Values are mean $\pm$ std over five seeds.}
 \label{tab:branch_ablation}
 \begin{tabular}{llcccc}
 \toprule
 Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
 \midrule
-B0 & native-21 & fusion & TBD & TBD & TBD \\
-B0 & native-21 & heatmap & TBD & TBD & TBD \\
-B0 & native-21 & coord & TBD & TBD & TBD \\
-B1 & native-10 & fusion & TBD & TBD & TBD \\
-B1 & native-10 & heatmap & TBD & TBD & TBD \\
-B1 & native-10 & coord & TBD & TBD & TBD \\
+B0 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
+B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
+B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
+B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
+\subsection{Runtime Analysis}
+
+Table~\ref{tab:latency} shows that on Jetson Orin Nano the 10-joint model is faster than the 21-joint baseline across all three prediction modes. The largest cost difference appears in fusion mode, where \texttt{B1} reduces end-to-end latency from 36.81 ms/image to 33.31 ms/image. The same trend is visible in forward prediction time. The reduction is modest rather than dramatic, which is consistent with the fact that much of the compute still resides in the shared backbone.
+
+The gap between fusion and the individual branches is also informative. For \texttt{B0}, fusion adds roughly 3.2 ms/image over heatmap mode in the forward stage. Table~\ref{tab:latency_breakdown} shows that the non-model costs are also non-trivial: image read and preprocessing together account for more than 7 ms/image in the fused setting. This supports the repository's choice to benchmark the full pipeline rather than the model alone. These timings provide preliminary deployment information, but they are not yet direct measures of interaction quality in an application setting.
+
 \begin{table*}[t]
 \centering
-\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction and JSON write.}
+\footnotesize
+\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction, and JSON write. Values are mean $\pm$ std over five seeds.}
 \label{tab:latency}
 \begin{tabular}{llccc}
 \toprule
 Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
 \midrule
-B0 & fusion & TBD & TBD & TBD \\
-B0 & heatmap & TBD & TBD & TBD \\
-B0 & coord & TBD & TBD & TBD \\
-B1 & fusion & TBD & TBD & TBD \\
-B1 & heatmap & TBD & TBD & TBD \\
-B1 & coord & TBD & TBD & TBD \\
+B0 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
+B0 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
+B0 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
+B1 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
+B1 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
+B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 \begin{table*}[t]
 \centering
-\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints.}
-\label{tab:fusion_diagnostics}
-\begin{tabular}{llccccc}
-\toprule
-Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
-\midrule
-B0 & native-21 & TBD & TBD & TBD & TBD & TBD \\
-B0 & shared-10 & TBD & TBD & TBD & TBD & TBD \\
-B1 & native-10 & TBD & TBD & TBD & TBD & TBD \\
-B1 & shared-10 & TBD & TBD & TBD & TBD & TBD \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent.}
+\footnotesize
+\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent. Values are mean $\pm$ std over five seeds.}
 \label{tab:latency_breakdown}
 \begin{tabular}{lcccccc}
 \toprule
 Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
 \midrule
-B0 fusion & TBD & TBD & TBD & TBD & TBD & TBD \\
-B1 fusion & TBD & TBD & TBD & TBD & TBD & TBD \\
+B0 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
+B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
+\subsection{Fusion Diagnostics}
+
+Table~\ref{tab:fusion_diagnostics} provides additional evidence about how the heuristic selector behaves. The 21-joint model chooses the coordinate branch more often than the heatmap branch, whereas the 10-joint model is almost evenly split. The oracle-match rate remains well below 1.0 for both models, meaning that the present rule often disagrees with the lower-error branch when judged retrospectively on visible joints. The 10-joint model achieves a better oracle-match rate than the 21-joint baseline, but both leave substantial room for improvement.
+
+These diagnostics show that the current fusion rule behaves differently across the two model settings and does not always match the retrospectively lower-error branch. This identifies a clear area for later refinement.
+
 \begin{table*}[t]
 \centering
-\caption{Hyperparameter ablation relative to the baseline B0 configuration.}
+\footnotesize
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. Diagnostics were exported only for native evaluation, so shared-10 rows are omitted.}
+\label{tab:fusion_diagnostics}
+\begin{tabular}{llccccc}
+\toprule
+Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
+\midrule
+B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
+B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Hyperparameter Sensitivity}
+
+Table~\ref{tab:hyper_ablation} summarizes the fused 21-joint hyperparameter sweep. No single setting dominates across all metrics. \texttt{W2} gives the lowest SSE, \texttt{E1} gives the lowest EPE, and \texttt{S2} gives the highest PCK. The runtime differences between these fused configurations remain relatively small, staying within roughly 0.8 ms/image end-to-end.
+
+This pattern shows that the baseline \texttt{B0} is relatively balanced, but also that different settings favour different metrics. At this stage, that observation mainly supports keeping multiple evaluation measures in the article rather than optimizing the draft around only one of them.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Hyperparameter ablation relative to the baseline \texttt{B0} configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. Values are mean $\pm$ std over five seeds.}
 \label{tab:hyper_ablation}
 \begin{tabular}{llcccc}
 \toprule
 Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
 \midrule
-L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & TBD & TBD & TBD & TBD \\
-L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & TBD & TBD & TBD & TBD \\
-S1 & $\sigma=1.5$ & TBD & TBD & TBD & TBD \\
-S2 & $\sigma=3.0$ & TBD & TBD & TBD & TBD \\
-W1 & $w=5.0$ & TBD & TBD & TBD & TBD \\
-W2 & $w=15.0$ & TBD & TBD & TBD & TBD \\
-E1 & $\epsilon=1.0$ & TBD & TBD & TBD & TBD \\
-E2 & $\epsilon=4.0$ & TBD & TBD & TBD & TBD \\
+B0 & baseline & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & 36.81 $\pm$ 1.33 \\
+L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & 0.3583 $\pm$ 0.0534 & 0.0725 $\pm$ 0.0096 & 0.9081 $\pm$ 0.0092 & 35.77 $\pm$ 0.45 \\
+L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & 0.3073 $\pm$ 0.0260 & 0.0812 $\pm$ 0.0022 & 0.9115 $\pm$ 0.0095 & 35.75 $\pm$ 0.49 \\
+S1 & $\sigma=1.5$ & 0.3252 $\pm$ 0.0381 & 0.0707 $\pm$ 0.0055 & 0.9116 $\pm$ 0.0086 & 35.72 $\pm$ 0.25 \\
+S2 & $\sigma=3.0$ & 0.3137 $\pm$ 0.0488 & 0.0833 $\pm$ 0.0058 & 0.9177 $\pm$ 0.0081 & 36.48 $\pm$ 0.53 \\
+W1 & $w=5.0$ & 0.3213 $\pm$ 0.0384 & 0.0737 $\pm$ 0.0058 & 0.9150 $\pm$ 0.0099 & 36.21 $\pm$ 0.39 \\
+W2 & $w=15.0$ & 0.2979 $\pm$ 0.0441 & 0.0750 $\pm$ 0.0031 & 0.9140 $\pm$ 0.0124 & 35.91 $\pm$ 0.43 \\
+E1 & $\epsilon=1.0$ & 0.2994 $\pm$ 0.0591 & 0.0695 $\pm$ 0.0011 & 0.9175 $\pm$ 0.0113 & 35.84 $\pm$ 0.23 \\
+E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0.0067 & 36.13 $\pm$ 0.52 \\
 \bottomrule
 \end{tabular}
 \end{table*}
+
+\section{CONCLUSIONS}
+
+This initial draft summarizes the current RGB hand-pose pipeline implemented in the repository and presents the available accuracy and latency results in research-article form. The present findings show how the 21-joint and 10-joint variants behave on RHD, how the fusion output compares with heatmap-only and coordinate-only prediction, and how the current models perform under Jetson Orin Nano benchmarking. The draft therefore establishes a documented starting point for the project rather than a final account of the full investigation.
+
+Several limitations remain. The current article reflects only the aggregated outputs already available in the repository and therefore emphasizes the RHD ablation study rather than cross-dataset transfer or task-based interaction evaluation. The full-frame resize preprocessing also means that detector quality is not part of the reported system behavior. In addition, the current fusion rule is hand-crafted and the oracle-match analysis shows that it is only partially aligned with the lower-error branch. Stereo input has not yet been integrated into the reported experiments, so the article does not yet address the full project scope described in the preliminary article. Future work can extend this draft by adding stereo-aware experiments, broader comparisons, application-level testing, and a more developed discussion of the results.
+
+\section*{ACKNOWLEDGEMENTS}
+
+This initial draft does not yet include project-specific acknowledgements. Support, supervision, or other contributions can be added in a later revision if appropriate.
+
+\begin{thebibliography}{00}
+
+\bibitem{vuletic}
+T. Vuletic, A. Duffy, L. Hay, C. McTeague, and G. Campbell, ``Systematic literature review of hand gestures used in human-computer interaction interfaces,'' \emph{Int. J. Human-Computer Studies}, vol. 129, pp. 47--65, 2019.
+
+\bibitem{wachs}
+J. P. Wachs, M. Kolsch, H. Stern, and Y. Edan, ``Vision-based hand-gesture applications,'' \emph{Communications of the ACM}, vol. 54, no. 2, pp. 60--71, 2011.
+
+\bibitem{li_vr}
+Y. Li, J. Huang, F. Tian, H.-A. Wang, and G.-Z. Dai, ``Gesture interaction in virtual reality,'' \emph{Virtual Reality \& Intelligent Hardware}, vol. 1, no. 1, pp. 84--112, 2019.
+
+\bibitem{dualreg}
+D. Wei, S. An, X. Zhang, J. Tian, K. A. Tsintotas, A. Gasteratos, and H. Zhu, ``Dual regression for efficient hand pose estimation,'' in \emph{Proc. IEEE Int. Conf. Robotics and Automation}, 2022.
+
+\bibitem{rhd}
+C. Zimmermann and T. Brox, ``Learning to estimate 3D hand pose from single RGB images,'' in \emph{Proc. IEEE Int. Conf. Computer Vision}, 2017, pp. 4903--4911.
+
+\bibitem{mediapipe}
+F. Zhang, V. Bazarevsky, A. Vakunov, A. Tkachenka, G. Sung, C.-L. Chang, and M. Grundmann, ``MediaPipe hands: On-device real-time hand tracking,'' \emph{arXiv preprint arXiv:2006.10214}, 2020.
+
+\bibitem{srhandnet}
+Y. Wang, B. Zhang, and C. Peng, ``SRHandNet: Real-time 2D hand pose estimation with simultaneous region localization,'' \emph{IEEE Trans. Image Processing}, vol. 29, pp. 2977--2986, 2019.
+
+\bibitem{wingloss}
+Z.-H. Feng, J. Kittler, M. Awais, P. Huber, and X.-J. Wu, ``Wing loss for robust facial landmark localisation with convolutional neural networks,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2018, pp. 2235--2245.
+
+\bibitem{nsrm}
+Y. Chen, H. Ma, D. Kong, X. Yan, J. Wu, W. Fan, and X. Xie, ``Nonparametric structure regularization machine for 2D hand pose estimation,'' in \emph{IEEE Winter Conf. Applications of Computer Vision}, 2020, pp. 381--390.
+
+\bibitem{fasthand}
+S. An, X. Zhang, D. Wei, H. Zhu, J. Yang, and K. A. Tsintotas, ``FastHand: Fast monocular hand pose estimation on embedded systems,'' \emph{Journal of Systems Architecture}, vol. 122, p. 102361, 2022.
+
+\bibitem{attentionlite}
+N. Santavas, I. Kansizoglou, L. Bampis, E. Karakasis, and A. Gasteratos, ``Attention! A lightweight 2D hand pose estimation approach,'' \emph{IEEE Sensors Journal}, vol. 21, no. 10, pp. 11488--11501, 2021.
+
+\bibitem{stereojetson}
+E. Williams-Linera and J. M. Ramirez-Cortes, ``Stereo vision system based on the NVIDIA Jetson Nano for real-time evaluation of yoga poses,'' in \emph{Proc. IEEE}, 2024, pp. 1--7.
+
+\bibitem{blazepose}
+V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann, ``BlazePose: On-device real-time body pose tracking,'' \emph{arXiv preprint arXiv:2006.10204}, 2020.
+
+\bibitem{xception}
+F. Chollet, ``Xception: Deep learning with depthwise separable convolutions,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2017, pp. 1251--1258.
+
+\end{thebibliography}
 
 \end{document}
