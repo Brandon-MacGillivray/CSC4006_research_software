@@ -264,3 +264,51 @@ sbatch --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.o
 
 
 python scripts/aggregate_results.py --eval-json-dir C:/Users/brand/Downloads/eval_results --benchmark-csv C:/Users/brand/Documents/CSC4006_DRHand_replica/docs/orin_maxn_summary.csv --out-dir C:/Users/brand/Documents/CSC4006_DRHand_replica/docs/aggregated_results
+
+
+
+python scripts/generate_transfer_experiment_matrix.py \
+  --rhd-root /users/40321491/data/RHD_published_v2 \
+  --coco-root /users/40321491/sharedscratch/data/hand_keypoint_dataset_26k \
+  --checkpoint-root /users/40321491/sharedscratch/training_results \
+  --eval-root /users/40321491/eval_results \
+  --benchmark-summary-csv /path/to/transfer_benchmark_results/transfer_summary.csv \
+  --benchmark-output-root /path/to/transfer_benchmark_results \
+  --out-dir /users/40321491/handpose/experiment_plan_transfer
+
+python scripts/generate_transfer_experiment_matrix.py --rhd-root /users/40321491/data/RHD_published_v2 --coco-root /users/40321491/sharedscratch/data/hand_keypoint_dataset_26k --checkpoint-root /users/40321491/sharedscratch/training_results --eval-root /users/40321491/eval_results --benchmark-summary-csv /path/to/transfer_benchmark_results/transfer_summary.csv --benchmark-output-root /path/to/transfer_benchmark_results --out-dir /users/40321491/handpose/experiment_plan_transfer
+
+
+sbatch --array=1-10 handpose/slurm/train_transfer_matrix.sbatch
+sbatch --array=11-20 handpose/slurm/train_transfer_matrix.sbatch
+
+
+cd ~/handpose
+
+python scripts/eval_mediapipe_rhd.py \
+  --model-asset-path ~/handpose/models/hand_landmarker.task \
+  --root ~/data/RHD_published_v2 \
+  --split evaluation \
+  --hand right \
+  --out-json ~/eval_results/mediapipe_rhd_right.json
+
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b0-k21-right-s101/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b0-k21-right-s101.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b0-k21-right-s202/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b0-k21-right-s202.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b0-k21-right-s303.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b0-k21-right-s404/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b0-k21-right-s404.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b0-k21-right-s505/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b0-k21-right-s505.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s101.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s202/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s202.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s303/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s303.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s404/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s404.fusion.shared10_diag.json
+
+python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s505/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s505.fusion.shared10_diag.json

@@ -62,10 +62,31 @@ LATENCY_GROUP_FIELDS = [
 ]
 
 LATENCY_METRIC_FIELDS = [
+    "image_read_ms_mean",
+    "preprocess_ms_mean",
+    "host_to_device_ms_mean",
     "forward_predict_ms_mean",
+    "write_json_ms_mean",
     "total_e2e_ms_mean",
+    "benchmark_images_per_second",
     "session_setup_ms",
 ]
+
+LATENCY_SUMMARY_METRIC_ALIASES = {
+    "forward_predict_ms_mean": "forward_ms",
+    "total_e2e_ms_mean": "e2e_ms",
+    "benchmark_images_per_second": "images_per_second",
+    "session_setup_ms": "setup_ms",
+}
+
+LATENCY_BREAKDOWN_METRIC_ALIASES = {
+    "image_read_ms_mean": "read_ms",
+    "preprocess_ms_mean": "prep_ms",
+    "host_to_device_ms_mean": "h2d_ms",
+    "forward_predict_ms_mean": "forward_ms",
+    "write_json_ms_mean": "write_ms",
+    "total_e2e_ms_mean": "e2e_ms",
+}
 
 EVAL_ID_FIELDS = [
     "job_id",
@@ -329,6 +350,11 @@ def load_benchmark_rows(csv_path: Path):
             row["wing_epsilon"] = row.get("wing_epsilon", "")
             row["seed"] = row.get("seed", "")
             row["status"] = row.get("status", "")
+            total_e2e_ms_mean = parse_number(row.get("total_e2e_ms_mean"))
+            if total_e2e_ms_mean is not None and total_e2e_ms_mean > 0:
+                row["benchmark_images_per_second"] = 1000.0 / float(total_e2e_ms_mean)
+            else:
+                row["benchmark_images_per_second"] = ""
             row["source_path"] = str(csv_path)
             rows.append(row)
     return rows
@@ -433,6 +459,40 @@ def build_branch_ablation_rows(rows):
     return aggregate_rows(rows, group_fields=branch_fields, metric_fields=metric_fields)
 
 
+def build_named_metric_rows(rows, *, group_fields, metric_aliases):
+    aggregated_rows = aggregate_rows(
+        rows,
+        group_fields=group_fields,
+        metric_fields=list(metric_aliases.keys()),
+    )
+    out_rows = []
+    for row in aggregated_rows:
+        out = {field: row.get(field, "") for field in group_fields}
+        out["n"] = row.get("n", "")
+        out["num_seeds"] = row.get("num_seeds", "")
+        for raw_field, alias in metric_aliases.items():
+            out[f"{alias}_mean"] = row.get(f"{raw_field}_mean", "")
+            out[f"{alias}_std"] = row.get(f"{raw_field}_std", "")
+        out_rows.append(out)
+    return out_rows
+
+
+def build_latency_summary_rows(rows):
+    return build_named_metric_rows(
+        rows,
+        group_fields=LATENCY_GROUP_FIELDS,
+        metric_aliases=LATENCY_SUMMARY_METRIC_ALIASES,
+    )
+
+
+def build_latency_breakdown_rows(rows):
+    return build_named_metric_rows(
+        rows,
+        group_fields=LATENCY_GROUP_FIELDS,
+        metric_aliases=LATENCY_BREAKDOWN_METRIC_ALIASES,
+    )
+
+
 def main():
     args = parse_args()
     out_dir = Path(args.out_dir)
@@ -481,7 +541,15 @@ def main():
             group_fields=LATENCY_GROUP_FIELDS,
             metric_fields=LATENCY_METRIC_FIELDS,
         )
-        write_csv(out_dir / "aggregated_latency.csv", aggregated_latency)
+        write_csv(out_dir / "aggregated_latency_raw.csv", aggregated_latency)
+        write_csv(
+            out_dir / "aggregated_latency.csv",
+            build_latency_summary_rows(latency_rows),
+        )
+        write_csv(
+            out_dir / "aggregated_latency_breakdown.csv",
+            build_latency_breakdown_rows(latency_rows),
+        )
 
 
 if __name__ == "__main__":

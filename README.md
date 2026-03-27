@@ -30,11 +30,18 @@ The repo now supports:
 - `numpy`
 - `Pillow`
 - `matplotlib` (for `plot_losses.py`)
+- `mediapipe` (optional, only for the MediaPipe baseline script)
 
 Example install:
 
 ```bash
 pip install torch torchvision numpy pillow matplotlib
+```
+
+Optional baseline dependency:
+
+```bash
+pip install mediapipe
 ```
 
 ## Expected Dataset Layouts
@@ -165,6 +172,14 @@ For non-RHD datasets, the stored hand metadata is normalized to `single`.
 - `--debug-coords`: print first-batch diagnostics to `stderr`
 - `--with-fusion-diagnostics`: export fusion-selection statistics in the result JSON
 
+### MediaPipe Baseline (`scripts/eval_mediapipe_rhd.py`)
+
+- `--model-asset-path`: path to the MediaPipe Hand Landmarker `.task` model
+- `--hand left|right|auto`: choose the RHD target hand
+- `--ignore-handedness`: ignore MediaPipe handedness labels and always score the highest-confidence detection
+- `--shared-10-eval`: evaluate only the shared 10 keypoints
+- `--out-json`: write a result JSON compatible with the repo's aggregation flow
+
 ## Plot Training Curves
 
 ```bash
@@ -216,6 +231,19 @@ python scripts/eval_metrics.py \
   --shared-10-eval \
   --out-json eval_results/exp_rhd_k21_shared10.json
 ```
+
+### Evaluate The MediaPipe Baseline On RHD
+
+```bash
+python scripts/eval_mediapipe_rhd.py \
+  --model-asset-path path/to/hand_landmarker.task \
+  --root data/RHD_published_v2 \
+  --split evaluation \
+  --hand right \
+  --out-json eval_results/mediapipe_rhd.json
+```
+
+This writes a JSON payload aligned with the normal eval output format so `scripts/aggregate_results.py` can consume it.
 
 ## Single Image Inference
 
