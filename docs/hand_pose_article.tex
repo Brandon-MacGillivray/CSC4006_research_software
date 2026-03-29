@@ -72,9 +72,9 @@ This paper therefore makes four contributions. First, it documents a lightweight
 
 \section{LITERATURE REVIEW}
 
-Related work spans both interaction design and pose estimation. Surveys of gesture-based HCI argue that hand input can be natural and expressive, particularly in virtual and mixed reality, large-display control, and clinical settings where touchless operation is valuable \cite{vuletic,wachs,li_vr}. On-device pose systems such as BlazePose further demonstrate how mobile deployment changes model priorities by rewarding low latency and stable tracking over absolute leaderboard performance \cite{blazepose}.
+Related work spans both interaction design and pose estimation. Surveys of gesture-based HCI argue that hand input can be natural and expressive, particularly in virtual and mixed reality, large-display control, and clinical settings where touchless operation is valuable \cite{vuletic,wachs,li_vr}. On-device pose systems such as BlazePose further demonstrate how mobile deployment changes model priorities by rewarding low latency and stable tracking \cite{blazepose}.
 
-Within hand pose estimation itself, MediaPipe Hands uses a detector-plus-landmark pipeline aimed directly at on-device deployment \cite{mediapipe}. Lightweight 2D methods such as Attention!, SRHandNet, and FastHand pursue reduced computation through efficiency-focused architectural choices \cite{attentionlite,srhandnet,fasthand}. DRHand is especially relevant to the present work because it combines a lightweight backbone with both heatmap and coordinate regression branches, then fuses their outputs geometrically \cite{dualreg}. This dual-regression idea is the direct methodological starting point for the implementation studied here. Other methods such as NSRM emphasise structural regularisation, while depthwise separable convolution remains a common strategy for reducing compute in lightweight backbones \cite{nsrm,xception}.
+Within hand pose estimation itself, MediaPipe Hands uses a detector-plus-landmark pipeline aimed directly at on-device deployment \cite{mediapipe}. Lightweight 2D methods such as Attention!, SRHandNet, and FastHand pursue reduced computation through efficiency-focused architectural choices \cite{attentionlite,srhandnet,fasthand}. DRHand is especially relevant to the present work because it combines a lightweight backbone with both heatmap and coordinate regression branches, then fuses their outputs geometrically \cite{dualreg}. This dual-regression idea is the direct methodological starting point for the implementation studied here.
 
 Stereo, RGB-D, and egocentric settings point toward the next challenge. Stereo systems on embedded NVIDIA hardware have been demonstrated for real-time pose assessment, but such work typically targets broader pose tasks rather than detailed hand tracking for HCI \cite{stereojetson}. This leaves a practical gap between efficient single-RGB hand tracking and richer multi-view sensing, and it motivates the later stages of the wider project.
 
@@ -152,6 +152,8 @@ At the same time, the results highlight several limitations and opportunities fo
 
 The present findings show that the current pipeline is capable of near-real-time operation on embedded hardware while maintaining competitive accuracy within the scope of the implemented experiments. Future work should extend this foundation by improving the fusion mechanism, broadening the evaluation to more varied datasets and application scenarios. 
 
+\clearpage
+\onecolumn
 \begin{thebibliography}{00}
 
 \bibitem{vuletic}
@@ -166,9 +168,6 @@ Y. Li, J. Huang, F. Tian, H.-A. Wang, and G.-Z. Dai, ``Gesture interaction in vi
 \bibitem{dualreg}
 D. Wei, S. An, X. Zhang, J. Tian, K. A. Tsintotas, A. Gasteratos, and H. Zhu, ``Dual regression for efficient hand pose estimation,'' in \emph{Proc. IEEE Int. Conf. Robotics and Automation}, 2022.
 
-\bibitem{rhd}
-C. Zimmermann and T. Brox, ``Learning to estimate 3D hand pose from single RGB images,'' in \emph{Proc. IEEE Int. Conf. Computer Vision}, 2017, pp. 4903--4911.
-
 \bibitem{mediapipe}
 F. Zhang, V. Bazarevsky, A. Vakunov, A. Tkachenka, G. Sung, C.-L. Chang, and M. Grundmann, ``MediaPipe hands: On-device real-time hand tracking,'' \emph{arXiv preprint arXiv:2006.10214}, 2020.
 
@@ -177,9 +176,6 @@ Y. Wang, B. Zhang, and C. Peng, ``SRHandNet: Real-time 2D hand pose estimation w
 
 \bibitem{wingloss}
 Z.-H. Feng, J. Kittler, M. Awais, P. Huber, and X.-J. Wu, ``Wing loss for robust facial landmark localisation with convolutional neural networks,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2018, pp. 2235--2245.
-
-\bibitem{nsrm}
-Y. Chen, H. Ma, D. Kong, X. Yan, J. Wu, W. Fan, and X. Xie, ``Nonparametric structure regularization machine for 2D hand pose estimation,'' in \emph{IEEE Winter Conf. Applications of Computer Vision}, 2020, pp. 381--390.
 
 \bibitem{fasthand}
 S. An, X. Zhang, D. Wei, H. Zhu, J. Yang, and K. A. Tsintotas, ``FastHand: Fast monocular hand pose estimation on embedded systems,'' \emph{Journal of Systems Architecture}, vol. 122, p. 102361, 2022.
@@ -193,8 +189,6 @@ E. Williams-Linera and J. M. Ramirez-Cortes, ``Stereo vision system based on the
 \bibitem{blazepose}
 V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann, ``BlazePose: On-device real-time body pose tracking,'' \emph{arXiv preprint arXiv:2006.10204}, 2020.
 
-\bibitem{xception}
-F. Chollet, ``Xception: Deep learning with depthwise separable convolutions,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2017, pp. 1251--1258.
 
 \end{thebibliography}
 
