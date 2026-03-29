@@ -15,6 +15,7 @@
 \usepackage{array}
 \usepackage{cite}
 \usepackage{url}
+\usepackage{float}
 
 \setlength{\parindent}{0.14in}
 \setlength{\parskip}{0pt}
@@ -117,113 +118,7 @@ In addition to the accuracy metrics, the benchmark pipeline recorded forward pre
 
 \section{RESULTS AND ANALYSIS}
 
-Unless otherwise stated, the accuracy tables summarise five-seed experiments on RHD and the latency tables summarise Jetson Orin Nano benchmarks exported by the repository benchmark pipeline. All values are reported as mean $\pm$ standard deviation. 
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better. Values are mean $\pm$ std over five seeds.}
-\label{tab:main_accuracy}
-\begin{tabular}{llcccc}
-\toprule
-Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
-\midrule
-B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
-B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
-B1 reduced & shared-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Branch ablation for the dual-regression design. Fusion is compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints. Values are mean $\pm$ std over five seeds.}
-\label{tab:branch_ablation}
-\begin{tabular}{llcccc}
-\toprule
-Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
-\midrule
-B0 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
-B0 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
-B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
-B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
-B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
-B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction, and JSON write. Values are mean $\pm$ std over five seeds.}
-\label{tab:latency}
-\begin{tabular}{llccc}
-\toprule
-Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
-\midrule
-B0 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
-B0 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
-B0 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
-B1 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
-B1 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
-B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent. Values are mean $\pm$ std over five seeds.}
-\label{tab:latency_breakdown}
-\begin{tabular}{lcccccc}
-\toprule
-Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
-\midrule
-B0 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
-B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. Diagnostics were exported only for native evaluation, so shared-10 rows are omitted.}
-\label{tab:fusion_diagnostics}
-\begin{tabular}{llccccc}
-\toprule
-Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
-\midrule
-B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
-B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Hyperparameter ablation relative to the baseline \texttt{B0} configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. Values are mean $\pm$ std over five seeds.}
-\label{tab:hyper_ablation}
-\begin{tabular}{llcccc}
-\toprule
-Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
-\midrule
-B0 & baseline & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & 36.81 $\pm$ 1.33 \\
-L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & 0.3583 $\pm$ 0.0534 & 0.0725 $\pm$ 0.0096 & 0.9081 $\pm$ 0.0092 & 35.77 $\pm$ 0.45 \\
-L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & 0.3073 $\pm$ 0.0260 & 0.0812 $\pm$ 0.0022 & 0.9115 $\pm$ 0.0095 & 35.75 $\pm$ 0.49 \\
-S1 & $\sigma=1.5$ & 0.3252 $\pm$ 0.0381 & 0.0707 $\pm$ 0.0055 & 0.9116 $\pm$ 0.0086 & 35.72 $\pm$ 0.25 \\
-S2 & $\sigma=3.0$ & 0.3137 $\pm$ 0.0488 & 0.0833 $\pm$ 0.0058 & 0.9177 $\pm$ 0.0081 & 36.48 $\pm$ 0.53 \\
-W1 & $w=5.0$ & 0.3213 $\pm$ 0.0384 & 0.0737 $\pm$ 0.0058 & 0.9150 $\pm$ 0.0099 & 36.21 $\pm$ 0.39 \\
-W2 & $w=15.0$ & 0.2979 $\pm$ 0.0441 & 0.0750 $\pm$ 0.0031 & 0.9140 $\pm$ 0.0124 & 35.91 $\pm$ 0.43 \\
-E1 & $\epsilon=1.0$ & 0.2994 $\pm$ 0.0591 & 0.0695 $\pm$ 0.0011 & 0.9175 $\pm$ 0.0113 & 35.84 $\pm$ 0.23 \\
-E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0.0067 & 36.13 $\pm$ 0.52 \\
-\bottomrule
-\end{tabular}
-\end{table*}
+Unless otherwise stated, the accuracy tables summarise five-seed experiments on RHD and the latency tables summarise Jetson Orin Nano benchmarks exported by the repository benchmark pipeline. All values are reported as mean $\pm$ standard deviation.
 
 \subsection{Main Accuracy Results}
 
@@ -302,5 +197,115 @@ V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann
 F. Chollet, ``Xception: Deep learning with depthwise separable convolutions,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2017, pp. 1251--1258.
 
 \end{thebibliography}
+
+\clearpage
+\onecolumn
+\section*{TABLES}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better. Values are mean $\pm$ std over five seeds.}
+\label{tab:main_accuracy}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
+B1 reduced & shared-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Branch ablation for the dual-regression design. Fusion is compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints. Values are mean $\pm$ std over five seeds.}
+\label{tab:branch_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
+B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
+B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
+B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction, and JSON write. Values are mean $\pm$ std over five seeds.}
+\label{tab:latency}
+\begin{tabular}{llccc}
+\toprule
+Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
+\midrule
+B0 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
+B0 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
+B0 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
+B1 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
+B1 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
+B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent. Values are mean $\pm$ std over five seeds.}
+\label{tab:latency_breakdown}
+\begin{tabular}{lcccccc}
+\toprule
+Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
+\midrule
+B0 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
+B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. Diagnostics were exported only for native evaluation, so shared-10 rows are omitted.}
+\label{tab:fusion_diagnostics}
+\begin{tabular}{llccccc}
+\toprule
+Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
+\midrule
+B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
+B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Hyperparameter ablation relative to the baseline \texttt{B0} configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. Values are mean $\pm$ std over five seeds.}
+\label{tab:hyper_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
+\midrule
+B0 & baseline & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & 36.81 $\pm$ 1.33 \\
+L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & 0.3583 $\pm$ 0.0534 & 0.0725 $\pm$ 0.0096 & 0.9081 $\pm$ 0.0092 & 35.77 $\pm$ 0.45 \\
+L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & 0.3073 $\pm$ 0.0260 & 0.0812 $\pm$ 0.0022 & 0.9115 $\pm$ 0.0095 & 35.75 $\pm$ 0.49 \\
+S1 & $\sigma=1.5$ & 0.3252 $\pm$ 0.0381 & 0.0707 $\pm$ 0.0055 & 0.9116 $\pm$ 0.0086 & 35.72 $\pm$ 0.25 \\
+S2 & $\sigma=3.0$ & 0.3137 $\pm$ 0.0488 & 0.0833 $\pm$ 0.0058 & 0.9177 $\pm$ 0.0081 & 36.48 $\pm$ 0.53 \\
+W1 & $w=5.0$ & 0.3213 $\pm$ 0.0384 & 0.0737 $\pm$ 0.0058 & 0.9150 $\pm$ 0.0099 & 36.21 $\pm$ 0.39 \\
+W2 & $w=15.0$ & 0.2979 $\pm$ 0.0441 & 0.0750 $\pm$ 0.0031 & 0.9140 $\pm$ 0.0124 & 35.91 $\pm$ 0.43 \\
+E1 & $\epsilon=1.0$ & 0.2994 $\pm$ 0.0591 & 0.0695 $\pm$ 0.0011 & 0.9175 $\pm$ 0.0113 & 35.84 $\pm$ 0.23 \\
+E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0.0067 & 36.13 $\pm$ 0.52 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \end{document}
