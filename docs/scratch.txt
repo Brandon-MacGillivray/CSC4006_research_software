@@ -312,3 +312,21 @@ python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_result
 python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s404/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s404.fusion.shared10_diag.json
 
 python ~/handpose/scripts/eval_metrics.py --ckpt ~/sharedscratch/training_results/drh-b1-k10-right-s505/checkpoints/best.pt --root ~/data/RHD_published_v2 --split evaluation --hand right --prediction-mode fusion --shared-10-eval --with-fusion-diagnostics --out-json ~/eval_results/drh-b1-k10-right-s505.fusion.shared10_diag.json
+
+
+
+python scripts/generate_transfer_experiment_matrix.py --rhd-root /users/40321491/data/RHD_published_v2 --coco-root /users/40321491/sharedscratch/data/hand_keypoint_dataset_26k --checkpoint-root /users/40321491/sharedscratch/training_results --eval-root /users/40321491/eval_results
+
+
+sbatch \
+  --array=1-40 \
+  --chdir=/users/40321491/handpose \
+  --output=/users/40321491/logs/%x_%A_%a.out \
+  --error=/users/40321491/logs/%x_%A_%a.err \
+  --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan_transfer/eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch \
+  slurm/eval_transfer_matrix.sbatch
+
+  sbatch --array=1-40 --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan_transfer/eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch slurm/eval_transfer_matrix.sbatch
+
+
+sbatch --array=1-5 --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan/shared10_diag_eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch slurm/eval_matrix.sbatch
