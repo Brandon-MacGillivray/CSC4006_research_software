@@ -1,0 +1,21 @@
+stages:
+  - smoke
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+cache:
+  paths:
+    - .cache/pip
+
+smoke-test:
+  stage: smoke
+  image: python:3.12
+  before_script:
+    - python --version
+    - python -m pip install --upgrade pip
+    - python -m pip install -r requirements.txt
+  script:
+    - python scripts/smoke_test.py
+    - pytest -q

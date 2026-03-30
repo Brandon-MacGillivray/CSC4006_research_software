@@ -9,6 +9,18 @@ The repo now supports:
 - `21` keypoints (default) or `10` keypoints (`--tips-bases-only`)
 - scratch training and transfer fine-tuning (`C->R`, `R->C`)
 
+## Artefact Files
+
+The repository includes the following root-level documents to support installation,
+reproducibility, and assessment as a research artefact:
+
+- `REQUIREMENTS.md`: hardware, software, dataset, and storage expectations
+- `environment.yml`: Conda environment definition for the base workflow
+- `requirements.txt`: base Python package dependencies for the core workflow
+- `INSTALL.md`: setup and smoke-test instructions
+- `REPLICATION_GUIDE.md`: step-by-step workflow for reproducing the reported runs
+- `LICENSE`: distribution terms for the code in this repository
+
 ## Structure
 
 - `src/handpose/data/`: shared dataset factory + transforms + dataset-specific loaders
@@ -35,13 +47,20 @@ The repo now supports:
 Example install:
 
 ```bash
-pip install torch torchvision numpy pillow matplotlib
+conda env create -f environment.yml
+conda activate drhand
 ```
 
 Optional baseline dependency:
 
 ```bash
 pip install mediapipe
+```
+
+Optional webcam demo dependency:
+
+```bash
+pip install opencv-python
 ```
 
 ## Expected Dataset Layouts
@@ -187,6 +206,24 @@ python scripts/plot_losses.py --job-id exp_rhd_k21
 ```
 
 This reads `training_results/<job-id>/losses.csv` and writes `loss_plot.png` in the same run directory.
+
+## Testing
+
+Basic repository smoke test:
+
+```bash
+python scripts/smoke_test.py
+```
+
+Synthetic unit tests:
+
+```bash
+pytest -q
+```
+
+The smoke test checks that the main non-optional CLIs start correctly. The `pytest`
+suite covers checkpoint validation, fusion helpers, evaluation helper logic, and model
+output shapes without requiring external datasets.
 
 ## Evaluate Trained Models
 
