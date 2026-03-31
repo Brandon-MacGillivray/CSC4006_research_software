@@ -330,3 +330,6 @@ sbatch \
 
 
 sbatch --array=1-5 --chdir=/users/40321491/handpose --output=/users/40321491/logs/%x_%A_%a.out --error=/users/40321491/logs/%x_%A_%a.err --export=ALL,REPO_DIR=/users/40321491/handpose,COMMAND_FILE=/users/40321491/handpose/experiment_plan/shared10_diag_eval_commands.txt,CONDA_SOURCE=/users/40321491/miniconda/etc/profile.d/conda.sh,CONDA_ENV_NAME=torch slurm/eval_matrix.sbatch
+
+
+python scripts/aggregate_results.py --eval-json-dir C:\Users\brand\Downloads\eval_results --benchmark-csv C:\Users\brand\Documents\CSC4006_DRHand_replica\docs\orin_maxn_summary.csv --out-dir docs/aggregated_results
