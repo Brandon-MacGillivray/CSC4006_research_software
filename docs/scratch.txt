@@ -343,3 +343,8 @@ python scripts/eval_mediapipe_rhd.py --model-asset-path src/handpose/models/hand
 python ~/handpose/scripts/eval_mediapipe_rhd.py --model-asset-path ~/handpose/src/handpose/models/hand_landmarker.task --root ~/data/RHD_published_v2 --split evaluation --hand right --out-json ~/eval_results/mediapipe_rhd.json
 python ~/handpose/scripts/eval_mediapipe_rhd.py --model-asset-path ~/handpose/src/handpose/models/hand_landmarker.task --root ~/data/RHD_published_v2 --split evaluation --hand right --shared-10-eval --out-json eval_results/mediapipe_rhd_shared10.json
 python ~/handpose/scripts/eval_mediapipe_rhd.py --model-asset-path ~/handpose/src/handpose/models/hand_landmarker.task --root ~/data/RHD_published_v2 --split evaluation --hand right --ignore-handedness --out-json eval_results/mediapipe_rhd_ignore_handedness.json
+
+
+Set-Location docs\latex
+pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v4.tex
+pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v4.tex
