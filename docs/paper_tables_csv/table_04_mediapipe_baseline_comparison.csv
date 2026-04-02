@@ -1,0 +1,7 @@
+Method,Eval set,SSE,EPE,PCK@0.2,Detection success
+MediaPipe,native-21,2.3022,0.0830,0.6452,0.4879
+MediaPipe (ignore handedness),native-21,1.4002,0.0904,0.6726,0.8933
+MediaPipe,shared-10,1.1202,0.1209,0.6407,0.4879
+DRHand B0 fusion,native-21,0.3098 +/- 0.0236,0.0779 +/- 0.0054,0.9112 +/- 0.0071,n/a
+DRHand B0 fusion,shared-10,0.1511 +/- 0.0120,0.0764 +/- 0.0039,0.9101 +/- 0.0071,n/a
+DRHand B1 fusion,native-10,0.1574 +/- 0.0226,0.0706 +/- 0.0054,0.9099 +/- 0.0046,n/a

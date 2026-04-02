@@ -52,7 +52,7 @@
 \end{center}
 
 \vspace{0.6em}
-\noindent\textbf{\textit{Abstract}}---This paper presents a lightweight RGB hand pose estimation pipeline for edge-based human-computer interaction, implemented as a DRHand-inspired dual-regression model with heatmap and coordinate branches combined by a geometric fusion rule. The study focuses on the current RGB-only stage of the project and evaluates the system through five-seed ablation experiments on the RHD benchmark together with deployment-oriented benchmarking on an NVIDIA Jetson Orin Nano. Results compare a 21-joint baseline and a reduced 10-joint variant, analyse fusion against heatmap-only and coordinate-only prediction, and examine the effect of key training hyperparameters. The reduced model preserves almost the same performance on the shared 10-joint subset while offering lower latency, and the fusion strategy provides the best overall geometric accuracy in terms of SSE and EPE, supporting the value of combining the two regression branches. Jetson benchmarking shows near-real-time performance, with the fused 10-joint model reaching about 30 images per second end to end. Fusion diagnostics, however, also show that the current hand-crafted selector does not consistently match the lower-error branch, indicating clear room for refinement. Overall, the reported results establish a practical baseline for lightweight edge deployment and provide a foundation for future improvements in fusion, robustness, and broader evaluation.
+\noindent\textbf{\textit{Abstract}}---This paper presents a lightweight RGB hand pose estimation pipeline for edge-based human-computer interaction. The system is implemented as a DRHand-inspired dual-regression model whose heatmap and coordinate branches are combined by a geometric fusion rule. The study evaluates the current RGB-only stage of the project through five-seed ablation experiments on RHD, transfer-learning experiments between RHD and a COCO-style hand dataset, a MediaPipe baseline comparison on RHD, and deployment-oriented benchmarking on NVIDIA Jetson Orin Nano. The results compare a 21-joint baseline with a reduced 10-joint variant, examine fusion against heatmap-only and coordinate-only prediction, and assess sensitivity to key training hyperparameters. On the shared 10-joint subset, the reduced model preserves almost the same accuracy while offering lower latency. Transfer results show weak zero-shot cross-dataset generalisation but strong gains from target-domain fine-tuning, especially from RHD to COCO. The MediaPipe baseline is substantially weaker on RHD and is strongly affected by handedness filtering. Jetson benchmarking shows near-real-time performance, with the fused 10-joint model reaching about 30 images per second end to end. Fusion diagnostics show that the current hand-crafted selector does not reliably match the lower-error branch, which leaves clear room for refinement. Overall, the reported results establish a practical baseline for lightweight edge deployment and provide a foundation for future improvements in fusion, transfer, and broader evaluation.
 
 \vspace{0.6em}
 \noindent\textbf{\textit{Keywords}}---hand pose estimation, human-computer interaction, edge devices, lightweight deep learning, stereo vision
@@ -64,11 +64,11 @@
 
 Human-computer interaction increasingly extends beyond keyboard, mouse, and touchscreen input toward camera-based, touchless interfaces. Hand pose tracking is attractive in this setting because hands are central to pointing, manipulation, and expressive gesture, and prior work has shown that hand-based interaction is especially promising for contact-free control, public displays, and sterile environments \cite{vuletic,wachs,li_vr}. Recent systems such as MediaPipe Hands demonstrate that near-real-time landmark prediction from RGB input is practical on commodity devices \cite{mediapipe}, which makes hand pose a plausible interface primitive for everyday HCI rather than only a computer-vision benchmark.
 
-Despite that promise, reliable hand pose estimation remains difficult under self-occlusion, cluttered backgrounds, fast motion, challenging viewpoints, and limited compute budgets. These problems become more severe on edge devices, where latency, memory, power, and thermal limits constrain model choice. Lightweight 2D pipelines such as DRHand and other efficiency-focused architectures address part of this problem \cite{dualreg,srhandnet,fasthand,attentionlite}, but the accuracy-latency trade-off remains central when a model must support interactive response rather than offline analysis.
+Despite that promise, reliable hand pose estimation remains difficult under self-occlusion, cluttered backgrounds, fast motion, challenging viewpoints, and limited compute budgets. These problems become more severe on edge devices, where latency, memory, power, and thermal limits constrain model choice. This constraint matters directly in the present work because the target platform is an embedded Jetson device intended for interactive HCI rather than offline analysis. Lightweight 2D pipelines such as DRHand and other efficiency-focused architectures address part of this problem \cite{dualreg,srhandnet,fasthand,attentionlite}, but the accuracy-latency trade-off remains central.
 
 The broader project that motivates this paper targets lightweight hand pose tracking for real-time HCI on embedded NVIDIA hardware, with future comparison between RGB-only and stereo-aware pipelines. The present study reports only the current RGB-only baseline. More specifically, it evaluates a DRHand-inspired dual-regression implementation, studies whether a reduced 10-keypoint layout can retain useful accuracy for HCI-oriented use, analyses the contribution of heatmap, coordinate, and fused prediction modes, and benchmarks the system on Jetson Orin Nano.
 
-This paper therefore makes four contributions. First, it documents a lightweight DRHand-inspired RGB hand pose pipeline adapted to the current repository. Second, it compares a standard 21-keypoint output with a reduced 10-keypoint variant motivated by edge HCI use. Third, it analyses the effect of branch fusion relative to heatmap-only and coordinate-only prediction. Fourth, it reports deployment-oriented latency measurements on embedded hardware to establish a practical baseline for future work.
+This paper therefore makes six contributions. First, it documents a lightweight DRHand-inspired RGB hand pose pipeline adapted to the current repository. Second, it compares a standard 21-keypoint output with a reduced 10-keypoint variant motivated by edge HCI use. Third, it analyses the effect of branch fusion relative to heatmap-only and coordinate-only prediction. Fourth, it reports a transfer-learning matrix across RHD and a COCO-style hand dataset. Fifth, it compares the learned models against a MediaPipe baseline on RHD. Sixth, it reports deployment-oriented latency measurements on embedded hardware to establish a practical baseline for future work.
 
 \section{LITERATURE REVIEW}
 
@@ -76,29 +76,31 @@ Related work spans both interaction design and pose estimation. Surveys of gestu
 
 Within hand pose estimation itself, MediaPipe Hands uses a detector-plus-landmark pipeline aimed directly at on-device deployment \cite{mediapipe}. Lightweight 2D methods such as Attention!, SRHandNet, and FastHand pursue reduced computation through efficiency-focused architectural choices \cite{attentionlite,srhandnet,fasthand}. DRHand is especially relevant to the present work because it combines a lightweight backbone with both heatmap and coordinate regression branches, then fuses their outputs geometrically \cite{dualreg}. This dual-regression idea is the direct methodological starting point for the implementation studied here.
 
-Stereo, RGB-D, and egocentric settings point toward the next challenge. Stereo systems on embedded NVIDIA hardware have been demonstrated for real-time pose assessment, but such work typically targets broader pose tasks rather than detailed hand tracking for HCI \cite{stereojetson}. This leaves a practical gap between efficient single-RGB hand tracking and richer multi-view sensing, and it motivates the later stages of the wider project.
+Stereo, RGB-D, and egocentric settings point toward the next challenge. Stereo systems on embedded NVIDIA hardware have been demonstrated for real-time pose assessment, but such work typically targets broader pose tasks rather than detailed hand tracking for HCI \cite{stereojetson}. This leaves a practical gap between efficient single-RGB hand tracking and richer multi-view sensing. That gap motivates the current focus on a lightweight RGB baseline that can be analysed in terms of both accuracy and deployment cost before richer sensing configurations are introduced. The next section therefore defines the implemented DRHand-inspired pipeline and the experimental protocol used in this study.
 
 \section{TECHNICAL APPROACH}
+
+This section narrows the scope of the paper, outlines the implemented model, and describes the training and evaluation procedures that generate the reported results.
 
 \subsection{Project Scope and Motivation}
 
 Many hand-pose pipelines predict a full 21-keypoint skeleton, but not every downstream HCI task necessarily requires all of those landmarks. A number of practical interactions rely mainly on fingertip placement and coarse finger configuration, which raises a simple question: can a reduced landmark set preserve useful predictive behaviour while reducing runtime on embedded hardware? In this paper, that question is explored through a 10-keypoint variant composed of finger bases and tips.
 
-The scope of the present paper is incomplete. The repository also supports transfer-learning experiments and broader dataset handling, the reported study focuses on the RHD ablation matrix and Jetson Orin Nano deployment benchmarks. The contribution is therefore a study into the effects of reducing number of output keypoints on the accuracy and latency of a hand pose estimation model.
+The scope of the present paper covers the main result-producing components of the repository. These include the RHD ablation matrix, transfer-learning experiments between RHD and a COCO-style hand dataset, a MediaPipe baseline evaluation on RHD, and Jetson Orin Nano deployment benchmarks. The emphasis remains on how output design, branch behaviour, transfer setting, and deployment constraints affect a lightweight hand pose estimation pipeline.
 
 \subsection{DRHand-Inspired Model}
 
 DRHand was selected as the control architecture because it is explicitly designed as a lightweight hand pose estimator. It is also well matched to the present research question: if some interaction scenarios do not require the full 21-keypoint output, then a compact DRHand-inspired model provides a sensible platform for testing whether reduced landmark layouts can improve efficiency without materially harming useful accuracy.
 
-The implemented model is a DRHand-inspired 2D hand pose estimator that combines heatmap regression and direct coordinate regression in a single dual-branch architecture. A shared backbone extracts compact multi-scale features from the input image using depthwise separable residual blocks and feature concatenation, keeping computation low while preserving both local detail and higher-level semantic information. From these shared features, one branch predicts per-joint heatmaps for strong spatial localisation, while the second branch predicts landmark coordinates directly, providing stronger geometric consistency between joints. The two branches are supervised separately, with an $L_2$-style heatmap loss for the heatmap branch and Wing loss for the coordinate branch \cite{wingloss}, and are trained in a two-stage manner. During inference, the model compares the predictions of the two branches for each landmark and selects the final output using a simple reliability rule: when both branches agree closely, the heatmap prediction is used; otherwise the coordinate prediction is preferred.
+The implemented model is a DRHand-inspired 2D hand pose estimator with a dual-branch design. A shared backbone extracts compact multi-scale features from the input image using depthwise separable residual blocks and feature concatenation. This keeps computation low while preserving both local detail and higher-level semantic information. From these shared features, one branch predicts per-joint heatmaps for spatial localisation, while the second branch predicts landmark coordinates directly to encourage stronger geometric consistency between joints. The two branches are supervised separately, with an $L_2$-style heatmap loss for the heatmap branch and Wing loss for the coordinate branch \cite{wingloss}. Training follows a two-stage procedure. During inference, the model compares the predictions of the two branches for each landmark and selects the final output using a simple reliability rule: when both branches agree closely, the heatmap prediction is used; otherwise the coordinate prediction is preferred.
 
 \subsection{Relation to the Original DRHand Paper}
 
-The present implementation follows the central idea of DRHand, namely a lightweight dual-regression architecture that combines a heatmap branch with a coordinate-regression branch, but it should be regarded as an adaptation rather than a strict reproduction of the original work. The most substantial difference lies in the experimental setting. In the original paper, DRHand is trained on YouTube2D Hands and GANerated Hands and evaluated on STB and RHD, whereas the current implementation is built around RHD and a COCO-style hand-keypoint dataset. In addition, the repository extends the original formulation with functionality that is not part of the paper, including transfer-learning experiments, cross-dataset evaluation, and an alternative 10-keypoint tip-and-base configuration. As a result, while the implementation preserves the main methodological intuition of DRHand, its empirical setting is broader and differs materially from that reported in the original study.
+The present implementation follows the central idea of DRHand, namely a lightweight dual-regression architecture that combines a heatmap branch with a coordinate-regression branch, but it should be regarded as an adaptation rather than a strict reproduction of the original work. The most substantial difference is the experimental setting. In the original paper, DRHand is trained on YouTube2D Hands and GANerated Hands and evaluated on STB and RHD. The current implementation is built around RHD and a COCO-style hand-keypoint dataset. The repository also extends the original formulation with transfer-learning experiments, cross-dataset evaluation, and an alternative 10-keypoint tip-and-base configuration. As a result, while the implementation preserves the main methodological intuition of DRHand, its empirical setting is materially broader than that reported in the original study.
 
-A further difference concerns the optimisation and evaluation procedures. The original paper reports a two-stage training strategy in TensorFlow, with stage 1 optimising the backbone and heatmap branch using a learning rate of $10^{-3}$ and batch size 64 until convergence, followed by stage 2 optimisation of the full network with a learning rate of $10^{-4}$ and batch size 256. By contrast, the current implementation is written in PyTorch, uses configurable training schedules with early stopping, and relies on gradient accumulation to approximate a larger effective batch size during the second stage. Moreover, invisible joints are masked during evaluation when visibility information is available, which is a sensible practical choice but is not explicitly reflected in the metric definitions given in the paper. These differences mean that quantitative results obtained with the present implementation should not be interpreted as directly comparable to those of the original DRHand paper.
+A further difference concerns the optimisation and evaluation procedures. The original paper reports a two-stage training strategy in TensorFlow, with stage 1 optimising the backbone and heatmap branch using a learning rate of $10^{-3}$ and batch size 64 until convergence, followed by stage 2 optimisation of the full network with a learning rate of $10^{-4}$ and batch size 256. By contrast, the current implementation is written in PyTorch, uses configurable training schedules with early stopping, and relies on gradient accumulation to approximate a larger effective batch size during the second stage. Invisible joints are also masked during evaluation when visibility information is available. This is a sensible engineering choice, but it is not explicitly reflected in the metric definitions given in the paper. These differences mean that quantitative results obtained with the present implementation should not be interpreted as directly comparable to those of the original DRHand paper.
 
-Several aspects of the original DRHand paper also remain underspecified, which necessarily introduces uncertainty into any reimplementation. The paper does not describe in detail how the target heatmaps are generated, does not fully define the stage-2 combined objective, and does not clearly document preprocessing details such as cropping, aspect-ratio handling, or augmentation. The present implementation therefore makes explicit engineering choices in these areas, which are reasonable but inferred rather than directly prescribed by the source paper.
+Several aspects of the original DRHand paper also remain underspecified, which necessarily introduces uncertainty into any reimplementation. The paper does not describe in detail how the target heatmaps are generated. It does not fully define the stage-2 combined objective. It also does not clearly document preprocessing details such as cropping, aspect-ratio handling, or augmentation. The present implementation therefore makes explicit engineering choices in these areas. Those choices are reasonable, but they are inferred rather than directly prescribed by the source paper.
 
 \subsection{Experimental Setup}
 
@@ -108,17 +110,21 @@ Each training run followed the same two-stage procedure. In stage 1, the backbon
 
 Evaluation was then carried out on the saved stage-2 checkpoints using a separate metrics pipeline. Each checkpoint was evaluated in three prediction modes: fusion, heatmap-only, and coordinate-only. In addition, fused predictions were evaluated in a shared-10-keypoint setting so that 21-keypoint and 10-keypoint models could be compared fairly, and an extra diagnostic run recorded how often the fusion rule selected the heatmap branch versus the coordinate branch. Beyond accuracy, the experiments also included end-to-end benchmarking of inference latency on Jetson Orin Nano. Benchmarking measured the time spent reading the image, preprocessing it, transferring data to the device, running prediction, writing the output JSON, and the total end-to-end time per image.
 
+Beyond the RHD ablation matrix, a transfer-learning matrix was also evaluated across RHD and a COCO-style hand-keypoint dataset. Four training sequences were considered: scratch training on RHD, scratch training on COCO, COCO-to-RHD fine-tuning, and RHD-to-COCO fine-tuning. This makes it possible to distinguish target-domain scratch performance, zero-shot cross-dataset generalisation, and transfer adaptation. A separate MediaPipe Hand Landmarker baseline was also evaluated on RHD in native 21-keypoint and shared-10 settings, together with a variant that ignores handedness filtering during detection selection.
+
 \subsection{Evaluation Metrics}
 
 All accuracy metrics were computed in normalised coordinate space after preprocessing. The normalised SSE was calculated by summing the squared Euclidean error of all visible joints in each sample and averaging this value across the evaluation set. The normalised EPE was computed in a root-relative manner by measuring the Euclidean distance between predicted and ground-truth joint coordinates after both had been expressed relative to a reference root joint. For the full 21-keypoint setting, the wrist/root joint at index 0 was used when available; for the reduced 10-keypoint setting, keypoint 1 was used instead. PCK@0.2 was calculated as the proportion of visible keypoints whose normalised Euclidean error was less than or equal to 0.2.
 
 The evaluation pipeline also computed fusion diagnostics to analyse the behaviour of the dual-branch selection rule. For each sample, the model produced heatmap-decoded coordinates, direct coordinate-regression outputs, and the final fused output. The disagreement between the two branches for each joint was measured as the Euclidean distance between the heatmap and coordinate predictions. A sample-level threshold $\alpha$ was computed as the median predicted bone length derived from the coordinate branch. Heatmap predictions were selected whenever the disagreement was smaller than $\alpha$; otherwise, coordinate predictions were used. Additional diagnostics reported the overall heatmap and coordinate selection rates, the mean and median of $\alpha$ and disagreement, and the proportion of visible joints for which the chosen branch matched the retrospectively lower-error branch.
 
-In addition to the accuracy metrics, the benchmark pipeline recorded forward prediction time, mean milliseconds per image, and images processed per second, together with a breakdown of image read time, preprocessing time, host-to-device transfer time, JSON writing time, and total end-to-end latency. This made it possible to analyse not only model quality but also practical deployment cost on edge hardware.
+In addition to the accuracy metrics, the benchmark pipeline recorded forward prediction time, mean milliseconds per image, and images processed per second, together with a breakdown of image read time, preprocessing time, host-to-device transfer time, JSON writing time, and total end-to-end latency. This made it possible to analyse not only model quality but also practical deployment cost on edge hardware. Together, these measures provide the basis for the quantitative comparisons reported in Section~IV.
 
 \section{RESULTS AND ANALYSIS}
 
-Unless otherwise stated, the accuracy tables summarise five-seed experiments on RHD and the latency tables summarise Jetson Orin Nano benchmarks exported by the repository benchmark pipeline. All values are reported as mean $\pm$ standard deviation.
+This section reports the main ablation, transfer, baseline, runtime, and diagnostic findings. It first compares the 21-joint and 10-joint models, then examines branch behaviour, cross-dataset transfer, baseline comparison, deployment cost, and hyperparameter sensitivity.
+
+Unless otherwise stated, the learned-model accuracy tables summarise five-seed experiments and the latency tables summarise Jetson Orin Nano benchmarks exported by the repository benchmark pipeline. These values are reported as mean $\pm$ standard deviation. The MediaPipe baseline table reports single evaluation runs.
 
 \subsection{Main Accuracy Results}
 
@@ -128,15 +134,29 @@ Table~\ref{tab:main_accuracy} compares the 21-joint baseline (\texttt{B0}) and t
 
 Table~\ref{tab:branch_ablation} isolates the behaviour of the three output modes. A consistent pattern is that fusion gives the best or near-best SSE and EPE for both \texttt{B0} and \texttt{B1}, which supports the main motivation for the dual-regression design. The heatmap branch behaves differently depending on the metric. For the 21-joint model it achieves the highest PCK, but its EPE is clearly worse than fusion or coordinate-only prediction. This indicates that thresholded correctness and fine-grained geometric accuracy reward different behaviours: a prediction can still fall within the PCK threshold while producing larger relative geometric errors. The coordinate branch is comparatively stable and remains close to fusion, especially in EPE, but fusion still provides a modest overall advantage. For the 10-joint model, heatmap-only prediction degrades more clearly across all metrics, which further suggests that the two branches are complementary rather than redundant.
 
+\subsection{Transfer Learning}
+
+Table~\ref{tab:transfer_learning} summarises the transfer-learning matrix across RHD and the COCO-style hand dataset. The clearest pattern is that zero-shot cross-dataset generalisation is weak. Scratch training on RHD performs strongly on RHD but poorly on COCO, and scratch training on COCO shows the opposite behaviour. In particular, \texttt{R\_ONLY} reaches PCK 0.9143 on RHD but only 0.3719 on COCO, whereas \texttt{C\_ONLY} reaches PCK 0.9834 on COCO but only 0.3397 on RHD.
+
+Target-domain fine-tuning substantially improves both directions. Relative to \texttt{C\_ONLY} evaluated on RHD, \texttt{C\_TO\_R} improves RHD PCK from 0.3397 to 0.8190. Relative to \texttt{R\_ONLY} evaluated on COCO, \texttt{R\_TO\_C} improves COCO PCK from 0.3719 to 0.9837. However, target-domain scratch training remains the strongest result on its home dataset. The transfer behaviour is also asymmetric: \texttt{R\_TO\_C} approaches COCO scratch performance closely, whereas \texttt{C\_TO\_R} remains more clearly below RHD scratch. In the present setup, adaptation from RHD to COCO therefore appears easier than the reverse.
+
+\subsection{MediaPipe Baseline}
+
+Table~\ref{tab:mediapipe_baseline} compares the learned DRHand variants against the MediaPipe Hand Landmarker baseline on RHD. The baseline is substantially weaker than the trained models in all reported settings. On native 21-keypoint evaluation, MediaPipe reaches PCK 0.6452, whereas \texttt{B0} fusion reaches 0.9112. On the shared-10 comparison, MediaPipe reaches PCK 0.6407, which remains far below both \texttt{B0} shared-10 and \texttt{B1} native-10.
+
+The MediaPipe results also reveal a strong sensitivity to handedness filtering. When handedness labels are enforced, the detection success rate is only 0.4879. Ignoring handedness raises detection success to 0.8933 and improves PCK from 0.6452 to 0.6726, although the EPE increases slightly from 0.0830 to 0.0904. This indicates that a substantial part of the baseline failure on RHD is caused not only by landmark quality, but also by hand-selection errors under the current evaluation protocol.
+
 \subsection{Runtime Analysis}
 
 Table~\ref{tab:latency} shows that the reduced 10-joint model is faster than the 21-joint baseline across all three prediction modes. In the fused setting, \texttt{B1} reduces end-to-end latency from 36.81 ms/image to 33.31 ms/image, corresponding to an increase from 27.20 to 30.03 images/s. The same trend is visible in forward prediction time. The speedup is useful but not dramatic, which is consistent with the fact that most computation still lies in the shared backbone rather than in the output heads alone. Both models nevertheless remain within a near-real-time operating range on Jetson Orin Nano, which is encouraging for edge HCI use.
 
-The detailed timing breakdown in Table~\ref{tab:latency_breakdown} shows that the forward stage is the dominant cost, accounting for most of the total end-to-end latency in the fused setting. However, non-model overhead is still non-trivial: image reading, preprocessing, host-to-device transfer, and result serialization together contribute several milliseconds per image. 
+The detailed timing breakdown in Table~\ref{tab:latency_breakdown} shows that the forward stage is the dominant cost, accounting for most of the total end-to-end latency in the fused setting. However, non-model overhead is still non-trivial: image reading, preprocessing, host-to-device transfer, and result serialization together contribute several milliseconds per image. This overhead matters because the target platform is already close to the interactive threshold, so pipeline optimisation remains relevant even when the network itself is lightweight.
 
 \subsection{Fusion Diagnostics}
 
-Table~\ref{tab:fusion_diagnostics} provides additional evidence about how the hand-crafted fusion rule behaves. For the 21-joint model, the selector chooses the coordinate branch more often than the heatmap branch, whereas for the 10-joint model the two branches are selected almost equally often. More importantly, the oracle-match rate remains relatively low for both models, at 0.481 for \texttt{B0} and 0.529 for \texttt{B1}. Since this metric measures how often the chosen branch matches the retrospectively lower-error branch, these values indicate that the current fusion rule is only partially aligned with the optimal branch decision. In other words, the present heuristic does improve aggregate accuracy, but it still leaves substantial room for improvement through a better calibrated or learned fusion strategy.
+Table~\ref{tab:fusion_diagnostics} provides additional evidence about how the hand-crafted fusion rule behaves. For the 21-joint model, the selector chooses the coordinate branch more often than the heatmap branch, whereas for the 10-joint model the two branches are selected almost equally often. More importantly, the oracle-match rate remains relatively low for both native settings, at 0.481 for \texttt{B0} and 0.529 for \texttt{B1}. Since this metric measures how often the chosen branch matches the retrospectively lower-error branch, these values indicate that the current fusion rule is only partially aligned with the optimal branch decision.
+
+The available shared-10 diagnostic export for \texttt{B0} shows similar behaviour. On the shared subset, heatmap selection falls slightly to 0.407 and coordinate selection rises to 0.593, while the oracle-match rate remains low at 0.474. Restricting evaluation to the shared subset therefore does not materially fix the mismatch between the current heuristic and the retrospectively better branch. In other words, the present fusion rule does improve aggregate accuracy, but it still leaves substantial room for improvement through a better calibrated or learned fusion strategy.
 
 \subsection{Hyperparameter Sensitivity}
 
@@ -146,11 +166,11 @@ Overall, the current results support three main conclusions. First, the reduced 
 
 \section{CONCLUSION}
 
-This paper presented the current RGB-only stage of a lightweight hand pose tracking pipeline intended for edge-based human-computer interaction. The implemented system adopts a DRHand-inspired dual-regression design, combining heatmap and coordinate prediction with a simple fusion rule, and evaluates this approach through ablation experiments on RHD together with deployment-oriented benchmarking on Jetson Orin Nano. The reported results show that the reduced 10-joint configuration preserves most of the useful predictive performance on the shared subset while providing a modest latency improvement over the full 21-joint baseline. The branch ablation study also indicates that fusing the two prediction branches improves geometric accuracy relative to using either branch alone, supporting the main design motivation behind the method.
+This paper presented the current RGB-only stage of a lightweight hand pose tracking pipeline intended for edge-based human-computer interaction. The implemented system adopts a DRHand-inspired dual-regression design, combining heatmap and coordinate prediction with a simple fusion rule, and evaluates this approach through ablation experiments on RHD, transfer-learning experiments across RHD and a COCO-style hand dataset, a MediaPipe baseline comparison, and deployment-oriented benchmarking on Jetson Orin Nano. The reported results show that the reduced 10-joint configuration preserves most of the useful predictive performance on the shared subset while providing a modest latency improvement over the full 21-joint baseline. The branch ablation study also indicates that fusing the two prediction branches improves geometric accuracy relative to using either branch alone, supporting the main design motivation behind the method.
 
-At the same time, the results highlight several limitations and opportunities for refinement. The current hand-crafted fusion rule does not consistently match the retrospectively lower-error branch, as shown by the oracle-match diagnostics, suggesting that the fusion stage remains a clear target for improvement. The hyperparameter sweep further shows that no single configuration dominates across all metrics, which implies that performance depends on the evaluation objective rather than on one universally best setting.
+At the same time, the broader result set highlights several limitations and opportunities for refinement. Zero-shot cross-dataset transfer is weak, even though target-domain fine-tuning recovers much of the lost performance, especially from RHD to COCO. The MediaPipe baseline also performs substantially worse than the trained models on RHD and is strongly affected by handedness filtering. In addition, the current hand-crafted fusion rule does not consistently match the retrospectively lower-error branch, as shown by the oracle-match diagnostics, which suggests that the fusion stage remains a clear target for improvement. The hyperparameter sweep further shows that no single configuration dominates across all metrics, so configuration choice depends on the evaluation objective rather than on one universally best setting.
 
-The present findings show that the current pipeline is capable of near-real-time operation on embedded hardware while maintaining competitive accuracy within the scope of the implemented experiments. Future work should extend this foundation by improving the fusion mechanism, broadening the evaluation to more varied datasets and application scenarios. 
+The present findings show that the current pipeline is capable of near-real-time operation on embedded hardware while maintaining competitive accuracy within the scope of the implemented experiments. Future work should therefore improve the fusion mechanism, broaden the evaluation to more varied datasets and application scenarios, and extend the comparison to richer sensing configurations on the same embedded platform.
 
 \clearpage
 \onecolumn
@@ -207,7 +227,7 @@ Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 
 \midrule
 B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
 B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
-B1 reduced & shared-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+B1 reduced & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -227,6 +247,42 @@ B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm
 B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
 B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
 B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Transfer-learning results for the four training sequences evaluated on both RHD and the COCO-style hand dataset. Values are mean $\pm$ std over five seeds, and fusion-mode evaluation is shown because it is the main operating mode in the study.}
+\label{tab:transfer_learning}
+\begin{tabular}{llcccccc}
+\toprule
+Training sequence & Exp. & RHD SSE & RHD EPE & RHD PCK & COCO SSE & COCO EPE & COCO PCK \\
+\midrule
+RHD scratch & \texttt{R\_ONLY} & 0.3091 $\pm$ 0.0269 & 0.0764 $\pm$ 0.0030 & 0.9143 $\pm$ 0.0097 & 3.7488 $\pm$ 0.7985 & 0.3365 $\pm$ 0.0075 & 0.3719 $\pm$ 0.0434 \\
+COCO scratch & \texttt{C\_ONLY} & 1.4194 $\pm$ 0.2619 & 0.1609 $\pm$ 0.0207 & 0.3397 $\pm$ 0.0718 & 0.0764 $\pm$ 0.0016 & 0.0612 $\pm$ 0.0049 & 0.9834 $\pm$ 0.0007 \\
+COCO $\rightarrow$ RHD & \texttt{C\_TO\_R} & 0.4504 $\pm$ 0.0162 & 0.1020 $\pm$ 0.0039 & 0.8190 $\pm$ 0.0114 & 1.6426 $\pm$ 0.2293 & 0.2678 $\pm$ 0.0114 & 0.5320 $\pm$ 0.0164 \\
+RHD $\rightarrow$ COCO & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$ 0.0149 & 0.7690 $\pm$ 0.0221 & 0.0980 $\pm$ 0.0064 & 0.0840 $\pm$ 0.0018 & 0.9837 $\pm$ 0.0007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Comparison between the MediaPipe Hand Landmarker baseline and the learned DRHand variants on RHD. The MediaPipe rows are single evaluation runs, whereas the DRHand rows are mean $\pm$ std over five seeds. Detection success is shown only for the MediaPipe runs because the learned-model evaluations do not use the same detection stage.}
+\label{tab:mediapipe_baseline}
+\begin{tabular}{llcccc}
+\toprule
+Method & Eval set & SSE & EPE & PCK@0.2 & Detect. succ. \\
+\midrule
+MediaPipe & native-21 & 2.3022 & 0.0830 & 0.6452 & 0.4879 \\
+MediaPipe (ignore handedness) & native-21 & 1.4002 & 0.0904 & 0.6726 & 0.8933 \\
+MediaPipe & shared-10 & 1.1202 & 0.1209 & 0.6407 & 0.4879 \\
+\texttt{B0} fusion & native-21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & n/a \\
+\texttt{B0} fusion & shared-10 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 & n/a \\
+\texttt{B1} fusion & native-10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 & n/a \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -268,13 +324,14 @@ B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. Diagnostics were exported only for native evaluation, so shared-10 rows are omitted.}
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. The table includes all currently available diagnostic exports, including a shared-10 row for \texttt{B0}.}
 \label{tab:fusion_diagnostics}
 \begin{tabular}{llccccc}
 \toprule
 Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
 \midrule
 B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
+B0 & shared-10 & 0.407 $\pm$ 0.024 & 0.593 $\pm$ 0.024 & 0.065 $\pm$ 0.007 & 0.162 $\pm$ 0.018 & 0.474 $\pm$ 0.011 \\
 B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
 \bottomrule
 \end{tabular}

@@ -1,0 +1,4 @@
+filename,job_id,experiment_id,dataset_name,split,hand,shared_10_eval,ignore_handedness,num_eval_keypoints,num_samples,num_visible_points,sse_norm,epe_norm,pck,ms_per_image,images_per_second,num_detection_failures,num_handedness_misses,detection_success_rate
+mediapipe_rhd.json,mediapipe_rhd_eval,MEDIAPIPE,rhd,evaluation,right,false,false,21,2728,39037,2.302188408000653,0.08304245045226956,0.6452083920383226,26.35897070925978,37.93774844359552,1397,1106,0.4879032258064516
+mediapipe_rhd_ignore_handedness.json,mediapipe_rhd_eval,MEDIAPIPE,rhd,evaluation,right,false,true,21,2728,39037,1.4002412893634244,0.09036580842373575,0.6725670517713964,26.32942753898586,37.98031683443571,291,0,0.8933284457478006
+mediapipe_rhd_shared10.json,mediapipe_rhd_eval,MEDIAPIPE,rhd,evaluation,right,true,false,10,2728,18634,1.12023624728838,0.12093624036204963,0.6406568637973596,26.37047329548845,37.92120030591501,1397,1106,0.4879032258064516
