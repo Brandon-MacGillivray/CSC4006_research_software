@@ -69,7 +69,6 @@
 - Can a reduced 10-keypoint model maintain sufficient hand-pose accuracy for edge HCI while improving runtime efficiency? HCI does not need 21 keypoints to be calcualted as not all are used for gesture calculation, thus wasted computation.\\
 - Does dual-branch fusion outperform heatmap-only and coordinate-only prediction? from the outset, it seems like DRHand is wasting computation having two branches, is it wasted?\\
 - To what extent can transfer learning improve cross-dataset hand-pose performance between RHD and COCO-style hand data? caused by the lack of real data for training this model. \\
-- Is the proposed pipeline competitive enough in accuracy and latency for practical embedded deployment compared with a baseline such as MediaPipe? is it useful?\\
 
 \subsection{DRHand-Inspired Model}
 
@@ -118,30 +117,21 @@
 
 \medskip
 \noindent\textbf{Point:} Transfer learning is effective when used for target-domain fine-tuning, but not as a zero-shot cross-dataset solution.
-\textbf{Evidence:} In Table~\ref{tab:transfer_learning}, \texttt{C\_ONLY} performs poorly on RHD, but \texttt{C\_TO\_R} improves strongly after fine-tuning; similarly, \texttt{R\_ONLY} performs poorly on COCO, but \texttt{R\_TO\_C} improves substantially after adaptation.
-\textbf{Explanation:} This shows that source-domain training learns useful reusable features, but these are not sufficient on their own without target-domain adjustment.
+\textbf{Evidence:} In Table~\ref{tab:transfer_learning}, the zero-shot cross-dataset runs are weak: \texttt{C\_ONLY} on RHD gives SSE 1.4194, EPE 0.1609, and PCK 0.3397, while \texttt{R\_ONLY} on COCO gives SSE 3.7488, EPE 0.3365, and PCK 0.3719. After target-domain fine-tuning, the transfer runs improve sharply: \texttt{C\_TO\_R} reaches SSE 0.4504, EPE 0.1020, and PCK 0.8190 on RHD, while \texttt{R\_TO\_C} reaches SSE 0.0980, EPE 0.0840, and PCK 0.9837 on COCO.
+\textbf{Explanation:} This suggests that the source-domain model does learn reusable hand-pose structure, but that knowledge is not well calibrated to a new dataset on its own. Fine-tuning helps because it retains the useful hand representation from pretraining while adapting the model to the target domain's appearance, pose distribution, and annotation characteristics.
 \textbf{Link:} The transfer results therefore answer the research question by showing that transfer is useful as initialization for fine-tuning rather than as a direct replacement for target-domain training.
 
 \medskip
 \noindent\textbf{Point:} Transfer performance is asymmetric across datasets.
-\textbf{Evidence:} Table~\ref{tab:transfer_learning} shows that \texttt{R\_TO\_C} approaches COCO scratch performance much more closely than \texttt{C\_TO\_R} approaches RHD scratch performance.
-\textbf{Explanation:} This suggests that transfer difficulty depends on the source-target pairing and that the two datasets are not equally compatible.
+\textbf{Evidence:} Table~\ref{tab:transfer_learning} shows that \texttt{R\_TO\_C} ends very close to COCO scratch performance: COCO scratch gives SSE 0.0764 and PCK 0.9834, while \texttt{R\_TO\_C} gives SSE 0.0980 and PCK 0.9837. In contrast, \texttt{C\_TO\_R} remains noticeably behind RHD scratch performance: RHD scratch gives SSE 0.3091 and PCK 0.9143, while \texttt{C\_TO\_R} gives SSE 0.4504 and PCK 0.8190.
+\textbf{Explanation:} This indicates that transfer difficulty depends on the direction of adaptation, not just on whether transfer is used. In this study, RHD pretraining appears to provide a stronger starting point for later COCO adaptation than COCO pretraining provides for later RHD adaptation, likely reflecting differences in domain mismatch between the two datasets.
 \textbf{Link:} Accordingly, the transfer study shows not only that fine-tuning helps, but also that some directions of adaptation are easier than others.
 
-% this seems sus. remove the handiness results as that hinders mediapipe alot. also I wonder if the --right flag is a problem. might have to run again using --auto for mp to be fair
 \medskip
 \noindent\textbf{Point:} The learned DRHand-style models outperform the MediaPipe baseline on RHD.
-\textbf{Evidence:} In Table~\ref{tab:mediapipe_baseline}, MediaPipe gives much worse SSE and PCK than the learned models in both native-21 and shared-10 comparisons, while ignoring handedness changes its detection success markedly.
-\textbf{Explanation:} This indicates that the learned pipeline is substantially stronger on the benchmark dataset and less dependent on the particular handedness filtering choice used in the baseline.
+\textbf{Evidence:} In Table~\ref{tab:mediapipe_baseline}, MediaPipe evaluated with \texttt{--hand auto} still gives much worse SSE and PCK than the learned models in both native-21 and shared-10 comparisons, despite achieving a detection success rate of 0.8933.
+\textbf{Explanation:} This indicates that the learned pipeline remains substantially stronger on the benchmark dataset even after removing the earlier handedness-selection mismatch from the baseline evaluation.
 \textbf{Link:} Therefore, the proposed system can be considered competitive and practically useful relative to a relevant external baseline.
-
-% no it's not, as the accuracy is not high enough, this could be seen in the qualitative results if I had any. must wait on that to answer this question. 
-% only reasonable based on latency results
-\medskip
-\noindent\textbf{Point:} The proposed pipeline is viable for practical embedded deployment.
-\textbf{Evidence:} The Jetson results in Table~\ref{tab:latency} show throughput of roughly 27 to 31 images per second across the main operating modes.
-\textbf{Explanation:} These rates are close to real-time performance, which means the system is not only accurate in offline evaluation but also feasible for edge-device use.
-\textbf{Link:} This directly supports the research question concerning practical embedded deployment.
 
 % how could there be such a low oracle score yet the aggregated results still be good? seems sus.
 \medskip
@@ -149,6 +139,13 @@
 \textbf{Evidence:} In Table~\ref{tab:fusion_diagnostics}, the oracle-match rate is only around 0.48 to 0.53.
 \textbf{Explanation:} This means the current rule often fails to choose the lower-error branch, even though fusion still improves aggregate performance.
 \textbf{Link:} Consequently, the experiments identify fusion design as the clearest target for future refinement.
+
+\noindent\textbf{Point:} A low oracle-match rate does not mean that fusion is ineffective.
+\textbf{Evidence:} The fusion diagnostics show oracle values of only around 0.48 to 0.53, yet the branch-ablation results still show that fusion gives the strongest overall balance of SSE and EPE compared with either individual branch.
+\textbf{Explanation:} The oracle metric measures how often the heuristic selects the same branch as the lower-error branch on a per-joint basis, whereas SSE and EPE measure the magnitude of the final prediction errors. As a result, fusion can still improve overall accuracy if it makes correct choices on the relatively small number of high-impact joints where the two branches differ substantially, while many oracle mismatches may occur on low-impact or near-tied joints that contribute little to the final error.
+\textbf{Link:} Therefore, the current results suggest that fusion is beneficial overall, even though the hand-crafted branch-selection rule remains far from optimal.
+
+
 
 \subsection{Qualitative Results}
 
@@ -212,15 +209,14 @@ RHD $\rightarrow$ COCO & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$ 
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Comparison between the MediaPipe Hand Landmarker baseline and the learned DRHand variants on RHD. The MediaPipe rows are single evaluation runs, whereas the DRHand rows are mean $\pm$ std over five seeds. Detection success is shown only for the MediaPipe runs because the learned-model evaluations do not use the same detection stage.}
+\caption{Comparison between the MediaPipe Hand Landmarker baseline and the learned DRHand variants on RHD. The MediaPipe rows are single evaluation runs using \texttt{--hand auto}, whereas the DRHand rows are mean $\pm$ std over five seeds. Detection success is shown only for the MediaPipe runs because the learned-model evaluations do not use the same detection stage.}
 \label{tab:mediapipe_baseline}
 \begin{tabular}{llcccc}
 \toprule
 Method & Eval set & SSE & EPE & PCK@0.2 & Detect. succ. \\
 \midrule
-MediaPipe & native-21 & 2.3022 & 0.0830 & 0.6452 & 0.4879 \\
-MediaPipe (ignore handedness) & native-21 & 1.4002 & 0.0904 & 0.6726 & 0.8933 \\
-MediaPipe & shared-10 & 1.1202 & 0.1209 & 0.6407 & 0.4879 \\
+MediaPipe & native-21 & 1.7049 & 0.0833 & 0.7707 & 0.8933 \\
+MediaPipe & shared-10 & 0.8599 & 0.1378 & 0.7635 & 0.8933 \\
 \texttt{B0} fusion & native-21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & n/a \\
 \texttt{B0} fusion & shared-10 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 & n/a \\
 \texttt{B1} fusion & native-10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 & n/a \\
@@ -306,6 +302,8 @@ E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0
 - 21, 10, coco, RHD->coco, coco->RHD, mp
 
 \section{CONCLUSION AND FUTURE WORK}
+
+Future work should focus on improving the fusion stage, since the current diagnostics show that the heuristic often fails to match the oracle branch choice. In addition to improving the selection rule itself, a useful extension would be to measure not only how often the heuristic disagrees with oracle, but also how costly those mistakes are. This could be done by reporting an oracle-regret metric, defined as the extra error incurred by the heuristic relative to the lower-error branch for each visible joint. Such a measure would help distinguish between harmless near-tie mismatches and genuinely costly branch-selection failures.
 
 \clearpage
 \begin{thebibliography}{00}
