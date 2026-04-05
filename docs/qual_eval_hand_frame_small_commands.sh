@@ -6,10 +6,11 @@
 # - Repo on Kelvin: ~/handpose
 # - Qualitative dataset root: ~/handpose/docs/hand_frame_small
 # - Ablation checkpoints: ~/sharedscratch/training_results
-# - Transfer checkpoints: ~/sharedscratch/transfer_training_results
+# - Transfer checkpoints: ~/sharedscratch/training_results
 #
-# If your transfer runs live under ~/sharedscratch/training_results instead,
-# change TRF_ROOT below to match.
+# Earlier notes used ~/sharedscratch/transfer_training_results, but the
+# observed hand_frame_small eval outputs point at ~/sharedscratch/training_results
+# for the transfer family as well.
 
 set -euo pipefail
 
@@ -17,7 +18,7 @@ REPO_ROOT=~/handpose
 QUAL_ROOT=~/handpose/docs/hand_frame_small
 OUT_ROOT=~/qual_eval_results/hand_frame_small
 ABL_ROOT=~/sharedscratch/training_results
-TRF_ROOT=~/sharedscratch/transfer_training_results
+TRF_ROOT=~/sharedscratch/training_results
 
 mkdir -p "$OUT_ROOT"
 
