@@ -37,6 +37,7 @@ COCO_HAND_SPLIT_ALIASES = {
     "benchmark": "val",
 }
 MEDIAPIPE_MODEL_KEYPOINT_INDICES = list(range(21))
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def parse_args():
@@ -136,6 +137,18 @@ def resolve_device(device_name: str):
     if device_name == "cuda":
         return torch.device("cuda")
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def resolve_user_path(value):
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    if path.exists():
+        return path.resolve()
+    repo_relative = REPO_ROOT / path
+    if repo_relative.exists():
+        return repo_relative.resolve()
+    return repo_relative
 
 
 def resolve_split_name(split: str):
@@ -444,7 +457,7 @@ def main():
     if not args.model and args.no_mediapipe:
         raise ValueError("Provide at least one --model unless MediaPipe is included.")
 
-    dataset_root = Path(args.root)
+    dataset_root = resolve_user_path(args.root)
     payload = load_annotation_payload(annotation_path(dataset_root, args.split))
     samples = build_samples(payload, image_dir(dataset_root, args.split))
 
@@ -474,7 +487,7 @@ def main():
     mediapipe_panel = None
     if not args.no_mediapipe:
         mediapipe_panel = MediaPipePanel(
-            model_asset_path=Path(args.mediapipe_model_asset_path),
+            model_asset_path=resolve_user_path(args.mediapipe_model_asset_path),
             shared_10_eval=shared_10_eval,
             requested_hand=args.mediapipe_hand,
             ignore_handedness=bool(args.ignore_handedness),
