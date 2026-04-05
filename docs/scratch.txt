@@ -348,3 +348,8 @@ python ~/handpose/scripts/eval_mediapipe_rhd.py --model-asset-path ~/handpose/sr
 Set-Location docs\latex
 pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v4.tex
 pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v4.tex
+
+
+python scripts/annotate_coco_hand_with_mediapipe.py --dataset-root C:/Users/brand/OneDrive/Desktop/hand_frame_small --split val --model-asset-path src/handpose/models/hand_landmarker.task --hand auto --ignore-handedness
+
+C:/Users/brand/OneDrive/Desktop/hand_frame_small
