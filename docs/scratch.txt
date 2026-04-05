@@ -353,3 +353,8 @@ pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v4.tex
 python scripts/annotate_coco_hand_with_mediapipe.py --dataset-root C:/Users/brand/OneDrive/Desktop/hand_frame_small --split val --model-asset-path src/handpose/models/hand_landmarker.task --hand auto --ignore-handedness
 
 C:/Users/brand/OneDrive/Desktop/hand_frame_small
+
+
+bash ~/handpose/docs/qual_eval_hand_frame_small_commands.sh
+
+python ~/handpose/scripts/render_qualitative_batch.py --root ~/handpose/docs/hand_frame_small --split val --out-dir ~/qual_figures/hand_frame_small_best_methods_shared10 --shared-10-eval --cols 4 --model B0=~/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model B1=~/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model R_ONLY=~/sharedscratch/transfer_training_results/trf-r-only-s202/checkpoints/best.pt --model C_ONLY=~/sharedscratch/transfer_training_results/trf-c-only-s202/checkpoints/best.pt --model C_TO_R=~/sharedscratch/transfer_training_results/trf-c-to-r-s404/checkpoints/best.pt --model R_TO_C=~/sharedscratch/transfer_training_results/trf-r-to-c-s404/checkpoints/best.pt --include-mediapipe --mediapipe-model-asset-path ~/handpose/src/handpose/models/hand_landmarker.task
