@@ -120,7 +120,7 @@ what is the point of making it lightweight?
 \subsection{DRHand-Inspired Model}
 
 \noindent\textbf{Point:} The proposed model uses a shared lightweight backbone to extract features from a resized RGB hand image.  
-\textbf{Evidence:} In the implementation, \texttt{HandPoseNet} is built around a single \texttt{Backbone} module that processes the input before either prediction head is applied. The backbone is composed mainly of depthwise-separable convolutions, downsampling blocks, and skip-connected upsampling stages, and outputs a compact feature representation for later prediction.  
+\textbf{Evidence:} In the implementation is built around a single backbone module that processes the input before either prediction head is applied. The backbone is composed mainly of depthwise-separable convolutions, downsampling blocks, and skip-connected upsampling stages, and outputs a compact feature representation for later prediction.  
 \textbf{Explanation:} This shared backbone allows most of the computation to be reused across both prediction branches, which is important for keeping the model lightweight enough for edge-device inference.  
 \textbf{Link:} Therefore, the backbone forms the efficiency-oriented core of the DRHand-inspired architecture used in this study.
 
