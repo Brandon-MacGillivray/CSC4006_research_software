@@ -10,6 +10,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -56,31 +57,176 @@ what is the point of making it lightweight?
 
 
 
-\section{LITERATURE REVIEW}
+\section{LITERATURE REVIEW}.
 
-what are knowledge gaps based on existing literatre? 
-must lead to the question of whether we are better off with 10 keypoints instead of 21.
+\medskip
+\noindent\textbf{Point:} The literature does not converge on a single architectural strategy for efficient pose estimation.  
+\textbf{Evidence:} Existing approaches include CNN-based systems such as MediaPipe Hands~\cite{mediapipe}, lightweight attention-based models~\cite{attentionlite}, hybrid CNN-transformer designs such as EdgePose~\cite{edgepose}, temporal GCN-based tracking~\cite{handobjectgcn}, and encoder-decoder approaches such as EfficientPose~\cite{efficientpose}.  
+\textbf{Explanation:} This suggests that efficient pose estimation remains an open design problem, with different model families making different tradeoffs between local feature extraction, global context, and structured joint reasoning.  
+\textbf{Link:} Accordingly, it is reasonable to evaluate a DRHand-inspired architecture rather than assume that the design space has already been settled.
+
+\medskip
+\noindent\textbf{Point:} Edge deployment imposes a genuine speed-accuracy tradeoff in pose estimation.  
+\textbf{Evidence:} Prior work notes that high-accuracy egocentric and 3D pose systems often rely on heavy backbones and desktop-class computation~\cite{everydayegohands}, whereas deployment-oriented methods such as MediaPipe Hands~\cite{mediapipe} and SPLite Hand~\cite{splitehand} pursue simplified architectures for constrained devices.  
+\textbf{Explanation:} The literature therefore shows a persistent mismatch between models optimised for benchmark accuracy and models that are practical on embedded hardware.  
+\textbf{Link:} This justifies treating runtime and deployment cost as core evaluation criteria rather than secondary implementation concerns.
+
+\medskip
+\noindent\textbf{Point:} Lightweight pose estimation methods typically achieve efficiency through deliberate simplification of the pipeline.  
+\textbf{Evidence:} Reported strategies include compact backbones and lightweight attention~\cite{attentionlite}, sparse or reduced-complexity computation~\cite{splitehand}, simplified decoder heads~\cite{efficientpose}, and detector-to-tracker pipelines with cropped regions of interest~\cite{mediapipe}.  
+\textbf{Explanation:} These studies imply that efficient performance usually comes from reducing unnecessary computation across multiple stages of the model rather than from a single isolated modification.  
+\textbf{Link:} This provides literature support for testing whether simpler prediction targets or prediction strategies can preserve useful hand-pose performance.
+
+\medskip
+\noindent\textbf{Point:} The choice of training data is likely to affect hand-pose model generalisation.  
+\textbf{Evidence:} Prior work uses both synthetic datasets such as RHD and real datasets for hand and hand-object tracking, while augmentation is often introduced to improve robustness under more realistic conditions~\cite{handobjectgcn,lightweightgcnhand,handaugment}.  
+\textbf{Explanation:} These data sources differ in appearance, pose distribution, and annotation conditions, so a model trained on one domain may not generalise reliably to another. This is especially relevant when a study relies heavily on synthetic supervision but aims to operate on real camera input.  
+\textbf{Link:} Therefore, dataset realism and cross-domain robustness remain important considerations in lightweight hand-pose estimation.
+
+\medskip
+\noindent\textbf{Point:} The literature leaves open whether full 21-keypoint hand representations are always necessary for lightweight edge-HCI use.  
+\textbf{Evidence:} Existing lightweight hand-pose systems such as MediaPipe Hands~\cite{mediapipe}, Attention!~\cite{attentionlite}, and SPLite Hand~\cite{splitehand} focus mainly on reducing model complexity while still predicting a full hand structure.  
+\textbf{Explanation:} This suggests that prior work has concentrated more on compressing the model than on questioning whether the full landmark target is required for practical HCI interaction.  
+\textbf{Link:} This directly motivates the present study's comparison between reduced 10-keypoint and standard 21-keypoint prediction.
+
 
 \section{TECHNICAL APPROACH}
 
 \subsection{Project Scope}
 
-- Can a reduced 10-keypoint model maintain sufficient hand-pose accuracy for edge HCI while improving runtime efficiency? HCI does not need 21 keypoints to be calcualted as not all are used for gesture calculation, thus wasted computation.\\
-- Does dual-branch fusion outperform heatmap-only and coordinate-only prediction? from the outset, it seems like DRHand is wasting computation having two branches, is it wasted?\\
-- To what extent can transfer learning improve cross-dataset hand-pose performance between RHD and COCO-style hand data? caused by the lack of real data for training this model. \\
+\noindent\textbf{Point:} This study focuses on lightweight 2D RGB hand pose estimation for edge HCI using a DRHand-inspired architecture.  
+\textbf{Evidence:} The experimental design in this paper centres on three evaluated components: reduced landmark prediction, dual-branch fusion, and transfer from synthetic to pseudo-labeled real-image data, as reflected in the main accuracy, branch-ablation, and transfer-learning results.  
+\textbf{Explanation:} These components were chosen because they address the main practical issues encountered during the project: the need to reduce computation for embedded deployment, the need to justify the extra complexity of the dual-branch design, and the need to improve generalisation beyond synthetic-only training.  
+\textbf{Link:} The scope of the study is therefore limited to questions that can be answered directly through the implemented model variants and the reported experiments.
 
+\medskip
+\noindent\textbf{Point:} The first question is whether a reduced 10-keypoint representation can retain sufficient performance for edge HCI while lowering runtime cost.  
+\textbf{Evidence:} The paper includes a direct comparison between the baseline 21-keypoint model and a reduced 10-keypoint model, together with Jetson latency measurements.  
+\textbf{Explanation:} This tests whether all 21 landmarks are necessary for the intended interactive setting, or whether a smaller output representation can provide a better efficiency-performance tradeoff.  
+\textbf{Link:} This defines the first strand of the project scope: reduced landmark prediction for lightweight deployment.
+
+\medskip
+\noindent\textbf{Point:} The second question is whether the dual-branch fusion strategy provides a meaningful benefit over single-branch prediction.  
+\textbf{Evidence:} The study reports branch-ablation results comparing fusion, heatmap-only, and coordinate-only outputs from the same trained checkpoints.  
+\textbf{Explanation:} This is necessary because the DRHand-inspired design introduces extra architectural complexity, and that complexity must be justified by measurable accuracy gains rather than assumed to be beneficial.  
+\textbf{Link:} This defines the second strand of the project scope: evaluating whether fusion is worth the added computation.
+
+\medskip
+\noindent\textbf{Point:} The third question is whether pseudo-labeled real-image data can improve generalisation beyond synthetic-only training.  
+\textbf{Evidence:} Early experimentation relied mainly on RHD, while later experiments introduced a COCO-style hand dataset based on MediaPipe-derived labels and evaluated transfer between these two sources.  
+\textbf{Explanation:} This reflects a practical constraint of the project: synthetic data was available, but access to suitable real hand-pose datasets with usable annotations was limited, and models trained only on RHD performed poorly on real camera images. The transfer-learning experiments therefore test whether imperfect pseudo-labeled real-image data can still provide a useful bridge toward more realistic deployment conditions.  
+\textbf{Link:} This defines the third strand of the project scope: adaptation beyond synthetic-only supervision.
 
 \subsection{DRHand-Inspired Model}
 
-- in brief, how does DRHand work? 
-- network structure 
-- branches
-- post processing
-- loss
+\noindent\textbf{Point:} The proposed model uses a shared lightweight backbone to extract features from a resized RGB hand image.  
+\textbf{Evidence:} In the implementation, \texttt{HandPoseNet} is built around a single \texttt{Backbone} module that processes the input before either prediction head is applied. The backbone is composed mainly of depthwise-separable convolutions, downsampling blocks, and skip-connected upsampling stages, and outputs a compact feature representation for later prediction.  
+\textbf{Explanation:} This shared backbone allows most of the computation to be reused across both prediction branches, which is important for keeping the model lightweight enough for edge-device inference.  
+\textbf{Link:} Therefore, the backbone forms the efficiency-oriented core of the DRHand-inspired architecture used in this study.
 
-\subsection{Relation to the Original DRHand Paper}
+Formally, the input to the model is an RGB image resized to $256 \times 256$, denoted by $x \in \mathbb{R}^{3 \times 256 \times 256}$. The shared backbone then produces a compact feature representation,
+\[
+F = B(x).
+\]
 
-- how is this implementation different to orginal paper?
+\medskip
+\noindent\textbf{Point:} The model uses two complementary prediction branches rather than a single output head.  
+\textbf{Evidence:} The heatmap branch predicts one heatmap per keypoint, while the coordinate branch predicts normalized $(x,y)$ coordinates directly for each keypoint. In the implementation, the coordinate branch operates on intermediate features produced by the heatmap path rather than on a completely separate feature extractor.  
+\textbf{Explanation:} This design combines the spatial localization behaviour of heatmaps with the compact direct-output behaviour of coordinate regression, allowing the model to exploit two different prediction strategies from the same backbone features.  
+\textbf{Link:} As a result, the architecture can support both branch-specific evaluation and fused prediction at inference time.
+
+From the shared representation, the heatmap branch predicts one heatmap per keypoint,
+\[
+\hat{H} = R_h(F), \qquad \hat{H} \in \mathbb{R}^{K \times 64 \times 64},
+\]
+where $K$ is the number of predicted keypoints. The coordinate branch predicts normalized landmark coordinates,
+\[
+\hat{P}^{coord} = R_c(F_{64}), \qquad \hat{P}^{coord} \in \mathbb{R}^{K \times 2},
+\]
+where $F_{64}$ denotes the intermediate feature map passed from the heatmap path into the coordinate regressor.
+
+\medskip
+\noindent\textbf{Point:} The final predicted pose can be produced by either individual branch or by a simple fusion rule.  
+\textbf{Evidence:} The implementation supports heatmap-only, coordinate-only, and fusion inference modes. In fusion mode, heatmaps are decoded by argmax and then compared with the coordinate predictions on a per-joint basis, with the final choice controlled by a threshold $\alpha$ derived from the median predicted bone length.  
+\textbf{Explanation:} This rule attempts to combine the strengths of the two branches while keeping post-processing simple enough for lightweight deployment.  
+\textbf{Link:} Consequently, the model architecture is not limited to a single prediction strategy, which makes it suitable for the branch-ablation and fusion experiments reported later in the paper.
+
+At inference time, the heatmap prediction for keypoint $i$ is decoded by argmax. If $(u_i^*, v_i^*)$ is the index of the peak response in $\hat{H}_i$, then the decoded heatmap coordinate is
+\[
+\hat{p}^{hm}_i =
+\left(
+\frac{u_i^*}{W-1},
+\frac{v_i^*}{H-1}
+\right).
+\]
+For fusion, the disagreement between the two predictions for joint $i$ is
+\[
+d_i = \left\| \hat{p}^{hm}_i - \hat{p}^{coord}_i \right\|_2.
+\]
+A sample-specific threshold $\alpha$ is computed as the median predicted bone length,
+\[
+\alpha = \mathrm{median}_{(a,b)\in \mathcal{E}}
+\left\| \hat{p}^{coord}_a - \hat{p}^{coord}_b \right\|_2,
+\]
+where $\mathcal{E}$ is the set of hand-skeleton edges. The fused output is then defined as
+\[
+\hat{p}^{fused}_i =
+\begin{cases}
+\hat{p}^{hm}_i, & d_i < \alpha, \\
+\hat{p}^{coord}_i, & \text{otherwise.}
+\end{cases}
+\]
+
+\medskip
+\noindent\textbf{Point:} The same architecture is used for both the standard 21-keypoint model and the reduced 10-keypoint variant.  
+\textbf{Evidence:} In the implementation, the number of predicted keypoints is controlled by the output dimensionality of the heatmap and coordinate heads, allowing the same backbone-and-branch design to be instantiated for either keypoint layout.  
+\textbf{Explanation:} This keeps the comparison between the 21-keypoint and 10-keypoint models fair, because the main structural difference lies in the output representation rather than in a completely different network design.  
+\textbf{Link:} Therefore, the architecture provides a consistent basis for evaluating whether reducing the predicted landmark set improves the efficiency-performance tradeoff.
+
+\medskip
+\noindent\textbf{Point:} Training uses separate objectives for the two prediction branches.  
+\textbf{Evidence:} The heatmap branch is supervised using Gaussian-target mean-squared error, while the coordinate branch is supervised using Wing loss.  
+\textbf{Explanation:} These losses match the form of each output: the heatmap branch is trained to reproduce spatial probability maps, whereas the coordinate branch is trained to regress landmark positions directly with a loss designed for landmark localisation.  
+\textbf{Link:} This training setup reflects the dual-output nature of the model and supports the later analysis of heatmap, coordinate, and fused predictions.
+
+For the heatmap branch, each ground-truth keypoint $p_i = (x_i, y_i)$ is converted into a Gaussian target heatmap,
+\[
+G_i(u,v) = \exp\left(
+-\frac{(u-x_i)^2 + (v-y_i)^2}{2\sigma^2}
+\right),
+\]
+and the branch is supervised with mean-squared error,
+\[
+\mathcal{L}_{hm}
+=
+\frac{1}{KHW}
+\sum_{i=1}^{K}
+\sum_{u,v}
+\left(\hat{H}_i(u,v) - G_i(u,v)\right)^2.
+\]
+The coordinate branch is supervised directly using Wing loss,
+\[
+\mathcal{L}_{coord}
+=
+\frac{1}{2K}
+\sum_{i=1}^{K}
+\sum_{j \in \{x,y\}}
+\phi\!\left(\hat{p}^{coord}_{i,j} - p_{i,j}\right),
+\]
+where
+\[
+\phi(\delta)=
+\begin{cases}
+w \ln\left(1 + \frac{|\delta|}{\epsilon}\right), & |\delta| < w, \\
+|\delta| - C, & \text{otherwise,}
+\end{cases}
+\qquad
+C = w - w \ln\left(1 + \frac{w}{\epsilon}\right).
+\]
+
+\subsection{Differences to the Original DRHand Paper}
+
+
 
 \subsection{Experimental Setup}
 
@@ -140,6 +286,7 @@ B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm
 \footnotesize
 \caption{Transfer-learning results for the four training sequences evaluated on both RHD and the COCO-style hand dataset. Values are mean $\pm$ std over five seeds, and fusion-mode evaluation is shown because it is the main operating mode in the study.}
 \label{tab:transfer_learning}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llcccccc}
 \toprule
 Training sequence & Exp. & RHD SSE & RHD EPE & RHD PCK & COCO SSE & COCO EPE & COCO PCK \\
@@ -150,6 +297,7 @@ COCO $\rightarrow$ RHD & \texttt{C\_TO\_R} & 0.4504 $\pm$ 0.0162 & 0.1020 $\pm$ 
 RHD $\rightarrow$ COCO & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$ 0.0149 & 0.7690 $\pm$ 0.0221 & 0.0980 $\pm$ 0.0064 & 0.0840 $\pm$ 0.0018 & 0.9837 $\pm$ 0.0007 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
 \begin{table}[H]
@@ -374,8 +522,29 @@ S. An, X. Zhang, D. Wei, H. Zhu, J. Yang, and K. A. Tsintotas, ``FastHand: Fast 
 \bibitem{attentionlite}
 N. Santavas, I. Kansizoglou, L. Bampis, E. Karakasis, and A. Gasteratos, ``Attention! A lightweight 2D hand pose estimation approach,'' \emph{IEEE Sensors Journal}, vol. 21, no. 10, pp. 11488--11501, 2021.
 
+\bibitem{handobjectgcn}
+Y. Yin, C. McCarthy, and D. Rezazadegan, ``Real-time lightweight 3D hand-object pose estimation using temporal graph convolution networks,'' in \emph{AI 2024: Advances in Artificial Intelligence}, LNCS 15443, 2024, pp. 243--255.
+
+\bibitem{everydayegohands}
+A. Prakash, R. Tu, M. Chang, and S. Gupta, ``3D hand pose estimation in everyday egocentric images,'' in \emph{Proc. ECCV}, 2024.
+
+\bibitem{splitehand}
+K. H. Yeh, T. W. Hsu, and M. Sun, ``SPLite Hand: Sparsity-aware lightweight 3D hand pose estimation,'' in \emph{Proc. AICCC 2025}, Tokyo, Japan, 2025, pp. 1--10.
+
 \bibitem{stereojetson}
 E. Williams-Linera and J. M. Ramirez-Cortes, ``Stereo vision system based on the NVIDIA Jetson Nano for real-time evaluation of yoga poses,'' in \emph{Proc. IEEE}, 2024, pp. 1--7.
+
+\bibitem{edgepose}
+L. Zhang et al., ``EdgePose: Real-time human pose estimation scheme for industrial scenes,'' \emph{IEEE Access}, vol. 12, pp. 156702--156716, 2024.
+
+\bibitem{lightweightgcnhand}
+Y. Zhang et al., ``A lightweight hand attitude estimation method based on GCN feature enhancement,'' \emph{Electronics}, vol. 13, no. 10, p. 1952, 2024.
+
+\bibitem{handaugment}
+Z. Zhang, S. Xie, M. Chen, and H. Zhu, ``HandAugment: A simple data augmentation method for depth-based 3D hand pose estimation,'' \emph{arXiv preprint arXiv:2001.00702}, 2020.
+
+\bibitem{efficientpose}
+I. B. Toft, J. P. B. Nielsen, N. K. Poulsen, and A. L. Laursen, ``EfficientPose: Scalable single-person pose estimation,'' \emph{arXiv preprint arXiv:2008.09062}, 2020.
 
 \bibitem{blazepose}
 V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann, ``BlazePose: On-device real-time body pose tracking,'' \emph{arXiv preprint arXiv:2006.10204}, 2020.
