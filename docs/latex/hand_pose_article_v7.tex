@@ -1,0 +1,385 @@
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage[
+  letterpaper,
+  top=0.7in,
+  bottom=0.7in,
+  left=0.8in,
+  right=0.8in
+]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{float}
+
+\setlength{\parindent}{0.14in}
+\setlength{\parskip}{0pt}
+\pagestyle{plain}
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\Alph{subsection}.}
+\renewcommand{\thetable}{\Roman{table}}
+\renewcommand{\refname}{REFERENCES}
+
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {1.3ex plus 1ex minus .2ex}%
+  {0.8ex plus .2ex}%
+  {\centering\normalfont\small\scshape}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {1.0ex plus .8ex minus .2ex}%
+  {0.6ex plus .2ex}%
+  {\normalfont\itshape}}
+\renewcommand{\fnum@table}{\textsc{Table \thetable}}
+\makeatother
+
+\begin{document}
+
+\begin{center}
+{\LARGE An investigation into Lightweight Hand Pose estimation for Edge HCI\par}
+\end{center}
+
+\vspace{0.6em}
+\noindent\textbf{\textit{Abstract}}---
+
+\vspace{0.6em}
+\noindent\textbf{\textit{Keywords}}---
+
+\section{INTRODUCTION}
+what is the point of HCI?
+what is the point of hand pose estimation?
+what is the point of making it lightweight?
+
+
+
+\section{LITERATURE REVIEW}
+
+what are knowledge gaps based on existing literatre? 
+must lead to the question of whether we are better off with 10 keypoints instead of 21.
+
+\section{TECHNICAL APPROACH}
+
+\subsection{Project Scope}
+
+- Can a reduced 10-keypoint model maintain sufficient hand-pose accuracy for edge HCI while improving runtime efficiency? HCI does not need 21 keypoints to be calcualted as not all are used for gesture calculation, thus wasted computation.\\
+- Does dual-branch fusion outperform heatmap-only and coordinate-only prediction? from the outset, it seems like DRHand is wasting computation having two branches, is it wasted?\\
+- To what extent can transfer learning improve cross-dataset hand-pose performance between RHD and COCO-style hand data? caused by the lack of real data for training this model. \\
+
+
+\subsection{DRHand-Inspired Model}
+
+- in brief, how does DRHand work? 
+- network structure 
+- branches
+- post processing
+- loss
+
+\subsection{Relation to the Original DRHand Paper}
+
+- how is this implementation different to orginal paper?
+
+\subsection{Experimental Setup}
+
+- dataset detail?
+- implementation details?  
+
+\subsection{Evaluation Metrics}
+
+- how are the models evalulated?
+- what is the math?
+- what doe the metrics mean?
+
+\section{RESULTS AND ANALYSIS}
+
+\subsection{Experimental Results}
+\subsection{Qualitative Results}
+
+\subsection{Tables}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Main quantitative comparison between the 21-keypoint baseline and the reduced 10-keypoint model on RHD. Lower SSE and EPE are better; higher PCK@0.2 is better. Values are mean $\pm$ std over five seeds.}
+\label{tab:main_accuracy}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
+B1 reduced & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Branch ablation for the dual-regression design. Fusion is compared against the heatmap-only and coordinate-only outputs using the same trained checkpoints. Values are mean $\pm$ std over five seeds.}
+\label{tab:branch_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
+\midrule
+B0 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+B0 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
+B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
+B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
+B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Transfer-learning results for the four training sequences evaluated on both RHD and the COCO-style hand dataset. Values are mean $\pm$ std over five seeds, and fusion-mode evaluation is shown because it is the main operating mode in the study.}
+\label{tab:transfer_learning}
+\begin{tabular}{llcccccc}
+\toprule
+Training sequence & Exp. & RHD SSE & RHD EPE & RHD PCK & COCO SSE & COCO EPE & COCO PCK \\
+\midrule
+RHD scratch & \texttt{R\_ONLY} & 0.3091 $\pm$ 0.0269 & 0.0764 $\pm$ 0.0030 & 0.9143 $\pm$ 0.0097 & 3.7488 $\pm$ 0.7985 & 0.3365 $\pm$ 0.0075 & 0.3719 $\pm$ 0.0434 \\
+COCO scratch & \texttt{C\_ONLY} & 1.4194 $\pm$ 0.2619 & 0.1609 $\pm$ 0.0207 & 0.3397 $\pm$ 0.0718 & 0.0764 $\pm$ 0.0016 & 0.0612 $\pm$ 0.0049 & 0.9834 $\pm$ 0.0007 \\
+COCO $\rightarrow$ RHD & \texttt{C\_TO\_R} & 0.4504 $\pm$ 0.0162 & 0.1020 $\pm$ 0.0039 & 0.8190 $\pm$ 0.0114 & 1.6426 $\pm$ 0.2293 & 0.2678 $\pm$ 0.0114 & 0.5320 $\pm$ 0.0164 \\
+RHD $\rightarrow$ COCO & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$ 0.0149 & 0.7690 $\pm$ 0.0221 & 0.0980 $\pm$ 0.0064 & 0.0840 $\pm$ 0.0018 & 0.9837 $\pm$ 0.0007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Comparison between the MediaPipe Hand Landmarker baseline and the learned DRHand variants on RHD. The MediaPipe rows are single evaluation runs using \texttt{--hand auto}, whereas the DRHand rows are mean $\pm$ std over five seeds. Detection success is shown only for the MediaPipe runs because the learned-model evaluations do not use the same detection stage.}
+\label{tab:mediapipe_baseline}
+\begin{tabular}{llcccc}
+\toprule
+Method & Eval set & SSE & EPE & PCK@0.2 & Detect. succ. \\
+\midrule
+MediaPipe & native-21 & 1.7049 & 0.0833 & 0.7707 & 0.8933 \\
+MediaPipe & shared-10 & 0.8599 & 0.1378 & 0.7635 & 0.8933 \\
+\texttt{B0} fusion & native-21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & n/a \\
+\texttt{B0} fusion & shared-10 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 & n/a \\
+\texttt{B1} fusion & native-10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 & n/a \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Edge-device latency summary for the main models. Forward time measures the prediction stage only, whereas end-to-end time includes image read, preprocessing, host-to-device transfer, prediction, and JSON write. Values are mean $\pm$ std over five seeds.}
+\label{tab:latency}
+\begin{tabular}{llccc}
+\toprule
+Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
+\midrule
+B0 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
+B0 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
+B0 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
+B1 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
+B1 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
+B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Detailed latency breakdown for the main fused models. These metrics are available from the benchmark pipeline and help localize where runtime is spent. Values are mean $\pm$ std over five seeds.}
+\label{tab:latency_breakdown}
+\begin{tabular}{lcccccc}
+\toprule
+Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
+\midrule
+B0 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
+B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. The table includes all currently available diagnostic exports, including a shared-10 row for \texttt{B0}.}
+\label{tab:fusion_diagnostics}
+\begin{tabular}{llccccc}
+\toprule
+Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
+\midrule
+B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
+B0 & shared-10 & 0.407 $\pm$ 0.024 & 0.593 $\pm$ 0.024 & 0.065 $\pm$ 0.007 & 0.162 $\pm$ 0.018 & 0.474 $\pm$ 0.011 \\
+B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Hyperparameter ablation relative to the baseline \texttt{B0} configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. Values are mean $\pm$ std over five seeds.}
+\label{tab:hyper_ablation}
+\begin{tabular}{llcccc}
+\toprule
+Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
+\midrule
+B0 & baseline & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & 36.81 $\pm$ 1.33 \\
+L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & 0.3583 $\pm$ 0.0534 & 0.0725 $\pm$ 0.0096 & 0.9081 $\pm$ 0.0092 & 35.77 $\pm$ 0.45 \\
+L2 & $\lambda_{hm}=0.5$, $\lambda_{coord}=1.5$ & 0.3073 $\pm$ 0.0260 & 0.0812 $\pm$ 0.0022 & 0.9115 $\pm$ 0.0095 & 35.75 $\pm$ 0.49 \\
+S1 & $\sigma=1.5$ & 0.3252 $\pm$ 0.0381 & 0.0707 $\pm$ 0.0055 & 0.9116 $\pm$ 0.0086 & 35.72 $\pm$ 0.25 \\
+S2 & $\sigma=3.0$ & 0.3137 $\pm$ 0.0488 & 0.0833 $\pm$ 0.0058 & 0.9177 $\pm$ 0.0081 & 36.48 $\pm$ 0.53 \\
+W1 & $w=5.0$ & 0.3213 $\pm$ 0.0384 & 0.0737 $\pm$ 0.0058 & 0.9150 $\pm$ 0.0099 & 36.21 $\pm$ 0.39 \\
+W2 & $w=15.0$ & 0.2979 $\pm$ 0.0441 & 0.0750 $\pm$ 0.0031 & 0.9140 $\pm$ 0.0124 & 35.91 $\pm$ 0.43 \\
+E1 & $\epsilon=1.0$ & 0.2994 $\pm$ 0.0591 & 0.0695 $\pm$ 0.0011 & 0.9175 $\pm$ 0.0113 & 35.84 $\pm$ 0.23 \\
+E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0.0067 & 36.13 $\pm$ 0.52 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\section*{QUALITATIVE FIGURES}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_28_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 1.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_33_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 2.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_38_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 3.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_41_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 4.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_51_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 5.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_57_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 6.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_57_04_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 7.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_57_15_Pro_qualitative.png}
+\caption{Qualitative comparison on hand\_frame\_small example 8.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00143_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00143.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00169_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00169.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00354_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00354.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00380_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00380.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00477_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00477.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00755_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00755.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00811_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00811.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best/00912_qualitative.png}
+\caption{Qualitative comparison on RHD evaluation example 00912.}
+\end{figure}
+
+\clearpage
+\section{CONCLUSION AND FUTURE WORK}
+
+\clearpage
+\begin{thebibliography}{00}
+
+\bibitem{vuletic}
+T. Vuletic, A. Duffy, L. Hay, C. McTeague, and G. Campbell, ``Systematic literature review of hand gestures used in human-computer interaction interfaces,'' \emph{Int. J. Human-Computer Studies}, vol. 129, pp. 47--65, 2019.
+
+\bibitem{wachs}
+J. P. Wachs, M. Kolsch, H. Stern, and Y. Edan, ``Vision-based hand-gesture applications,'' \emph{Communications of the ACM}, vol. 54, no. 2, pp. 60--71, 2011.
+
+\bibitem{li_vr}
+Y. Li, J. Huang, F. Tian, H.-A. Wang, and G.-Z. Dai, ``Gesture interaction in virtual reality,'' \emph{Virtual Reality \& Intelligent Hardware}, vol. 1, no. 1, pp. 84--112, 2019.
+
+\bibitem{dualreg}
+D. Wei, S. An, X. Zhang, J. Tian, K. A. Tsintotas, A. Gasteratos, and H. Zhu, ``Dual regression for efficient hand pose estimation,'' in \emph{Proc. IEEE Int. Conf. Robotics and Automation}, 2022.
+
+\bibitem{mediapipe}
+F. Zhang, V. Bazarevsky, A. Vakunov, A. Tkachenka, G. Sung, C.-L. Chang, and M. Grundmann, ``MediaPipe hands: On-device real-time hand tracking,'' \emph{arXiv preprint arXiv:2006.10214}, 2020.
+
+\bibitem{srhandnet}
+Y. Wang, B. Zhang, and C. Peng, ``SRHandNet: Real-time 2D hand pose estimation with simultaneous region localization,'' \emph{IEEE Trans. Image Processing}, vol. 29, pp. 2977--2986, 2019.
+
+\bibitem{wingloss}
+Z.-H. Feng, J. Kittler, M. Awais, P. Huber, and X.-J. Wu, ``Wing loss for robust facial landmark localisation with convolutional neural networks,'' in \emph{Proc. IEEE Conf. Computer Vision and Pattern Recognition}, 2018, pp. 2235--2245.
+
+\bibitem{fasthand}
+S. An, X. Zhang, D. Wei, H. Zhu, J. Yang, and K. A. Tsintotas, ``FastHand: Fast monocular hand pose estimation on embedded systems,'' \emph{Journal of Systems Architecture}, vol. 122, p. 102361, 2022.
+
+\bibitem{attentionlite}
+N. Santavas, I. Kansizoglou, L. Bampis, E. Karakasis, and A. Gasteratos, ``Attention! A lightweight 2D hand pose estimation approach,'' \emph{IEEE Sensors Journal}, vol. 21, no. 10, pp. 11488--11501, 2021.
+
+\bibitem{stereojetson}
+E. Williams-Linera and J. M. Ramirez-Cortes, ``Stereo vision system based on the NVIDIA Jetson Nano for real-time evaluation of yoga poses,'' in \emph{Proc. IEEE}, 2024, pp. 1--7.
+
+\bibitem{blazepose}
+V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann, ``BlazePose: On-device real-time body pose tracking,'' \emph{arXiv preprint arXiv:2006.10204}, 2020.
+
+\end{thebibliography}
+
+\end{document}
