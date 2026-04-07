@@ -374,3 +374,20 @@ python ~/handpose/scripts/render_qualitative_rhd.py --root ~/data/RHD_published_
 00143 00169 00354 00380 00477 00755 00811 00912
 
 python ~/handpose/scripts/render_qualitative_rhd.py --root ~/data/RHD_published_v2 --split evaluation --hand right --ids 00143 00169 00354 00380 00477 00755 00811 00912 --out-dir ~/qual_figures/rhd_best --model B0=~/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model B1=~/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model C_ONLY=~/sharedscratch/training_results/trf-c-only-s202/checkpoints/best.pt --model C_TO_R=~/sharedscratch/training_results/trf-c-to-r-s404/checkpoints/best.pt --model R_TO_C=~/sharedscratch/training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+
+
+PyTorch instead of TensorFlow.
+Different datasets. 
+Added 21 and 10 keypoint support.
+Incomplete training-parameter specification in the original paper, which lead to the ablation experiment
+used gradient acculmentation due to memory contstraints
+
+
+Reduced 10-keypoint performance is competitive with the 21-keypoint baseline.
+The runtime benefit of the 10-keypoint model is concentrated in fusion mode
+Fusion provides the best overall balance of branch behaviour
+The current fusion heuristic is useful but clearly imperfect
+The baseline hyperparameter setting is a compromise rather than an obviously dominant configuration
+
+“The experiments show that synthetic-only training does not generalize reliably to more realistic image domains, but pseudo-labeled real-image supervision provides a useful adaptation bridge.”
