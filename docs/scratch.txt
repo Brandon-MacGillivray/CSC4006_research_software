@@ -391,3 +391,24 @@ The current fusion heuristic is useful but clearly imperfect
 The baseline hyperparameter setting is a compromise rather than an obviously dominant configuration
 
 “The experiments show that synthetic-only training does not generalize reliably to more realistic image domains, but pseudo-labeled real-image supervision provides a useful adaptation bridge.”
+
+pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v8.tex
+pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v9.tex
+
+COCO-oriented models visually align best with the manually annotated real-image set.
+The synthetic-oriented models appear less well matched to this real-image domain.
+Transfer from RHD to the COCO-style domain appears visually beneficial
+MediaPipe is extremely well aligned on this set
+
+qualative tests on manually annotated real image set
+and eval RHD dataset
+
+overall this implementation performs 
+
+tendency to bunch up
+
+redesign architecture more suited for only 10 keypoints, can it be smaller?
+eval on real dataset
+investigate better fusion , as noted in the DRHand paper
+experiment with hand detection before main model like mediapipe does
+
