@@ -412,3 +412,5 @@ eval on real dataset
 investigate better fusion , as noted in the DRHand paper
 experiment with hand detection before main model like mediapipe does
 
+
+pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v13.tex
