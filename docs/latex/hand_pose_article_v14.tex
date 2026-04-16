@@ -78,39 +78,46 @@ Email: bmacgillivray01@qub.ac.uk\par
 \textbf{Link:} The paper therefore focuses on lightweight RGB hand-pose estimation for edge deployment.
 
 \medskip
-\noindent\textbf{Point:} Existing lightweight methods show that real-time hand tracking is feasible, but they leave open design questions about representation, post processing techniques, and generalisation with limited training data.
-\textbf{Evidence:} MediaPipe Hands demonstrates efficient on-device tracking, while DRHand combines heatmap and coordinate regression in a lightweight dual-branch framework producing competitive performance results ~\cite{mediapipe,dualreg}.
-\textbf{Explanation:} These methods establish a strong baseline, but certain questions emerge, such as do we need all 21 keypoints? is the fusion used in DRHand actually better than single branch inference or unnecessary computation? And in light of limited available datasets, what can be done to improve generalisation? 
+\noindent\textbf{Point:} Existing lightweight hand-pose methods leave open important design questions about keypoint representation, the value of dual-branch fusion, and generalisation under limited training data.
+\textbf{Evidence:} MediaPipe Hands demonstrates efficient on-device tracking, while DRHand combines heatmap and coordinate regression in a lightweight dual-branch framework producing competitive performance results~\cite{mediapipe,dualreg}.
+\textbf{Explanation:} In many hand-pose systems, the hand is represented as a fixed set of landmark keypoints, commonly a standard 21-keypoint skeleton covering the wrist and finger joints. These methods show that real-time hand tracking is feasible, but they do not fully resolve whether full 21-keypoint prediction is necessary for practical use, whether fusion improves results enough to justify its added complexity, or how robustness can be improved when available training data are limited.
 \textbf{Link:} This motivates a targeted study of reduced keypoint prediction, fusion utility, and cross-model knowledge transfer.
 
 \medskip
 \noindent\textbf{Point:} This paper investigates those questions through a DRHand-inspired implementation and a deployment-oriented evaluation.
-\textbf{Evidence:} The study compares 21-keypoint and reduced 10-keypoint prediction, evaluates fusion against the individual branches, analyses transfer between RHD and HK26K, whose annotations are used here as MediaPipe-generated pseudo-labels, compares against a MediaPipe baseline, and benchmarks runtime on NVIDIA Jetson orin nano hardware.
+\textbf{Evidence:} The study compares the full 21-keypoint and reduced 10-keypoint layouts shown in Figure~\ref{fig:keypoint_layouts}, evaluates fusion against the individual branches, analyses transfer between RHD and HK26K, whose annotations are used here as MediaPipe-generated pseudo-labels, compares against a MediaPipe baseline, and benchmarks runtime on NVIDIA Jetson orin nano hardware.
 \textbf{Explanation:} These experiments are designed to test both prediction quality and practical deployment tradeoffs.
 \textbf{Link:} The contribution of the paper is therefore an empirical study into current held assumptions and adaptions to dataset constraints.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.95\columnwidth]{hand_keypoint_image.jpg}
+\caption{Keypoint layouts considered in this study. Left: full 21-keypoint hand skeleton. Right: reduced 10-keypoint skeleton using finger bases and fingertips.}
+\label{fig:keypoint_layouts}
+\end{figure}
 
 \section{LITERATURE REVIEW}.
 
 \medskip
 \noindent\textbf{Point:} The literature does not converge on a single architectural strategy for efficient pose estimation.  
 \textbf{Evidence:} Existing approaches include CNN-based systems such as MediaPipe Hands~\cite{mediapipe}, attention-based models~\cite{attentionlite}, hybrid CNN-transformer designs such as EdgePose~\cite{edgepose} and temporal GCN-based tracking~\cite{handobjectgcn}.  
-\textbf{Explanation:} This suggests that efficient pose estimation remains an open design problem.  
+\textbf{Explanation:} This suggests that the literature has not yet established a single dominant architecture for achieving efficient hand-pose estimation.  
 \textbf{Link:} It is reasonable to evaluate a DRHand-inspired architecture rather than assume that the design space has already been settled.
 
 \medskip
 \noindent\textbf{Point:} Edge deployment imposes a speed-accuracy tradeoff in pose estimation.  
-\textbf{Evidence:} Prior work such as SPLite Hand~\cite{splitehand} mentions the tradeoff and actively caters for it. while other papers assume desktop level compute.
+\textbf{Evidence:} Prior work such as SPLite Hand~\cite{splitehand} shows the tradeoff and actively caters for it. while other papers assume desktop level compute.
 \textbf{Explanation:} The literature therefore shows a persistent mismatch between models optimised for benchmark accuracy and models that are practical on embedded hardware.  
 \textbf{Link:} This justifies treating runtime and deployment cost as core evaluation criteria
 
 \medskip
-\noindent\textbf{Point:} Lightweight pose estimation methods typically achieve efficiency through deliberate simplification of the pipeline.  
+\noindent\textbf{Point:} Lightweight pose estimation methods typically achieve efficiency through architectural, computational, and pipeline-level simplifications.  
 \textbf{Evidence:} Reported strategies include compact backbones and lightweight attention~\cite{attentionlite}, sparse or reduced-complexity computation~\cite{splitehand} and detector-to-tracker pipelines with cropped regions of interest~\cite{mediapipe}.  
 \textbf{Explanation:} These studies imply that efficient performance usually comes from reducing unnecessary computation across multiple stages of the model rather than from a single isolated modification.  
 \textbf{Link:} This provides literature support for testing whether simpler prediction targets can preserve useful hand-pose performance.
 
 \medskip
-\noindent\textbf{Point:} The choice of training data is known to affect model generalisation.  
+\noindent\textbf{Point:} The realism and domain characteristics of training data are important determinants of cross-domain generalisation in hand-pose estimation. 
 \textbf{Evidence:} Prior work uses both synthetic datasets such as RHD and real datasets for hand tracking, while augmentation is often introduced to improve robustness under more realistic conditions~\cite{handobjectgcn,lightweightgcnhand,handaugment}.  
 \textbf{Explanation:} These data sources differ in appearance, so a model trained on one domain may not generalise reliably to another. This is especially relevant when a study relies heavily on synthetic supervision but aims to operate on real camera input.  
 \textbf{Link:} Therefore, dataset realism and cross-domain robustness remain important considerations in lightweight hand-pose estimation.
@@ -122,50 +129,57 @@ Email: bmacgillivray01@qub.ac.uk\par
 \textbf{Link:} This directly motivates the present study's comparison between reduced 10-keypoint and standard 21-keypoint prediction.
 
 \medskip
-These gaps motivate the three main questions examined in this study: whether a reduced 10-keypoint representation is sufficient for lightweight edge HCI, whether the added complexity of dual-branch fusion is justified, and whether pseudo-labeled real-image data can improve generalisation beyond synthetic-only training.
-
+These gaps motivate three main research questions:
+\begin{enumerate}
+    \item Is a reduced 10-keypoint representation sufficient for lightweight edge-HCI use?
+    \item Does dual-branch fusion provide enough benefit to justify its added complexity?
+    \item Can pseudo-labeled real-image data improve generalisation beyond synthetic-only training?
+\end{enumerate}
 
 \section{METHOD}
 
 \subsection{Network Structure}
 
 \noindent\textbf{Point:} The proposed model uses a shared backbone followed by two prediction branches.  
-\textbf{Explanation:} The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths. The same structure is used for both the standard 21-keypoint model and the reduced 10-keypoint variant, with only the output dimensionality changing.
-
-Formally, the input to the model is an RGB image resized to $256 \times 256$, denoted by $x \in \mathbb{R}^{3 \times 256 \times 256}$. The backbone then produces a compact feature representation,
-\[
-F = B(x).
-\]
+\textbf{Explanation:} The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths.
 
 \subsubsection{The Backbone Network}
 
 \noindent\textbf{Point:} The backbone is designed to extract useful hand features.  
-\textbf{Explanation:} The backbone is built from depthwise-separable convolutions, downsampling blocks, and skip-connected upsampling stages.
+\textbf{Explanation:} Formally, the input to the model is an RGB image resized to $256 \times 256$, denoted by $x \in \mathbb{R}^{3 \times 256 \times 256}$. The backbone then produces a compact feature representation,
+\begin{equation}
+F = B(x).
+\label{eq:backbone-features}
+\end{equation}
+The backbone is built from depthwise-separable convolutions, downsampling blocks, and skip-connected upsampling stages.
 
 \subsubsection{The Heatmap Regression Branch}
 
 \noindent\textbf{Point:} The heatmap branch predicts one spatial confidence map per keypoint.  
 \textbf{Explanation:} From the shared representation, the heatmap branch predicts \(K\) output heatmaps,
-\[
+\begin{equation}
 \hat{H} = R_h(F), \qquad \hat{H} \in \mathbb{R}^{K \times 64 \times 64},
-\]
-where \(K\) is the number of predicted keypoints. For keypoint \(i\), \(\hat{H}_i(u,v)\) denotes the predicted confidence at spatial location \((u,v)\) on the \(64 \times 64\) heatmap grid, where \(u\) and \(v\) are the horizontal and vertical heatmap indices. Let \(p_i = (x_i, y_i)\) denote the ground-truth location of keypoint \(i\), expressed in the same heatmap coordinate system. The target heatmap for keypoint \(i\) is then defined as a 2D Gaussian centered at the true keypoint location,
-\[
+\label{eq:heatmap-output}
+\end{equation}
+where \(K\) is the number of predicted keypoints. For keypoint \(i\), \(\hat{H}_i(u,v)\) denotes the predicted confidence at spatial location \((u,v)\) on the \(64 \times 64\) heatmap grid, where \(u\) and \(v\) are the horizontal and vertical heatmap indices respectively. Let \(p_i = (x_i, y_i)\) denote the ground-truth location of keypoint \(i\), expressed in the same heatmap coordinate system. The target heatmap for keypoint \(i\) is then defined as a 2D Gaussian centered at the true keypoint location,
+\begin{equation}
 G_i(u,v) = \exp\left(
 -\frac{(u-x_i)^2 + (v-y_i)^2}{2\sigma^2}
 \right),
-\]
+\label{eq:gaussian-target}
+\end{equation}
 where \(\sigma\) controls the spread of the Gaussian. A larger \(\sigma\) produces a broader peak, while a smaller \(\sigma\) produces a sharper target concentrated around the true landmark.
 
 The heatmap branch is supervised using mean-squared error between the predicted heatmaps and the Gaussian target heatmaps:
-\[
+\begin{equation}
 \mathcal{L}_{hm}
 =
 \frac{1}{KHW}
 \sum_{i=1}^{K}
 \sum_{u,v}
 \left(\hat{H}_i(u,v) - G_i(u,v)\right)^2.
-\]
+\label{eq:heatmap-loss}
+\end{equation}
 Here, \(H\) and \(W\) denote the heatmap height and width. This loss averages the squared difference over all keypoints and all spatial locations, encouraging each predicted heatmap to assign a high response near the true keypoint position and a low response elsewhere. 
 
 \subsubsection{The Coordinate Regression Branch}
@@ -174,22 +188,24 @@ Here, \(H\) and \(W\) denote the heatmap height and width. This loss averages th
 \textbf{Explanation:} Rather than producing a spatial heatmap for each keypoint, this branch regresses the landmark coordinates directly. It takes as input the intermediate \(64 \times 64\) feature map produced within the heatmap pathway, allowing the coordinate branch to reuse features that already encode spatial hand structure.
 
 The coordinate branch predicts normalised landmark coordinates,
-\[
+\begin{equation}
 \hat{P}^{coord} = R_c(F_{64}), \qquad \hat{P}^{coord} \in \mathbb{R}^{K \times 2},
-\]
+\label{eq:coord-output}
+\end{equation}
 where \(F_{64}\) denotes the intermediate feature map passed from the heatmap branch to the coordinate regressor, \(R_c(\cdot)\) denotes the coordinate-regression subnetwork, and \(K\) is the number of predicted keypoints. For keypoint \(i\), the output \(\hat{p}^{coord}_i = (\hat{x}_i, \hat{y}_i)\) represents the predicted normalised 2D coordinate, with both values expressed in the range \([0,1]\).
 
 Let \(p_i = (x_i, y_i)\) denote the corresponding ground-truth normalised coordinate for keypoint \(i\). The coordinate branch is supervised using Wing loss,
-\[
+\begin{equation}
 \mathcal{L}_{coord}
 =
 \frac{1}{2K}
 \sum_{i=1}^{K}
 \sum_{j \in \{x,y\}}
 \phi\!\left(\hat{p}^{coord}_{i,j} - p_{i,j}\right),
-\]
+\label{eq:coord-loss}
+\end{equation}
 where \(\hat{p}^{coord}_{i,j}\) and \(p_{i,j}\) are the predicted and ground-truth values of the \(j\)-th coordinate component, and
-\[
+\begin{equation}
 \phi(\delta)=
 \begin{cases}
 w \ln\left(1 + \frac{|\delta|}{\epsilon}\right), & |\delta| < w, \\
@@ -197,7 +213,8 @@ w \ln\left(1 + \frac{|\delta|}{\epsilon}\right), & |\delta| < w, \\
 \end{cases}
 \qquad
 C = w - w \ln\left(1 + \frac{w}{\epsilon}\right).
-\]
+\label{eq:wing-loss}
+\end{equation}
 \(\delta\) is the scalar prediction error for one coordinate value, \(w\) controls the range over which the loss behaves logarithmically, \(\epsilon\) controls the curvature near zero, and \(C\) is a constant chosen so that the piecewise function is continuous at \(|\delta| = w\).
 
 Wing loss places greater emphasis on reducing small and medium localisation errors than standard \(L_1\) or \(L_2\) losses, while remaining less sensitive to very large errors.
@@ -208,38 +225,43 @@ Wing loss places greater emphasis on reducing small and medium localisation erro
 \textbf{Explanation:} The implementation supports three inference modes: heatmap-only, coordinate-only, and fusion. In heatmap-only mode, landmark locations are obtained by decoding the peak of each predicted heatmap. In coordinate-only mode, the direct regression output is used as the final pose. In fusion mode, the two predictions are compared joint-by-joint and a simple heuristic selects which branch to trust for each landmark.
 
 At inference time, let \(\hat{H}_i\) denote the predicted heatmap for keypoint \(i\), with spatial dimensions \(H \times W\). The heatmap-based prediction is obtained by taking the spatial argmax,
-\[
+\begin{equation}
 (u_i^*, v_i^*) = \arg\max_{u,v} \hat{H}_i(u,v),
-\]
+\label{eq:heatmap-argmax}
+\end{equation}
 where \((u_i^*, v_i^*)\) is the location of the peak response on the discrete heatmap grid. This peak is then converted into normalized image coordinates,
-\[
+\begin{equation}
 \hat{p}^{hm}_i =
 \left(
 \frac{u_i^*}{W-1},
 \frac{v_i^*}{H-1}
 \right).
-\]
+\label{eq:heatmap-decode}
+\end{equation}
 The coordinate branch directly predicts the normalized coordinate \(\hat{p}^{coord}_i\) for the same joint, so both outputs lie in the same \([0,1]\) coordinate space and can be compared directly.
 
 For each joint \(i\), the disagreement between the two branches is measured by Euclidean distance,
-\[
+\begin{equation}
 d_i = \left\| \hat{p}^{hm}_i - \hat{p}^{coord}_i \right\|_2.
-\]
+\label{eq:fusion-disagreement}
+\end{equation}
 A sample-specific threshold \(\alpha\) is then computed from the coordinate-branch output as the median predicted bone length,
-\[
+\begin{equation}
 \alpha = \mathrm{median}_{(a,b)\in \mathcal{E}}
 \left\| \hat{p}^{coord}_a - \hat{p}^{coord}_b \right\|_2,
-\]
+\label{eq:fusion-threshold}
+\end{equation}
 where \(\mathcal{E}\) denotes the set of hand-skeleton edges. \(\alpha\) acts as a scale-adaptive tolerance: for a larger predicted hand, a larger disagreement between the two branches may still be acceptable, whereas for a smaller predicted hand, the same disagreement would be more significant.
 
 The fused output for joint \(i\) is defined as
-\[
+\begin{equation}
 \hat{p}^{fused}_i =
 \begin{cases}
 \hat{p}^{hm}_i, & d_i < \alpha, \\
 \hat{p}^{coord}_i, & \text{otherwise.}
 \end{cases}
-\]
+\label{eq:fused-output}
+\end{equation}
 Thus, fusion is performed independently for each joint. When the two branches agree closely, the heatmap-decoded prediction is used; otherwise, the coordinate-regression prediction is retained.
 
 \section{EXPERIMENTS}
@@ -254,7 +276,7 @@ A small real-image benchmark set, \texttt{hand\_frame\_small}, is also used for 
 
 \subsection{Implementation Details}
 
-The proposed network was implemented in PyTorch and trained on an NVIDIA Tesla A100 80GB GPU using the Adam optimizer. Training followed a two-stage procedure. In stage 1, only the backbone and heatmap branch were optimized with learning rate \(10^{-3}\) and batch size 64. In stage 2, the coordinate branch was added and the model was further optimized with learning rate \(10^{-4}\) and an effective batch size of 256, implemented as batch size 64 with gradient accumulation. Runtime benchmarking for deployment-oriented evaluation was performed separately on Jetson Orin Nano hardware.
+The proposed network was implemented in PyTorch and trained on an NVIDIA Tesla A100 80GB GPU using the Adam optimizer. Two output configurations were used in this study: a standard 21-keypoint model and a reduced 10-keypoint variant. In both cases, the same overall architecture was retained, with only the output dimensionality of the prediction heads changed. Training followed a two-stage procedure. In stage 1, only the backbone and heatmap branch were optimized with learning rate \(10^{-3}\) and batch size 64. In stage 2, the coordinate branch was added and the model was further optimized with learning rate \(10^{-4}\) and an effective batch size of 256, implemented as batch size 64 with gradient accumulation. Runtime benchmarking for deployment-oriented evaluation was performed separately on Jetson Orin Nano hardware.
 
 \subsection{Differences in this implementation and DRHand}
 
@@ -267,7 +289,7 @@ The proposed network was implemented in PyTorch and trained on an NVIDIA Tesla A
 \textbf{Explanation:} The learned models are evaluated using sum of squared error (SSE), end-point error (EPE), and probability of correct keypoint (PCK). Let \(p_{si}, \hat{p}_{si} \in [0,1]^2\) denote the ground-truth and predicted normalized 2D coordinates of keypoint \(i\) in sample \(s\), and let \(v_{si} \in \{0,1\}\) denote a visibility mask, where \(v_{si}=1\) if the evaluated keypoint is visible and \(v_{si}=0\) otherwise. Thus, invisible keypoints do not contribute to the reported error values. All distances below are Euclidean distances in normalized coordinate space.
 
 The normalised SSE is defined as
-\[
+\begin{equation}
 \mathrm{SSE} =
 \frac{1}{N}
 \sum_{s=1}^{N}
@@ -275,7 +297,8 @@ The normalised SSE is defined as
 v_{si}\left\|
 \hat{p}_{si} - p_{si}
 \right\|_2^2,
-\]
+\label{eq:sse}
+\end{equation}
 where \(N\) is the number of samples and \(K\) is the number of evaluated keypoints. This metric sums the squared localization error over all visible evaluated keypoints in each sample and then averages that total over the dataset. Lower SSE therefore indicates lower overall pose error.
 
 \medskip
@@ -283,7 +306,7 @@ where \(N\) is the number of samples and \(K\) is the number of evaluated keypoi
 \textbf{Explanation:} EPE is computed after subtracting a designated root joint from both the prediction and the ground truth. This removes global translation and measures how well the relative hand structure is recovered. Let \(r\) denote the root keypoint used for the current evaluation layout. In the full layout, keypoint \(0\) is used when available. In reduced or shared-10 evaluation, keypoint \(1\) is used when keypoint \(0\) is absent.
 
 The normalized root-relative EPE is defined as
-\[
+\begin{equation}
 \mathrm{EPE} =
 \frac{
 \sum_{s=1}^{N}
@@ -297,14 +320,15 @@ v_{si}
 \sum_{i=1}^{K}
 v_{si}
 },
-\]
+\label{eq:epe}
+\end{equation}
 where \(\hat{p}_{sr}\) and \(p_{sr}\) are the predicted and ground-truth coordinates of the root keypoint in sample \(s\). This metric reports the mean visible-joint distance after root alignment, so lower EPE indicates better recovery of the relative pose configuration. EPE is reported only when a supported root keypoint is present in the evaluated layout.
 
 \medskip
 \noindent\textbf{Point:} PCK measures the proportion of visible keypoints localized within a fixed error threshold.  
 \textbf{Explanation:} In this study, a keypoint is counted as correct when its normalized distance from the ground truth is at most \(0.2\). Higher PCK therefore indicates a larger fraction of acceptable landmark predictions.
 
-\[
+\begin{equation}
 \mathrm{PCK}_{\sigma} =
 \frac{
 \sum_{s=1}^{N}
@@ -321,7 +345,8 @@ v_{si}\,\mathbf{1}
 v_{si}
 },
 \qquad \sigma = 0.2,
-\]
+\label{eq:pck}
+\end{equation}
 where \(\mathbf{1}(\cdot)\) is the indicator function, which returns \(1\) when the condition is true and \(0\) otherwise. Thus, PCK is the fraction of visible evaluated keypoints whose localization error falls within the accepted threshold. In this evaluation section, \(\sigma\) denotes the PCK threshold.
 
 \medskip
@@ -333,7 +358,7 @@ where \(\mathbf{1}(\cdot)\) is the indicator function, which returns \(1\) when 
 \textbf{Explanation:} For the MediaPipe baseline, detection success rate is reported because the pipeline may fail before landmark prediction. For fusion analysis, the study also reports how often each branch is selected, how strongly the two branches disagree, the typical size of the adaptive fusion threshold, and how often the heuristic agrees with an oracle branch choice computed using ground truth.
 
 Let \(m_{si} \in \{0,1\}\) denote the branch-selection decision for keypoint \(i\) in sample \(s\), where \(m_{si}=1\) if fusion selects the heatmap prediction and \(m_{si}=0\) if fusion selects the coordinate-regression prediction. The heatmap-selection and coordinate-selection rates are then
-\[
+\begin{equation}
 \mathrm{Sel}^{hm} =
 \frac{1}{NK}
 \sum_{s=1}^{N}\sum_{i=1}^{K} m_{si},
@@ -341,13 +366,14 @@ Let \(m_{si} \in \{0,1\}\) denote the branch-selection decision for keypoint \(i
 \mathrm{Sel}^{coord} =
 \frac{1}{NK}
 \sum_{s=1}^{N}\sum_{i=1}^{K} (1-m_{si}).
-\]
+\label{eq:selection-rates}
+\end{equation}
 These rates describe how often each branch contributes the final fused output across all evaluated joints.
 
 The reported fusion-threshold statistics are the mean and median of \(\alpha_s\) over all evaluated samples. Intuitively, \(\alpha_s\) reflects the predicted hand scale for that sample and determines how much disagreement between branches is tolerated before the coordinate branch is preferred.
 
 An oracle branch label is defined for each visible evaluated keypoint by comparing the two branch errors directly against ground truth:
-\[
+\begin{equation}
 o_{si} =
 \mathbf{1}
 \left(
@@ -359,9 +385,10 @@ o_{si} =
 \hat{p}^{coord}_{si} - p_{si}
 \right\|_2
 \right).
-\]
+\label{eq:oracle-label}
+\end{equation}
 The oracle-match rate is then
-\[
+\begin{equation}
 \mathrm{OracleMatch} =
 \frac{
 \sum_{s=1}^{N}\sum_{i=1}^{K}
@@ -369,7 +396,8 @@ v_{si}\,\mathbf{1}(m_{si}=o_{si})
 }{
 \sum_{s=1}^{N}\sum_{i=1}^{K} v_{si}
 }.
-\]
+\label{eq:oracle-match}
+\end{equation}
 This metric reports how often the fusion heuristic selected the lower-error branch on visible evaluated keypoints. A higher oracle-match rate therefore indicates that the fusion rule more often makes the locally correct decision.
 
 \section{RESULTS AND ANALYSIS}
