@@ -141,7 +141,7 @@ These gaps motivate three main research questions:
 \subsection{Network Structure}
 
 \noindent\textbf{Point:} The proposed model uses a shared backbone followed by two prediction branches.  
-\textbf{Explanation:} The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths. Figure~\ref{fig:network_structure} shows the overall DRHand-inspired network structure used in this study.
+\textbf{Explanation:} The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths. Here, the term \emph{branch} refers to a task-specific prediction subnetwork attached to the shared backbone. In this architecture, the two branches are the heatmap regression branch and the coordinate regression branch. Figure~\ref{fig:network_structure} shows the overall DRHand-inspired network structure used in this study.
 
 \begin{figure}[!p]
 \centering
@@ -288,7 +288,7 @@ The Rendered Handpose Dataset (RHD)~\cite{rhd} is used as the main synthetic ben
 
 The second dataset is HK26K (Kaggle)~\cite{hk26k}, is the more realistic image domain for transfer learning. 18,776 training images and 7,992 validation images. The images are drawn from hand-photo and gesture datasets such as 11K Hands~\cite{hands11k}, 2000 Hand Gestures~\cite{giridhar_hand_gestures}, and the Gesture Recognition Dataset~\cite{gesture_recognition_kaggle}, and include both hand-only views and realistic photographed scenes. the annotations are generated using MediaPipe and act as pseudo-labels. the standard training/evaluation split is used.
 
-A pre-defined subset of a small real-image benchmark set is also used for evaluation. This set contains 8 original real RGB hand images showing basic single-hand gestures on a white background, with annotations initialized from MediaPipe predictions and then manually corrected.
+A pre-defined subset of an 8-image real-hand evaluation set (RH8) is also used for evaluation. This set contains 8 original real RGB hand images showing basic single-hand gestures on a white background, with annotations initialized from MediaPipe predictions and then manually corrected.
 
 \subsection{Implementation Details}
 
@@ -319,7 +319,7 @@ where \(N\) is the number of samples and \(K\) is the number of evaluated keypoi
 
 \medskip
 \noindent\textbf{Point:} End-point error is measured in a root-relative normalized form.  
-\textbf{Explanation:} EPE is computed after subtracting a designated root joint from both the prediction and the ground truth. This removes global translation and measures how well the relative hand structure is recovered. Let \(r\) denote the root keypoint used for the current evaluation layout. In the full layout, keypoint \(0\) is used when available. In reduced or shared-10 evaluation, keypoint \(1\) is used when keypoint \(0\) is absent.
+\textbf{Explanation:} EPE is computed after subtracting a designated root joint from both the prediction and the ground truth. This removes global translation and measures how well the relative hand structure is recovered. Let \(r\) denote the root keypoint used for the current evaluation layout. In the full layout, keypoint \(0\) is used when available. In reduced or shared-10 evaluation, keypoint \(1\) is used when keypoint \(0\) is absent, as shown in Figure~\ref{fig:keypoint_layouts}.
 
 The normalized root-relative EPE is defined as
 \begin{equation}
@@ -342,7 +342,7 @@ where \(\hat{p}_{sr}\) and \(p_{sr}\) are the predicted and ground-truth coordin
 
 \medskip
 \noindent\textbf{Point:} PCK measures the proportion of visible keypoints localized within a fixed error threshold.  
-\textbf{Explanation:} In this study, a keypoint is counted as correct when its normalized distance from the ground truth is at most \(0.2\). Higher PCK therefore indicates a larger fraction of acceptable landmark predictions.
+\textbf{Explanation:} In this study, a keypoint is counted as correct when its normalized distance from the ground truth is at most \(0.2\). This threshold is retained from the original DRHand evaluation protocol. Higher PCK therefore indicates a larger fraction of acceptable landmark predictions under the same tolerance.
 
 \begin{equation}
 \mathrm{PCK}_{\sigma} =
@@ -371,7 +371,7 @@ where \(\mathbf{1}(\cdot)\) is the indicator function, which returns \(1\) when 
 
 \medskip
 \noindent\textbf{Point:} Additional metrics are used for baseline and fusion-specific analysis.  
-\textbf{Explanation:} For the MediaPipe baseline, detection success rate is reported because the pipeline may fail before landmark prediction. For fusion analysis, the study also reports how often each branch is selected, how strongly the two branches disagree, the typical size of the adaptive fusion threshold, and how often the heuristic agrees with an oracle branch choice computed using ground truth.
+\textbf{Explanation:} For the MediaPipe baseline, detection success rate is reported because the pipeline may fail before landmark prediction. For fusion analysis, the study also reports how often the heatmap branch or the coordinate branch is selected, how strongly their predictions disagree, the typical size of the adaptive fusion threshold, and how often the heuristic agrees with an oracle choice of the lower-error branch computed using ground truth.
 
 Let \(m_{si} \in \{0,1\}\) denote the branch-selection decision for keypoint \(i\) in sample \(s\), where \(m_{si}=1\) if fusion selects the heatmap prediction and \(m_{si}=0\) if fusion selects the coordinate-regression prediction. The heatmap-selection and coordinate-selection rates are then
 \begin{equation}
@@ -385,7 +385,6 @@ Let \(m_{si} \in \{0,1\}\) denote the branch-selection decision for keypoint \(i
 \label{eq:selection-rates}
 \end{equation}
 These rates describe how often each branch contributes the final fused output across all evaluated joints.
-
 The reported fusion-threshold statistics are the mean and median of \(\alpha_s\) over all evaluated samples. Intuitively, \(\alpha_s\) reflects the predicted hand scale for that sample and determines how much disagreement between branches is tolerated before the coordinate branch is preferred.
 
 An oracle branch label is defined for each visible evaluated keypoint by comparing the two branch errors directly against ground truth:
@@ -415,15 +414,18 @@ v_{si}\,\mathbf{1}(m_{si}=o_{si})
 \label{eq:oracle-match}
 \end{equation}
 This metric reports how often the fusion heuristic selected the lower-error branch on visible evaluated keypoints. A higher oracle-match rate therefore indicates that the fusion rule more often makes the locally correct decision.
+Each learned-model configuration was trained and evaluated in five independent runs using different random seeds. Reported values for learned models are therefore given as mean \(\pm\) standard deviation across those five runs.
 
 \section{RESULTS AND ANALYSIS}
 
 \subsection{Experimental Results}
 
+The learned-model configurations are as follows: the standard 21-keypoint baseline is referred to as Baseline-21, the reduced 10-keypoint model as Reduced-10, the single-domain transfer baselines as RHD-only and HK26K-only, and the fine-tuned transfer models as HK26K$\rightarrow$RHD and RHD$\rightarrow$HK26K.
+
 \subsubsection{Reduced Keypoint Performance}
 
 \noindent\textbf{Point:} The reduced 10-keypoint model retains broadly comparable performance to the 21-keypoint baseline on the shared subset.  
-\textbf{Evidence:} In Table~\ref{tab:main_accuracy}, the shared-10 evaluation of \texttt{B0} gives SSE 0.1511, EPE 0.0764, and PCK 0.9101, while the native-10 \texttt{B1} model gives SSE 0.1574, EPE 0.0706, and PCK 0.9099.  
+\textbf{Evidence:} In Table~\ref{tab:main_accuracy}, the shared-10 evaluation of Baseline-21 gives SSE 0.1511, EPE 0.0764, and PCK 0.9101, while the native-10 Reduced-10 model gives SSE 0.1574, EPE 0.0706, and PCK 0.9099.  
 \textbf{Explanation:} These values are very close, indicating that reducing the landmark set does not substantially weaken performance on the subset of keypoints most relevant to the reduced representation.  
 \textbf{Link:} This supports the claim that a smaller landmark set can remain viable for lightweight edge-HCI use.
 
@@ -431,7 +433,7 @@ This metric reports how often the fusion heuristic selected the lower-error bran
 
 \medskip
 \noindent\textbf{Point:} The runtime advantage of the 10-keypoint model appears mainly in fusion mode.  
-\textbf{Evidence:} In Table~\ref{tab:latency}, the forward-time gap between \texttt{B0} and \texttt{B1} is much larger in fusion mode (27.43 vs 24.59 ms/image) than in heatmap mode (24.28 vs 24.00 ms/image) or coordinate mode (24.08 vs 23.91 ms/image).  
+\textbf{Evidence:} In Tables~\ref{tab:latency} and~\ref{tab:latency_breakdown}, the forward-time gap between Baseline-21 and Reduced-10 is much larger in fusion mode (27.43 vs 24.59 ms/image) than in heatmap mode (24.28 vs 24.00 ms/image) or coordinate mode (24.08 vs 23.91 ms/image). The detailed breakdown further shows that the largest difference appears in the forward stage, while the surrounding pipeline costs are comparatively similar.  
 \textbf{Explanation:} Since the single-branch modes differ only slightly, the main efficiency gain of the reduced model appears to come from lower fusion-stage overhead rather than from a large reduction in shared network cost.  
 \textbf{Link:} This suggests that the practical speed benefit of the 10-keypoint model is tied mainly to the post-processing stage. The minor yet consistent speed gains seen with single branch results prompt further investigation. 
 
@@ -439,27 +441,27 @@ This metric reports how often the fusion heuristic selected the lower-error bran
 
 \medskip
 \noindent\textbf{Point:} Fusion provides the strongest overall balance of branch behaviour.  
-\textbf{Evidence:} In Table~\ref{tab:branch_ablation}, fusion gives the best or near-best overall combination of SSE and EPE for both \texttt{B0} and \texttt{B1}, whereas the heatmap-only and coordinate-only modes are less consistent across metrics.  
-\textbf{Explanation:} This indicates that the two branches contribute complementary strengths, so the dual-regression design offers more than simply duplicating two alternative outputs.  
+\textbf{Evidence:} In Table~\ref{tab:branch_ablation}, fusion gives the lowest SSE and EPE for both Baseline-21 and Reduced-10, while maintaining PCK values that remain close to the best single-branch result. For Baseline-21, heatmap-only achieves the highest PCK but at the cost of substantially worse EPE, whereas for Reduced-10, coordinate-only gives only a marginal PCK gain over fusion while fusion retains better SSE and EPE.  
+\textbf{Explanation:} This suggests that the two branches contribute complementary strengths: the heatmap branch can improve threshold-based correctness, while the coordinate branch preserves stronger geometric structure. Fusion provides the most balanced overall operating point across these error criteria.  
 \textbf{Link:} Accordingly, the branch-ablation results support the use of fusion as the main operating mode of the system.
 
 \subsubsection{Transfer and Real-Image Adaptation}
 
 \medskip
 \noindent\textbf{Point:} The experiments show that synthetic-only training does not generalize reliably to more realistic image domains, but pseudo-labeled real-image supervision provides a useful adaptation bridge.  
-\textbf{Evidence:} In Table~\ref{tab:transfer_learning}, the RHD-trained model performs strongly on RHD but poorly on HK26K, while the HK26K-trained model shows the opposite pattern. After target-domain adaptation, \texttt{R\_TO\_C} and \texttt{C\_TO\_R} both improve substantially over their cross-domain starting points. This interpretation is further supported by the small real-image benchmark in Table~\ref{tab:hand_frame_small_pilot}, where the HK26K-oriented models, especially \texttt{C\_ONLY} and \texttt{R\_TO\_C}, perform more strongly than the RHD-only baselines.  
+\textbf{Evidence:} In Table~\ref{tab:transfer_learning}, the RHD-trained model performs strongly on RHD but poorly on HK26K, while the HK26K-trained model shows the opposite pattern. After target-domain adaptation, RHD$\rightarrow$HK26K and HK26K$\rightarrow$RHD both improve substantially over their cross-domain starting points. This interpretation is further supported by the small real-image benchmark in Table~\ref{tab:hand_frame_small_pilot}, where the HK26K-oriented models, especially HK26K-only and RHD$\rightarrow$HK26K, perform more strongly than the RHD-only baselines.  
 \textbf{Explanation:} These results suggest that the main difficulty is the domain gap between synthetic training data and more realistic image conditions. Pseudo-labeled real-image data does not provide perfect supervision, but it appears to move the model closer to the real-image domain than synthetic-only training can achieve on its own.  
 \textbf{Link:} Therefore, the transfer results are best interpreted as evidence that pseudo-labeled real-image supervision can act as a practical adaptation bridge beyond synthetic-only training.
 
 \medskip
 \noindent\textbf{Point:} A small real-image benchmark was also included.  
-\textbf{Explanation:} In addition to the main benchmark results on RHD and HK26K, the models were evaluated on the \texttt{hand\_frame\_small} set, which contains eight real images with annotations initialized from MediaPipe predictions and then manually corrected. These results provide a small but explicit real-image benchmark alongside the larger synthetic and pseudo-labeled datasets.
+\textbf{Explanation:} In addition to the main benchmark results on RHD and HK26K, the models were evaluated on RH8, which contains eight real images with annotations initialized from MediaPipe predictions and then manually corrected. These results provide a small but explicit real-image benchmark alongside the larger synthetic and pseudo-labeled datasets.
 
 \subsubsection{Fusion Diagnostics}
 
 \medskip
 \noindent\textbf{Point:} The current fusion heuristic is useful but clearly imperfect.  
-\textbf{Evidence:} In Table~\ref{tab:fusion_diagnostics}, the oracle-match rate is only about 0.48 for \texttt{B0} and 0.53 for \texttt{B1}, even though fusion improves aggregate accuracy in the branch-ablation study.  
+\textbf{Evidence:} In Table~\ref{tab:fusion_diagnostics}, the oracle-match rate is only about 0.48 for Baseline-21 and 0.53 for Reduced-10, even though fusion improves aggregate accuracy in the branch-ablation study.  
 \textbf{Explanation:} This means that the heuristic often fails to choose the lower-error branch on a per-joint basis, but still helps overall because some of its correct decisions occur on more influential prediction cases.  
 \textbf{Link:} Therefore, the current fusion rule is beneficial, but it also remains one of the clearest opportunities for future improvement.
 
@@ -467,39 +469,45 @@ This metric reports how often the fusion heuristic selected the lower-error bran
 
 \medskip
 \noindent\textbf{Point:} The baseline hyperparameter setting is a compromise rather than an obviously dominant configuration.  
-\textbf{Evidence:} In Table~\ref{tab:hyper_ablation}, several alternative settings improve one metric while worsening another; for example, \texttt{E1} improves EPE and PCK relative to \texttt{B0}, whereas \texttt{W2} gives the lowest SSE, but no single configuration is uniformly best across all reported metrics.  
-\textbf{Explanation:} This indicates that the baseline configuration is not trivially optimal, but instead reflects a practical tradeoff between competing accuracy criteria and runtime behaviour.  
+\textbf{Evidence:} In Table~\ref{tab:hyper_ablation}, several alternative settings improve one metric while worsening another; for example, \texttt{E1} improves EPE and PCK relative to Baseline-21, whereas \texttt{W2} gives the lowest SSE, but no single configuration is uniformly best across all reported metrics.  
+\textbf{Explanation:} The hyperparameter study suggests that not all settings matter equally. The end-to-end runtime changes are small across all variants, so these hyperparameters have negligible effect on deployment cost. In contrast, accuracy is more sensitive to some parameters than others. The Wing-loss parameter \(\epsilon\) appears particularly influential: \texttt{E1} improves EPE and PCK relative to the baseline, whereas \texttt{E2} noticeably worsens EPE. The heatmap width \(\sigma\) and the Wing-loss parameter \(w\) also affect the accuracy tradeoff, but in a more mixed way, with some variants improving SSE, EPE, or PCK at the expense of others. By comparison, the loss-weight variants mainly produce smaller or less consistently beneficial changes, aside from \texttt{L1}, which degrades SSE. Overall, the baseline should therefore be viewed as a practical compromise, while \(\epsilon\) appears to be the most influential of the tested hyperparameters.  
 \textbf{Link:} As a result, the hyperparameter study suggests that the selected baseline is a reasonable compromise rather than a clearly dominated operating point.
 
 \subsection{Qualitative Results}
 
+\subsubsection{Real-Image Behaviour}
+
 \medskip
 \noindent\textbf{Point:} The real-image examples favour the HK26K-oriented models.  
-\textbf{Evidence:} In the two \texttt{hand\_frame\_small} figures, \texttt{C\_ONLY} and especially \texttt{R\_TO\_C} place the red landmarks closer to the green annotations than \texttt{B0} and \texttt{B1}, particularly around the inner finger cluster.  
+\textbf{Evidence:} In the two RH8 figures, HK26K-only and especially RHD$\rightarrow$HK26K place the red landmarks closer to the green annotations than Baseline-21 and Reduced-10, particularly around the inner finger cluster.  
 \textbf{Explanation:} This suggests that the real-image examples are visually closer to the HK26K domain than to the synthetic RHD domain.  
 \textbf{Link:} The qualitative results therefore support the transfer findings on real-image adaptation.
 
+\subsubsection{Cross-Dataset Failure and Adaptation}
+
 \medskip
-\noindent\textbf{Point:} The HK26K-only model generalizes poorly to RHD.  
-\textbf{Evidence:} In the RHD examples \texttt{00143} and \texttt{00354}, \texttt{C\_ONLY} produces landmark groups that are visibly detached from the hand.  
-\textbf{Explanation:} This is a clear visual failure under domain shift rather than a minor local error.  
-\textbf{Link:} The selected figures therefore reinforce the conclusion that zero-shot HK26K-to-RHD transfer is weak.
+\noindent\textbf{Point:} The model trained only on HK26K generalizes poorly when evaluated on the RHD dataset.  
+\textbf{Evidence:} In the RHD examples \texttt{00143} and \texttt{00354}, the HK26K-only model produces landmark groups that are visibly detached from the hand.  
+\textbf{Explanation:} This is a clear visual failure under cross-dataset domain shift rather than a minor local error.  
+\textbf{Link:} The selected figures therefore reinforce the conclusion that zero-shot transfer from HK26K to RHD is weak.
 
 \medskip
 \noindent\textbf{Point:} Target-domain adaptation improves the transferred HK26K model on RHD.  
-\textbf{Evidence:} In \texttt{00354}, \texttt{C\_TO\_R} is visibly better aligned to the hand than \texttt{C\_ONLY}, even though it is not the strongest prediction in the figure.  
+\textbf{Evidence:} In \texttt{00354}, HK26K$\rightarrow$RHD is visibly better aligned to the hand than HK26K-only, even though it is not the strongest prediction in the figure.  
 \textbf{Explanation:} Fine-tuning reduces the most obvious cross-domain failures, but does not eliminate them completely.  
 \textbf{Link:} This supports the interpretation that transfer is useful mainly as initialization for later target-domain adaptation.
 
 \medskip
-\noindent\textbf{Point:} \texttt{R\_TO\_C} is the most consistently strong learned model across the selected figures.  
-\textbf{Evidence:} It is among the closest models to ground truth on the two real-image examples and remains stable on the two RHD examples, unlike \texttt{C\_ONLY}.  
+\noindent\textbf{Point:} RHD$\rightarrow$HK26K is the most consistently strong learned model across the selected figures.  
+\textbf{Evidence:} In Figures~\ref{fig:qual_real_1} and~\ref{fig:qual_real_2}, RHD$\rightarrow$HK26K is among the closest predictions to the ground truth on the two real-image examples, and in Figures~\ref{fig:qual_rhd_1} and~\ref{fig:qual_rhd_2} it remains stable on the two RHD examples, unlike HK26K-only. This visual pattern is also consistent with the quantitative transfer results in Table~\ref{tab:transfer_learning}.  
 \textbf{Explanation:} This indicates that RHD pretraining followed by HK26K adaptation transfers more consistently across the displayed cases than HK26K-only training.  
 \textbf{Link:} The selected figures therefore visually support the transfer asymmetry seen in the quantitative results.
 
+\subsubsection{MediaPipe Comparison Caveat}
+
 \medskip
-\noindent\textbf{Point:} MediaPipe is visually strong, but the real-image comparison is not fully independent.  
-\textbf{Evidence:} MediaPipe aligns closely with the annotations in the two \texttt{hand\_frame\_small} figures, but those annotations were initialized from MediaPipe predictions before manual correction.  
+\noindent\textbf{Point:} In Figures~\ref{fig:qual_real_1} and~\ref{fig:qual_real_2}, MediaPipe is visually strong, but the real-image comparison is not fully independent.
+\textbf{Evidence:} MediaPipe aligns closely with the annotations in the two RH8 figures, but those annotations were initialized from MediaPipe predictions before manual correction.  
 \textbf{Explanation:} This gives MediaPipe a structural advantage on that small benchmark set.  
 \textbf{Link:} The real-image MediaPipe comparisons should therefore be treated as illustrative rather than definitive.
 
@@ -511,7 +519,7 @@ This metric reports how often the fusion heuristic selected the lower-error bran
 \textbf{Link:} The first research question is answered positively.
 
 \medskip
-\noindent\textbf{Point:} Dual-branch fusion is justified, but only as a qualified improvement.
+\noindent\textbf{Point:} Dual-branch fusion is justified, but only as a marginal improvement with minimal time expense.
 \textbf{Evidence:} Fusion gives the best overall balance across the reported results, but the diagnostic analysis shows that the current selection rule is not fully optimal.
 \textbf{Explanation:} The two-branch design is useful, yet the present heuristic does not extract all of its potential benefit.
 \textbf{Link:} The second research question is answered as a qualified yes.
@@ -559,9 +567,9 @@ This metric reports how often the fusion heuristic selected the lower-error bran
 \toprule
 Model & Eval set & Train joints & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
 \midrule
-B0 baseline & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
-B0 baseline & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
-B1 reduced & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+Baseline-21 & native-21 & 21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+Baseline-21 & shared-10 & 21 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 \\
+Reduced-10 & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -575,12 +583,12 @@ B1 reduced & native-10 & 10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099
 \toprule
 Model & Mode & Forward ms/img $\downarrow$ & End-to-end ms/img $\downarrow$ & Images/s $\uparrow$ \\
 \midrule
-B0 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
-B0 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
-B0 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
-B1 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
-B1 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
-B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
+Baseline-21 & fusion & 27.43 $\pm$ 0.45 & 36.81 $\pm$ 1.33 & 27.20 $\pm$ 0.97 \\
+Baseline-21 & heatmap & 24.28 $\pm$ 0.35 & 33.19 $\pm$ 0.56 & 30.13 $\pm$ 0.50 \\
+Baseline-21 & coord & 24.08 $\pm$ 0.44 & 33.17 $\pm$ 0.86 & 30.16 $\pm$ 0.77 \\
+Reduced-10 & fusion & 24.59 $\pm$ 0.61 & 33.31 $\pm$ 0.71 & 30.03 $\pm$ 0.64 \\
+Reduced-10 & heatmap & 24.00 $\pm$ 0.34 & 32.64 $\pm$ 0.46 & 30.64 $\pm$ 0.43 \\
+Reduced-10 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -594,8 +602,8 @@ B1 & coord & 23.91 $\pm$ 0.29 & 32.50 $\pm$ 0.34 & 30.77 $\pm$ 0.32 \\
 \toprule
 Model & Read ms & Prep ms & H2D ms & Forward ms & Write ms & E2E ms \\
 \midrule
-B0 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
-B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
+Baseline-21 fusion & 4.89 $\pm$ 0.64 & 2.80 $\pm$ 0.13 & 0.32 $\pm$ 0.02 & 27.43 $\pm$ 0.45 & 0.67 $\pm$ 0.09 & 36.81 $\pm$ 1.33 \\
+Reduced-10 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.61 & 0.52 $\pm$ 0.02 & 33.31 $\pm$ 0.71 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -609,12 +617,12 @@ B1 fusion & 4.49 $\pm$ 0.08 & 2.74 $\pm$ 0.05 & 0.31 $\pm$ 0.01 & 24.59 $\pm$ 0.
 \toprule
 Model & Eval set & Mode & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ \\
 \midrule
-B0 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
-B0 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
-B0 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
-B1 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
-B1 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
-B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
+Baseline-21 & native-21 & fusion & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 \\
+Baseline-21 & native-21 & heatmap & 0.3139 $\pm$ 0.0684 & 0.0989 $\pm$ 0.0335 & 0.9374 $\pm$ 0.0066 \\
+Baseline-21 & native-21 & coord & 0.3134 $\pm$ 0.0229 & 0.0788 $\pm$ 0.0062 & 0.9113 $\pm$ 0.0071 \\
+Reduced-10 & native-10 & fusion & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 \\
+Reduced-10 & native-10 & heatmap & 0.2213 $\pm$ 0.0880 & 0.0991 $\pm$ 0.0288 & 0.9022 $\pm$ 0.0393 \\
+Reduced-10 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm$ 0.0048 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -627,10 +635,10 @@ B1 & native-10 & coord & 0.1599 $\pm$ 0.0218 & 0.0715 $\pm$ 0.0070 & 0.9102 $\pm
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llcccccc}
 \toprule
-Training sequence & Exp. & RHD SSE & RHD EPE & RHD PCK & HK26K SSE & HK26K EPE & HK26K PCK \\
+Training sequence & ID & RHD SSE & RHD EPE & RHD PCK & HK26K SSE & HK26K EPE & HK26K PCK \\
 \midrule
-RHD scratch & \texttt{R\_ONLY} & 0.3091 $\pm$ 0.0269 & 0.0764 $\pm$ 0.0030 & 0.9143 $\pm$ 0.0097 & 3.7488 $\pm$ 0.7985 & 0.3365 $\pm$ 0.0075 & 0.3719 $\pm$ 0.0434 \\
-HK26K scratch & \texttt{C\_ONLY} & 1.4194 $\pm$ 0.2619 & 0.1609 $\pm$ 0.0207 & 0.3397 $\pm$ 0.0718 & 0.0764 $\pm$ 0.0016 & 0.0612 $\pm$ 0.0049 & 0.9834 $\pm$ 0.0007 \\
+RHD-only & \texttt{R\_ONLY} & 0.3091 $\pm$ 0.0269 & 0.0764 $\pm$ 0.0030 & 0.9143 $\pm$ 0.0097 & 3.7488 $\pm$ 0.7985 & 0.3365 $\pm$ 0.0075 & 0.3719 $\pm$ 0.0434 \\
+HK26K-only & \texttt{C\_ONLY} & 1.4194 $\pm$ 0.2619 & 0.1609 $\pm$ 0.0207 & 0.3397 $\pm$ 0.0718 & 0.0764 $\pm$ 0.0016 & 0.0612 $\pm$ 0.0049 & 0.9834 $\pm$ 0.0007 \\
 HK26K $\rightarrow$ RHD & \texttt{C\_TO\_R} & 0.4504 $\pm$ 0.0162 & 0.1020 $\pm$ 0.0039 & 0.8190 $\pm$ 0.0114 & 1.6426 $\pm$ 0.2293 & 0.2678 $\pm$ 0.0114 & 0.5320 $\pm$ 0.0164 \\
 RHD $\rightarrow$ HK26K & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$ 0.0149 & 0.7690 $\pm$ 0.0221 & 0.0980 $\pm$ 0.0064 & 0.0840 $\pm$ 0.0018 & 0.9837 $\pm$ 0.0007 \\
 \bottomrule
@@ -641,18 +649,18 @@ RHD $\rightarrow$ HK26K & \texttt{R\_TO\_C} & 0.5699 $\pm$ 0.0592 & 0.1276 $\pm$
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Real-image benchmark evaluation on the \texttt{hand\_frame\_small} set ($n=8$ images). The annotations were initialized from MediaPipe predictions and then manually corrected. Learned-model rows are mean $\pm$ std over five seeds; MediaPipe is a single run. All learned-model results use fusion-mode evaluation.}
+\caption{Real-image benchmark evaluation on RH8, the 8-image real-hand evaluation set ($n=8$ images). The annotations were initialized from MediaPipe predictions and then manually corrected. Learned-model rows are mean $\pm$ std over five seeds; MediaPipe is a single run. All learned-model results use fusion-mode evaluation.}
 \label{tab:hand_frame_small_pilot}
 \begin{tabular}{llcccc}
 \toprule
 Method & Eval protocol & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & Detect. succ. \\
 \midrule
-B0 & shared-10 & 0.3345 $\pm$ 0.0221 & 0.2815 $\pm$ 0.0129 & 0.7075 $\pm$ 0.0143 & n/a \\
-B1 & native-10 & 0.4350 $\pm$ 0.1153 & 0.2752 $\pm$ 0.0307 & 0.6475 $\pm$ 0.0555 & n/a \\
-R\_ONLY & shared-10 & 0.3595 $\pm$ 0.0475 & 0.2706 $\pm$ 0.0214 & 0.7050 $\pm$ 0.0338 & n/a \\
-C\_ONLY & shared-10 & 0.1215 $\pm$ 0.0434 & 0.1155 $\pm$ 0.0286 & 0.9200 $\pm$ 0.0647 & n/a \\
-C\_TO\_R & shared-10 & 0.3644 $\pm$ 0.0360 & 0.2481 $\pm$ 0.0090 & 0.7075 $\pm$ 0.0301 & n/a \\
-R\_TO\_C & shared-10 & 0.1209 $\pm$ 0.0236 & 0.1043 $\pm$ 0.0151 & 0.9425 $\pm$ 0.0301 & n/a \\
+Baseline-21 & shared-10 & 0.3345 $\pm$ 0.0221 & 0.2815 $\pm$ 0.0129 & 0.7075 $\pm$ 0.0143 & n/a \\
+Reduced-10 & native-10 & 0.4350 $\pm$ 0.1153 & 0.2752 $\pm$ 0.0307 & 0.6475 $\pm$ 0.0555 & n/a \\
+RHD-only & shared-10 & 0.3595 $\pm$ 0.0475 & 0.2706 $\pm$ 0.0214 & 0.7050 $\pm$ 0.0338 & n/a \\
+HK26K-only & shared-10 & 0.1215 $\pm$ 0.0434 & 0.1155 $\pm$ 0.0286 & 0.9200 $\pm$ 0.0647 & n/a \\
+HK26K$\rightarrow$RHD & shared-10 & 0.3644 $\pm$ 0.0360 & 0.2481 $\pm$ 0.0090 & 0.7075 $\pm$ 0.0301 & n/a \\
+RHD$\rightarrow$HK26K & shared-10 & 0.1209 $\pm$ 0.0236 & 0.1043 $\pm$ 0.0151 & 0.9425 $\pm$ 0.0301 & n/a \\
 MediaPipe & native-21 & 0.0012 & 0.0018 & 1.0000 & 1.0000 \\
 MediaPipe & shared-10 & 0.0005 & 0.0017 & 1.0000 & 1.0000 \\
 \bottomrule
@@ -670,9 +678,9 @@ Method & Eval set & SSE & EPE & PCK@0.2 & Detect. succ. \\
 \midrule
 MediaPipe & native-21 & 1.7049 & 0.0833 & 0.7707 & 0.8933 \\
 MediaPipe & shared-10 & 0.8599 & 0.1378 & 0.7635 & 0.8933 \\
-\texttt{B0} fusion & native-21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & n/a \\
-\texttt{B0} fusion & shared-10 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 & n/a \\
-\texttt{B1} fusion & native-10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 & n/a \\
+Baseline-21 fusion & native-21 & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & n/a \\
+Baseline-21 fusion & shared-10 & 0.1511 $\pm$ 0.0120 & 0.0764 $\pm$ 0.0039 & 0.9101 $\pm$ 0.0071 & n/a \\
+Reduced-10 fusion & native-10 & 0.1574 $\pm$ 0.0226 & 0.0706 $\pm$ 0.0054 & 0.9099 $\pm$ 0.0046 & n/a \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -680,15 +688,15 @@ MediaPipe & shared-10 & 0.8599 & 0.1378 & 0.7635 & 0.8933 \\
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. The table includes all currently available diagnostic exports, including a shared-10 row for \texttt{B0}.}
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. Values are mean $\pm$ std over five seeds. The table includes all currently available diagnostic exports, including a shared-10 row for Baseline-21.}
 \label{tab:fusion_diagnostics}
 \begin{tabular}{llccccc}
 \toprule
 Model & Eval set & HM sel. & Coord sel. & $\alpha$ mean & Disagr. mean & Oracle match \\
 \midrule
-B0 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
-B0 & shared-10 & 0.407 $\pm$ 0.024 & 0.593 $\pm$ 0.024 & 0.065 $\pm$ 0.007 & 0.162 $\pm$ 0.018 & 0.474 $\pm$ 0.011 \\
-B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
+Baseline-21 & native-21 & 0.426 $\pm$ 0.025 & 0.574 $\pm$ 0.025 & 0.065 $\pm$ 0.007 & 0.163 $\pm$ 0.022 & 0.481 $\pm$ 0.012 \\
+Baseline-21 & shared-10 & 0.407 $\pm$ 0.024 & 0.593 $\pm$ 0.024 & 0.065 $\pm$ 0.007 & 0.162 $\pm$ 0.018 & 0.474 $\pm$ 0.011 \\
+Reduced-10 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.171 $\pm$ 0.018 & 0.529 $\pm$ 0.037 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -696,11 +704,11 @@ B1 & native-10 & 0.501 $\pm$ 0.053 & 0.499 $\pm$ 0.053 & 0.084 $\pm$ 0.003 & 0.1
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Hyperparameter ablation relative to the baseline \texttt{B0} configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. Values are mean $\pm$ std over five seeds.}
+\caption{Hyperparameter ablation relative to the Baseline-21 configuration, using native-21 fused accuracy on RHD and fused end-to-end benchmark latency. \texttt{L1}/\texttt{L2} modify the relative heatmap and coordinate loss weights, \texttt{S1}/\texttt{S2} modify the heatmap Gaussian width \(\sigma\), \texttt{W1}/\texttt{W2} modify the Wing-loss parameter \(w\), and \texttt{E1}/\texttt{E2} modify the Wing-loss parameter \(\epsilon\).}
 \label{tab:hyper_ablation}
 \begin{tabular}{llcccc}
 \toprule
-Exp & Change vs. B0 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
+Variant & Change vs. Baseline-21 & SSE $\downarrow$ & EPE $\downarrow$ & PCK@0.2 $\uparrow$ & E2E ms $\downarrow$ \\
 \midrule
 B0 & baseline & 0.3098 $\pm$ 0.0236 & 0.0779 $\pm$ 0.0054 & 0.9112 $\pm$ 0.0071 & 36.81 $\pm$ 1.33 \\
 L1 & $\lambda_{hm}=1.5$, $\lambda_{coord}=0.5$ & 0.3583 $\pm$ 0.0534 & 0.0725 $\pm$ 0.0096 & 0.9081 $\pm$ 0.0092 & 35.77 $\pm$ 0.45 \\
@@ -721,25 +729,29 @@ E2 & $\epsilon=4.0$ & 0.3106 $\pm$ 0.0106 & 0.0873 $\pm$ 0.0056 & 0.9110 $\pm$ 0
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_28_Pro_qualitative.png}
-\caption{Qualitative comparison on hand\_frame\_small example 1.}
+\caption{Qualitative comparison on RH8 example 1.}
+\label{fig:qual_real_1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best/WIN_20260405_12_56_57_Pro_qualitative.png}
-\caption{Qualitative comparison on hand\_frame\_small example 6.}
+\caption{Qualitative comparison on RH8 example 6.}
+\label{fig:qual_real_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{../qual_figures/rhd_best/00143_qualitative.png}
 \caption{Qualitative comparison on RHD evaluation example 00143.}
+\label{fig:qual_rhd_1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{../qual_figures/rhd_best/00354_qualitative.png}
 \caption{Qualitative comparison on RHD evaluation example 00354.}
+\label{fig:qual_rhd_2}
 \end{figure}
 
 \clearpage
