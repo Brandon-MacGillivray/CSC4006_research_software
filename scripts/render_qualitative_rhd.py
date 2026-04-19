@@ -35,8 +35,12 @@ LEGACY_PANEL_LABELS = {
     "B1": "Reduced-10",
     "R_ONLY": "RHD-only",
     "C_ONLY": "HK26K-only",
-    "C_TO_R": "HK26K->RHD",
-    "R_TO_C": "RHD->HK26K",
+    "C_TO_R": "HK26K→RHD",
+    "R_TO_C": "RHD→HK26K",
+    "HK26K-to-RHD": "HK26K→RHD",
+    "RHD-to-HK26K": "RHD→HK26K",
+    "HK26K->RHD": "HK26K→RHD",
+    "RHD->HK26K": "RHD→HK26K",
 }
 
 
@@ -420,7 +424,6 @@ def render_sample(*, sample: dict, gt_keypoint_indices, gt_edges, panels, out_pa
     for ax in axes[total_panels:]:
         ax.axis("off")
 
-    fig.suptitle(sample["file_name"], fontsize=12)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=180, bbox_inches="tight")

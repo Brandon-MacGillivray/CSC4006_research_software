@@ -414,3 +414,28 @@ experiment with hand detection before main model like mediapipe does
 
 
 pdflatex -interaction=nonstopmode -halt-on-error hand_pose_article_v13.tex
+
+
+
+python ~/handpose/scripts/render_qualitative_minimal.py --root ~/handpose/docs/hand_frame_small --out-dir ~/qual_figures/hand_frame_small_best_2 --model Baseline-21=~/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=~/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model RHD-only=~/sharedscratch/transfer_training_results/trf-r-only-s202/checkpoints/best.pt --model HK26K-only=~/sharedscratch/transfer_training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=~/sharedscratch/transfer_training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=~/sharedscratch/transfer_training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+python ~/handpose/scripts/render_qualitative_rhd.py --root /users/40321491/sharedscratch/data/RHD_published_v2 --split evaluation --hand right --ids 00143 00169 00354 00380 00477 00755 00811 00912 --out-dir ~/qual_figures/rhd_best_2 --model Baseline-21=~/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=~/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model HK26K-only=~/sharedscratch/transfer_training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=~/sharedscratch/transfer_training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=~/sharedscratch/transfer_training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+python ~/handpose/scripts/render_qualitative_minimal.py --root ~/handpose/docs/hand_frame_small --out-dir ~/qual_figures/hand_frame_small_best_2 --model Baseline-21=$HOME/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=$HOME/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model RHD-only=$HOME/sharedscratch/transfer_training_results/trf-r-only-s202/checkpoints/best.pt --model HK26K-only=$HOME/sharedscratch/transfer_training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=$HOME/sharedscratch/transfer_training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=$HOME/sharedscratch/transfer_training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+python ~/handpose/scripts/render_qualitative_rhd.py --root /users/40321491/sharedscratch/data/RHD_published_v2 --split evaluation --hand right --ids 00143 00169 00354 00380 00477 00755 00811 00912 --out-dir ~/qual_figures/rhd_best_2 --model Baseline-21=$HOME/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=$HOME/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model HK26K-only=$HOME/sharedscratch/transfer_training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=$HOME/sharedscratch/transfer_training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=$HOME/sharedscratch/transfer_training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+
+python ~/CSC4006_DRHand_replica/scripts/render_qualitative_minimal.py --root ~/CSC4006_DRHand_replica/docs/hand_frame_small --out-dir ~/qual_figures/hand_frame_small_best_3 --model Baseline-21=$HOME/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=$HOME/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model RHD-only=$HOME/sharedscratch/training_results/trf-r-only-s202/checkpoints/best.pt --model HK26K-only=$HOME/sharedscratch/training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=$HOME/sharedscratch/training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=$HOME/sharedscratch/training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+python ~/CSC4006_DRHand_replica/scripts/render_qualitative_rhd.py --root /users/40321491/sharedscratch/data/RHD_published_v2 --split evaluation --hand right --ids 00143 00169 00354 00380 00477 00755 00811 00912 --out-dir ~/qual_figures/rhd_best_3 --model Baseline-21=$HOME/sharedscratch/training_results/drh-b0-k21-right-s303/checkpoints/best.pt --model Reduced-10=$HOME/sharedscratch/training_results/drh-b1-k10-right-s101/checkpoints/best.pt --model HK26K-only=$HOME/sharedscratch/training_results/trf-c-only-s202/checkpoints/best.pt --model HK26K-to-RHD=$HOME/sharedscratch/training_results/trf-c-to-r-s404/checkpoints/best.pt --model RHD-to-HK26K=$HOME/sharedscratch/training_results/trf-r-to-c-s404/checkpoints/best.pt
+
+
+/users/40321491/qual_figures/hand_frame_small_best_2
+/users/40321491/qual_figures/rhd_best_2
+
+docs\qual_figures
+/users/40321491/handpose/docs
+
+mv /users/40321491/qual_figures/hand_frame_small_best_2 /users/40321491/handpose/docs
+mv /users/40321491/qual_figures/rhd_best_2 /users/40321491/handpose/docs

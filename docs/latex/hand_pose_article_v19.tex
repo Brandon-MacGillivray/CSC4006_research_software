@@ -1,4 +1,4 @@
-\documentclass[10pt,letterpaper]{article}
+﻿\documentclass[10pt,letterpaper]{article}
 
 \usepackage[
   letterpaper,
@@ -71,7 +71,7 @@ Email: bmacgillivray01@qub.ac.uk\par
 Hand pose estimation is a useful interface modality for touchless HCI, particularly in contexts where accessibility, hygiene, or hands-free interaction are important. Prior HCI research describes hand-based interaction as natural and expressive, and demonstrates its use for pointing, manipulation, and contact-free control in settings such as AR/VR, large displays, and clinical environments~\cite{vuletic,wachs,li_vr}. In these scenarios, avoiding physical contact is advantageous when conventional input devices are inconvenient, undesirable, or impractical. Unlike simple gesture classification, landmark-based hand pose estimation provides a structured representation that supports richer and more flexible interaction, making it a suitable target for practical touchless HCI research.
 
 \medskip
-A significant technical challenge is achieving useful hand-pose performance under edge-device constraints. Real-world deployment requires balancing prediction quality with latency, throughput, and computational cost on constrained hardware rather than desktop GPUs~\cite{attentionlite,srhandnet,dualreg}. A highly accurate model is insufficient for HCI applications if it cannot respond quickly enough in embedded settings. Thus, This paper focuses on lightweight RGB hand-pose estimation for edge deployment.
+A significant technical challenge is achieving useful hand-pose performance under edge-device constraints. Real-world deployment requires balancing prediction quality with latency, throughput, and computational cost on constrained hardware rather than desktop GPUs~\cite{attentionlite,srhandnet,dualreg}. A highly accurate model is insufficient for HCI applications if it cannot respond quickly enough in embedded settings. Thus, this paper focuses on lightweight RGB hand-pose estimation for edge deployment.
 
 \medskip
 Existing lightweight hand-pose methods leave open important design questions regarding keypoint representation, the value of dual-branch fusion, and generalisation under limited training data. MediaPipe Hands demonstrates efficient on-device tracking, while DRHand combines heatmap and coordinate regression in a lightweight dual-branch framework and achieves competitive performance~\cite{mediapipe,dualreg}. In many hand-pose systems, the hand is represented as a fixed set of landmark keypoints, typically a standard 21-keypoint skeleton covering the wrist and finger joints. Although these approaches establish the feasibility of real-time hand tracking, they do not fully resolve whether full 21-keypoint prediction is necessary for practical use, whether fusion provides sufficient benefit to justify its added complexity, or how robustness can be improved when training data are limited. This motivates a targeted study of reduced keypoint prediction, fusion utility, and cross-model knowledge transfer.
@@ -101,7 +101,7 @@ Lightweight pose estimation methods typically achieve efficiency through a combi
 The realism and domain characteristics of training data are important determinants of cross-domain generalisation in hand-pose estimation. Prior work makes use of both synthetic datasets such as RHD and real datasets for hand tracking, with augmentation often introduced to improve robustness under more realistic conditions~\cite{handobjectgcn,lightweightgcnhand,handaugment}. These data sources differ significantly in appearance, meaning that a model trained on one domain may not generalise reliably to another, particularly when synthetic supervision is used but deployment targets real camera input. Thus, dataset realism and cross-domain robustness remain important considerations in lightweight hand-pose estimation.
 
 \medskip
-The literature leaves open whether full 21-keypoint hand representations are always necessary for lightweight edge-HCI use. Existing lightweight hand-pose systems such as MediaPipe Hands~\cite{mediapipe}, Attention!~\cite{attentionlite}, and SPLite Hand~\cite{splitehand} primarily focus on reducing model complexity while still predicting a complete hand structure. This suggests that prior work has concentrated more on compressing the model than on questioning whether the full landmark target is required for practical HCI interaction. This gap directly motivates the present study’s comparison between reduced 10-keypoint and standard 21-keypoint prediction.
+The literature leaves open whether full 21-keypoint hand representations are always necessary for lightweight edge-HCI use. Existing lightweight hand-pose systems such as MediaPipe Hands~\cite{mediapipe}, Attention!~\cite{attentionlite}, and SPLite Hand~\cite{splitehand} primarily focus on reducing model complexity while still predicting a complete hand structure. This suggests that prior work has concentrated more on compressing the model than on questioning whether the full landmark target is required for practical HCI interaction. This gap directly motivates the present study's comparison between reduced 10-keypoint and standard 21-keypoint prediction.
 
 \medskip
 These gaps motivate three main research questions:
@@ -116,7 +116,7 @@ These gaps motivate three main research questions:
 \subsection{Network Structure}
 
 \noindent
-The proposed model uses a shared backbone followed by two prediction branches. The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths. Here, the term \emph{branch} refers to a task-specific prediction subnetwork attached to the shared backbone, specifically the heatmap regression branch and the coordinate regression branch. Figure~\ref{fig:network_structure} and Figure~\ref{fig:hm_coord_fusion} shows the overall DRHand-inspired network structure used in this study.
+The proposed model uses a shared backbone followed by two prediction branches. The input is a resized RGB hand image, and most computation is shared before the network splits into heatmap and coordinate regression paths. Here, the term \emph{branch} refers to a task-specific prediction subnetwork attached to the shared backbone, specifically the heatmap regression branch and the coordinate regression branch. Figures~\ref{fig:network_structure} and~\ref{fig:hm_coord_fusion} show the overall DRHand-inspired network structure used in this study.
 
 \begin{figure}[!p]
 \centering
@@ -259,9 +259,9 @@ Thus, fusion is performed independently for each joint. When the two branches ag
 
 \subsection{Datasets}
 
-The Rendered Handpose Dataset (RHD)~\cite{rhd} is used as the main synthetic benchmark in this study. It provides 41,258 training samples and 2,728 testing samples. Each sample contains a Blender rendered $320 \times 320$ RGB hand image, and 21 hand keypoints with image-space coordinates and visibility labels. the standard training/evaluation split is used.
+The Rendered Handpose Dataset (RHD)~\cite{rhd} is used as the main synthetic benchmark in this study. It provides 41,258 training samples and 2,728 testing samples. Each sample contains a Blender-rendered $320 \times 320$ RGB hand image, together with 21 hand keypoints with image-space coordinates and visibility labels. The standard training/evaluation split is used.
 
-The second dataset is HK26K (Kaggle)~\cite{hk26k}, is the more realistic image domain for transfer learning. 18,776 training images and 7,992 validation images. The images are drawn from hand-photo and gesture datasets such as 11K Hands~\cite{hands11k}, 2000 Hand Gestures~\cite{giridhar_hand_gestures}, and the Gesture Recognition Dataset~\cite{gesture_recognition_kaggle}, and include both hand-only views and realistic photographed scenes. the annotations are generated using MediaPipe and act as pseudo-labels. the standard training/evaluation split is used.
+The second dataset, HK26K (Kaggle)~\cite{hk26k}, is the more realistic image domain for transfer learning. It contains 18,776 training images and 7,992 validation images. The images are drawn from hand-photo and gesture datasets such as 11K Hands~\cite{hands11k}, 2000 Hand Gestures~\cite{giridhar_hand_gestures}, and the Gesture Recognition Dataset~\cite{gesture_recognition_kaggle}, and include both hand-only views and realistic photographed scenes. The annotations are generated using MediaPipe and act as pseudo-labels. The standard training/evaluation split is used.
 
 A pre-defined subset of an 8-image real-hand evaluation set (RH8) is also used for evaluation. This set contains 8 original real RGB hand images showing basic single-hand gestures on a white background, with annotations initialized from MediaPipe predictions and then manually corrected.
 
@@ -655,7 +655,7 @@ Target-domain adaptation improves the transferred HK26K model on RHD. In \texttt
 
 \medskip
 \noindent
-RHD$\rightarrow$HK26K is the most consistently strong learned model across the selected figures. In Figures~\ref{fig:qual_real_1} and~\ref{fig:qual_real_2}, RHD$\rightarrow$HK26K is among the closest predictions to the ground truth on the two real-image examples, and in Figures~\ref{fig:qual_rhd_1} and~\ref{fig:qual_rhd_2} it remains stable on the two RHD examples, unlike HK26K-only. This visual pattern is also consistent with the quantitative transfer results in Table~\ref{tab:transfer_learning_HK} and Table~\ref{tab:transfer_learning_HK}. This indicates that RHD pretraining followed by HK26K adaptation transfers more consistently across the displayed cases than HK26K-only training, and the selected figures therefore visually support the transfer asymmetry observed in the quantitative results.
+RHD$\rightarrow$HK26K is the most consistently strong learned model across the selected figures. In Figures~\ref{fig:qual_real_1} and~\ref{fig:qual_real_2}, RHD$\rightarrow$HK26K is among the closest predictions to the ground truth on the two real-image examples, and in Figures~\ref{fig:qual_rhd_1} and~\ref{fig:qual_rhd_2} it remains stable on the two RHD examples, unlike HK26K-only. This visual pattern is also consistent with the quantitative transfer results in Table~\ref{tab:transfer_learning_HK} and Table~\ref{tab:transfer_learning_RHD}. This indicates that RHD pretraining followed by HK26K adaptation transfers more consistently across the displayed cases than HK26K-only training, and the selected figures therefore visually support the transfer asymmetry observed in the quantitative results.
 
 \subsubsection{MediaPipe Comparison Caveat}
 
@@ -698,28 +698,28 @@ Future work should introduce an explicit hand-detection stage to standardise inp
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best_3/WIN_20260405_12_56_28_Pro_qualitative.png}
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best_4/WIN_20260405_12_56_28_Pro_qualitative.png}
 \caption{Qualitative comparison on RH8 example 1.}
 \label{fig:qual_real_1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best_3/WIN_20260405_12_56_57_Pro_qualitative.png}
+\includegraphics[width=\textwidth]{../qual_figures/hand_frame_small_best_4/WIN_20260405_12_56_57_Pro_qualitative.png}
 \caption{Qualitative comparison on RH8 example 6.}
 \label{fig:qual_real_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../qual_figures/rhd_best_3/00143_qualitative.png}
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best_4/00143_qualitative.png}
 \caption{Qualitative comparison on RHD evaluation example 00143.}
 \label{fig:qual_rhd_1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../qual_figures/rhd_best_3/00354_qualitative.png}
+\includegraphics[width=\textwidth]{../qual_figures/rhd_best_4/00354_qualitative.png}
 \caption{Qualitative comparison on RHD evaluation example 00354.}
 \label{fig:qual_rhd_2}
 \end{figure}
@@ -799,3 +799,4 @@ Sparsh, ``Gesture recognition dataset,'' Kaggle dataset. Available: \url{https:/
 \end{thebibliography}
 
 \end{document}
+
