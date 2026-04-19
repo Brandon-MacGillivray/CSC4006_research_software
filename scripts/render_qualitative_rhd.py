@@ -30,6 +30,14 @@ from handpose.models.hand_pose_model import HandPoseNet
 
 MEDIAPIPE_MODEL_KEYPOINT_INDICES = list(range(21))
 REPO_ROOT = Path(__file__).resolve().parents[1]
+LEGACY_PANEL_LABELS = {
+    "B0": "Baseline-21",
+    "B1": "Reduced-10",
+    "R_ONLY": "RHD-only",
+    "C_ONLY": "HK26K-only",
+    "C_TO_R": "HK26K->RHD",
+    "R_TO_C": "RHD->HK26K",
+}
 
 
 def parse_args():
@@ -149,11 +157,15 @@ def resolve_user_path(value):
     return repo_relative
 
 
+def normalize_panel_label(label: str):
+    return LEGACY_PANEL_LABELS.get(str(label).strip(), str(label).strip())
+
+
 def parse_model_spec(spec: str):
     if "=" not in str(spec):
         raise ValueError(f"Invalid --model spec {spec!r}. Expected Label=/path/to/checkpoint.pt")
     label, ckpt = str(spec).split("=", 1)
-    label = label.strip()
+    label = normalize_panel_label(label)
     ckpt = ckpt.strip()
     if not label or not ckpt:
         raise ValueError(f"Invalid --model spec {spec!r}. Expected Label=/path/to/checkpoint.pt")
@@ -388,15 +400,6 @@ def render_sample(*, sample: dict, gt_keypoint_indices, gt_edges, panels, out_pa
 
     for ax, panel in zip(axes[1:], panels):
         ax.imshow(panel["image"])
-        draw_hand(
-            ax,
-            gt_coords,
-            gt_mask,
-            gt_edges,
-            color="lime",
-            linewidth=1.8,
-            point_size=42.0,
-        )
         pred_coords = panel.get("pred_coords")
         if pred_coords is not None:
             draw_hand(
