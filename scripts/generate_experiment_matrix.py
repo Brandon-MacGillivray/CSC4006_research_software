@@ -14,8 +14,8 @@ DEFAULT_SHARED_ROOT = HOME_ROOT / "sharedscratch"
 DEFAULT_CHECKPOINT_ROOT = DEFAULT_SHARED_ROOT / "training_results"
 DEFAULT_EVAL_ROOT = DEFAULT_SHARED_ROOT / "eval_results"
 DEFAULT_BENCHMARK_ROOT = DEFAULT_SHARED_ROOT / "benchmark_results"
-DEFAULT_BENCHMARK_SUMMARY_CSV = DEFAULT_BENCHMARK_ROOT / "orin_maxn_summary.csv"
-DEFAULT_OUT_DIR = REPO_ROOT / "experiment_plan"
+DEFAULT_BENCHMARK_SUMMARY_CSV = DEFAULT_BENCHMARK_ROOT / "jetson_orin_nano_maxn_summary.csv"
+DEFAULT_OUT_DIR = REPO_ROOT / "experiments" / "ablation"
 
 
 def parse_args():

@@ -5,7 +5,7 @@ import time
 import numpy as np
 import torch
 
-from _bootstrap import bootstrap_src_path
+from bootstrap_src import bootstrap_src_path
 
 bootstrap_src_path()
 

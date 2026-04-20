@@ -22,7 +22,7 @@ try:
 except ImportError:  # pragma: no cover - optional runtime dependency
     psutil = None
 
-from _bootstrap import bootstrap_src_path
+from bootstrap_src import bootstrap_src_path
 
 bootstrap_src_path()
 

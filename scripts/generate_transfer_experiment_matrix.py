@@ -19,7 +19,7 @@ DEFAULT_CHECKPOINT_ROOT = DEFAULT_SHARED_ROOT / "transfer_training_results"
 DEFAULT_EVAL_ROOT = DEFAULT_SHARED_ROOT / "transfer_eval_results"
 DEFAULT_BENCHMARK_ROOT = DEFAULT_SHARED_ROOT / "transfer_benchmark_results"
 DEFAULT_BENCHMARK_SUMMARY_CSV = DEFAULT_BENCHMARK_ROOT / "transfer_summary.csv"
-DEFAULT_OUT_DIR = REPO_ROOT / "experiment_plan_transfer"
+DEFAULT_OUT_DIR = REPO_ROOT / "experiments" / "transfer"
 SUPPORTED_DATASETS = ("rhd", "coco_hand")
 
 

@@ -15,6 +15,15 @@ env/
 .ruff_cache/
 .ipynb_checkpoints/
 .cache/
+pytest-cache-files-*/
+
+# LaTeX build outputs
+*.aux
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 
 # Build and packaging outputs
 build/
@@ -33,6 +42,10 @@ logs/
 
 # Local datasets
 data/
+
+# Downloaded checkpoint archive
+docs/artefacts/checkpoints/*
+!docs/artefacts/checkpoints/.gitkeep
 
 # Plots and local logs
 loss_plot.png

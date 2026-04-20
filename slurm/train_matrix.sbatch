@@ -20,7 +20,7 @@ set -euo pipefail
 # Run one generated training command per Slurm array task.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-DEFAULT_COMMAND_REL="experiment_plan/train_commands.txt"
+DEFAULT_COMMAND_REL="experiments/ablation/train_commands.txt"
 
 if [[ -z "${REPO_DIR:-}" ]]; then
   REPO_CANDIDATES=()
@@ -46,7 +46,7 @@ if [[ -z "${REPO_DIR:-}" ]]; then
 fi
 
 REPO_DIR="${REPO_DIR:-${SCRIPT_REPO_DIR}}"
-COMMAND_FILE="${COMMAND_FILE:-${REPO_DIR}/experiment_plan/train_commands.txt}"
+COMMAND_FILE="${COMMAND_FILE:-${REPO_DIR}/experiments/ablation/train_commands.txt}"
 CONDA_SOURCE="${CONDA_SOURCE:-/users/40321491/miniconda/etc/profile.d/conda.sh}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-torch}"
 

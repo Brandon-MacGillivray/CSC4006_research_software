@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 from pathlib import Path
 
@@ -12,8 +13,6 @@ bootstrap_src_path()
 
 from handpose.checkpoints import infer_checkpoint_keypoint_indices, load_checkpoint
 from handpose.data.keypoints import TIP_BASE_KEYPOINT_INDICES
-from handpose.data.rhd.parsing import find_uv_key, load_annotations, select_hand
-from handpose.data.rhd.paths import annotation_path, image_dir, resolve_split_name
 from handpose.inference.fusion import HAND_BONE_EDGES_10_GLOBAL, HAND_BONE_EDGES_21
 from handpose.inference.image_io import load_image_tensor
 from handpose.inference.mediapipe_baseline import (
@@ -28,6 +27,15 @@ from handpose.inference.predict import (
 from handpose.models.hand_pose_model import HandPoseNet
 
 
+COCO_HAND_SPLIT_ALIASES = {
+    "train": "train",
+    "training": "train",
+    "val": "val",
+    "validation": "val",
+    "eval": "val",
+    "evaluation": "val",
+    "benchmark": "val",
+}
 MEDIAPIPE_MODEL_KEYPOINT_INDICES = list(range(21))
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LEGACY_PANEL_LABELS = {
@@ -47,8 +55,8 @@ LEGACY_PANEL_LABELS = {
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Minimal standalone qualitative renderer for the RHD dataset. "
-            "Writes one comparison figure per selected image."
+            "Minimal standalone qualitative renderer for a COCO-style hand dataset. "
+            "Writes one comparison figure per image."
         )
     )
     parser.add_argument(
@@ -63,16 +71,16 @@ def parse_args():
         help="Repeated model spec in the form Label=/path/to/checkpoint.pt",
     )
     parser.add_argument(
-        "--ids",
+        "--images",
         nargs="*",
         default=None,
-        help="Optional explicit list of RHD sample IDs or file names, for example 3 143 00435.png",
+        help="Optional explicit list of image file names to render.",
     )
     parser.add_argument(
         "--limit",
         type=int,
         default=0,
-        help="Optional maximum number of images to render. 0 means all matching images.",
+        help="Optional maximum number of images to render. 0 means all images.",
     )
     parser.add_argument(
         "--native",
@@ -93,19 +101,13 @@ def parse_args():
     )
     parser.add_argument(
         "--root",
-        default="data/RHD_published_v2",
-        help="RHD dataset root. Defaults to data/RHD_published_v2.",
+        default="docs/artefacts/datasets/rh8",
+        help="Dataset root. Defaults to docs/artefacts/datasets/rh8.",
     )
     parser.add_argument(
         "--split",
-        default="evaluation",
-        help="RHD split alias. Defaults to evaluation.",
-    )
-    parser.add_argument(
-        "--hand",
-        default="right",
-        choices=["left", "right", "auto"],
-        help="Which RHD hand to use as ground truth. Defaults to right.",
+        default="val",
+        help="Dataset split alias. Defaults to val.",
     )
     parser.add_argument(
         "--prediction-mode",
@@ -125,9 +127,9 @@ def parse_args():
     )
     parser.add_argument(
         "--mediapipe-hand",
-        default="match",
-        choices=["left", "right", "auto", "match"],
-        help="Requested hand for the MediaPipe panel. 'match' uses --hand.",
+        default="auto",
+        choices=["left", "right", "auto"],
+        help="Requested hand for the MediaPipe panel.",
     )
     parser.add_argument(
         "--ignore-handedness",
@@ -165,6 +167,64 @@ def normalize_panel_label(label: str):
     return LEGACY_PANEL_LABELS.get(str(label).strip(), str(label).strip())
 
 
+def resolve_split_name(split: str):
+    text = str(split).strip().lower()
+    if text in COCO_HAND_SPLIT_ALIASES:
+        return COCO_HAND_SPLIT_ALIASES[text]
+    raise ValueError(f"Unsupported COCO-hand split: {split!r}")
+
+
+def annotation_path(root, split: str):
+    return Path(root) / "coco_annotation" / resolve_split_name(split) / "_annotations.coco.json"
+
+
+def image_dir(root, split: str):
+    return Path(root) / "images" / resolve_split_name(split)
+
+
+def load_annotation_payload(path: Path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def build_samples(payload: dict, image_root: Path):
+    images_by_id = {}
+    for image_meta in payload.get("images", []):
+        if "id" not in image_meta:
+            continue
+        images_by_id[int(image_meta["id"])] = image_meta
+
+    samples = []
+    for ann in sorted(
+        payload.get("annotations", []),
+        key=lambda item: (int(item.get("image_id", -1)), int(item.get("id", -1))),
+    ):
+        if int(ann.get("iscrowd", 0)) != 0:
+            continue
+        image_meta = images_by_id.get(int(ann.get("image_id", -1)))
+        if image_meta is None:
+            continue
+        raw_keypoints = ann.get("keypoints")
+        if not isinstance(raw_keypoints, list) or len(raw_keypoints) < 63:
+            continue
+        keypoints = np.asarray(raw_keypoints[:63], dtype=np.float32).reshape(21, 3)
+        file_name = str(image_meta.get("file_name", "")).strip()
+        if not file_name:
+            continue
+        samples.append(
+            {
+                "image_id": int(image_meta["id"]),
+                "annotation_id": int(ann.get("id", len(samples))),
+                "file_name": file_name,
+                "image_path": image_root / file_name,
+                "coords": keypoints[:, :2],
+                "vis": keypoints[:, 2],
+            }
+        )
+    samples.sort(key=lambda sample: sample["file_name"].lower())
+    return samples
+
+
 def parse_model_spec(spec: str):
     if "=" not in str(spec):
         raise ValueError(f"Invalid --model spec {spec!r}. Expected Label=/path/to/checkpoint.pt")
@@ -173,19 +233,7 @@ def parse_model_spec(spec: str):
     ckpt = ckpt.strip()
     if not label or not ckpt:
         raise ValueError(f"Invalid --model spec {spec!r}. Expected Label=/path/to/checkpoint.pt")
-    return label, Path(ckpt).expanduser()
-
-
-def parse_requested_ids(values):
-    requested = set()
-    for value in values or []:
-        text = str(value).strip()
-        if not text:
-            continue
-        if text.lower().endswith(".png"):
-            text = Path(text).stem
-        requested.add(int(text))
-    return requested
+    return label, Path(ckpt)
 
 
 def choose_detection(detections, *, requested_hand: str, ignore_handedness: bool):
@@ -273,28 +321,6 @@ def draw_hand(ax, coords_px, vis_mask, edges, *, color: str, linewidth: float, p
             edgecolors="white",
             linewidths=0.7,
         )
-
-
-def load_rhd_samples(root: Path, split: str, hand: str):
-    resolved_split = resolve_split_name(split)
-    annotations = load_annotations(annotation_path(root, resolved_split))
-    color_dir = image_dir(root, resolved_split)
-
-    samples = []
-    for sample_id in sorted(annotations.keys()):
-        sample_meta = annotations[sample_id]
-        uv_data = sample_meta[find_uv_key(sample_meta)]
-        hand_uv = select_hand(uv_data, hand)
-        samples.append(
-            {
-                "sample_id": int(sample_id),
-                "file_name": f"{int(sample_id):05d}.png",
-                "image_path": color_dir / f"{int(sample_id):05d}.png",
-                "coords": np.asarray(hand_uv[:, :2], dtype=np.float32),
-                "vis": np.asarray(hand_uv[:, 2], dtype=np.float32),
-            }
-        )
-    return samples
 
 
 class CheckpointPanel:
@@ -438,15 +464,16 @@ def main():
         raise ValueError("Provide at least one --model unless MediaPipe is included.")
 
     dataset_root = resolve_user_path(args.root)
-    samples = load_rhd_samples(dataset_root, args.split, args.hand)
+    payload = load_annotation_payload(annotation_path(dataset_root, args.split))
+    samples = build_samples(payload, image_dir(dataset_root, args.split))
 
-    requested_ids = parse_requested_ids(args.ids)
-    if requested_ids:
-        samples = [sample for sample in samples if int(sample["sample_id"]) in requested_ids]
+    if args.images:
+        requested = {str(name) for name in args.images}
+        samples = [sample for sample in samples if sample["file_name"] in requested]
     if int(args.limit) > 0:
         samples = samples[: int(args.limit)]
     if not samples:
-        raise ValueError("No samples matched the requested split/ids selection.")
+        raise ValueError("No samples matched the requested split/images selection.")
 
     device = resolve_device(str(args.device))
 
@@ -465,11 +492,10 @@ def main():
 
     mediapipe_panel = None
     if not args.no_mediapipe:
-        requested_mp_hand = args.hand if args.mediapipe_hand == "match" else args.mediapipe_hand
         mediapipe_panel = MediaPipePanel(
             model_asset_path=resolve_user_path(args.mediapipe_model_asset_path),
             shared_10_eval=shared_10_eval,
-            requested_hand=requested_mp_hand,
+            requested_hand=args.mediapipe_hand,
             ignore_handedness=bool(args.ignore_handedness),
             num_hands=int(args.num_hands),
             min_hand_detection_confidence=float(args.min_hand_detection_confidence),
@@ -479,7 +505,7 @@ def main():
 
     gt_keypoint_indices = list(TIP_BASE_KEYPOINT_INDICES) if shared_10_eval else list(range(21))
     gt_edges = resolve_draw_edges(gt_keypoint_indices)
-    out_dir = Path(args.out_dir).expanduser()
+    out_dir = Path(args.out_dir)
 
     try:
         for sample in samples:

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.utils.data import Subset
 
-from _bootstrap import bootstrap_src_path
+from bootstrap_src import bootstrap_src_path
 
 bootstrap_src_path()
 
