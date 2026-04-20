@@ -1,3 +1,9 @@
+"""High-level hand pose network wrapper used across the repository.
+
+This module exposes the combined DRHand-style model built from the backbone and
+branch components defined in the lower-level architecture module.
+"""
+
 import torch.nn as nn
 
 from handpose.models.architecture import Backbone, Heatmap_reg, coord_reg

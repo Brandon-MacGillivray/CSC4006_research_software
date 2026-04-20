@@ -1,3 +1,9 @@
+"""Reusable neural-network building blocks for the model architecture.
+
+This module defines the convolutional, pooling, and upsampling components used
+to assemble the DRHand-inspired network.
+"""
+
 import torch
 import torch.nn as nn
 

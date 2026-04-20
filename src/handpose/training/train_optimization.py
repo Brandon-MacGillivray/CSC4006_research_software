@@ -1,3 +1,9 @@
+"""Optimizer builders for the two-stage training pipeline.
+
+This module configures the stage-specific optimizers used by the main training
+entry point, including optional freezing during stage 2.
+"""
+
 import torch
 import torch.nn as nn
 

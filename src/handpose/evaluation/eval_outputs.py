@@ -1,3 +1,9 @@
+"""Helpers for building and saving evaluation result payloads.
+
+This module standardises the JSON output structure used by evaluation scripts
+and downstream aggregation utilities.
+"""
+
 import json
 from pathlib import Path
 

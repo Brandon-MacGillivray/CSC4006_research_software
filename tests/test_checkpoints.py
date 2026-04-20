@@ -1,3 +1,9 @@
+"""Tests for checkpoint schema validation helpers.
+
+These tests protect the repository's checkpoint metadata contract used by
+training, evaluation, and inference workflows.
+"""
+
 import pytest
 
 from handpose.checkpoints import CHECKPOINT_VERSION, validate_checkpoint

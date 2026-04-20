@@ -1,3 +1,9 @@
+"""Evaluate a trained checkpoint on a supported dataset split.
+
+This script runs the repository evaluation pipeline for fusion, heatmap, or
+coordinate prediction modes and can optionally write a JSON results payload.
+"""
+
 import argparse
 import json
 

@@ -1,3 +1,9 @@
+"""Run single-image inference with a preserved or regenerated checkpoint.
+
+This script loads a checkpoint, predicts hand keypoints for one image, and can
+optionally export an overlay visualisation beside the source image.
+"""
+
 import argparse
 import json
 from pathlib import Path

@@ -1,3 +1,5 @@
+"""Helpers specific to COCO-style hand-pose datasets."""
+
 __all__ = [
     "COCOHandKeypointsDataset",
     "annotation_path",

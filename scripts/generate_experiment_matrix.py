@@ -1,3 +1,9 @@
+"""Generate ablation experiment matrices and command templates.
+
+This script writes the CSV, JSON, and command files that define the ablation
+training, evaluation, diagnostics, and benchmark surfaces.
+"""
+
 import argparse
 import csv
 import json
@@ -8,13 +14,11 @@ DEFAULT_SEEDS = [101, 202, 303, 404, 505]
 DEFAULT_PREDICTION_MODES = ["fusion", "heatmap", "coord"]
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-HOME_ROOT = REPO_ROOT.parent
-DEFAULT_DATA_ROOT = HOME_ROOT / "data" / "RHD_published_v2"
-DEFAULT_SHARED_ROOT = HOME_ROOT / "sharedscratch"
-DEFAULT_CHECKPOINT_ROOT = DEFAULT_SHARED_ROOT / "training_results"
-DEFAULT_EVAL_ROOT = DEFAULT_SHARED_ROOT / "eval_results"
-DEFAULT_BENCHMARK_ROOT = DEFAULT_SHARED_ROOT / "benchmark_results"
-DEFAULT_BENCHMARK_SUMMARY_CSV = DEFAULT_BENCHMARK_ROOT / "jetson_orin_nano_maxn_summary.csv"
+DEFAULT_DATA_ROOT = "<RHD_ROOT>"
+DEFAULT_CHECKPOINT_ROOT = "<CHECKPOINT_ROOT>"
+DEFAULT_EVAL_ROOT = "<EVAL_ROOT>"
+DEFAULT_BENCHMARK_ROOT = "<BENCHMARK_ROOT>"
+DEFAULT_BENCHMARK_SUMMARY_CSV = "<BENCHMARK_ROOT>/jetson_orin_nano_maxn_summary.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "experiments" / "ablation"
 
 
@@ -175,6 +179,25 @@ def build_benchmark_commands(run, args):
     return commands
 
 
+def build_shared10_diag_eval_command(run, args):
+    ckpt = f"{args.checkpoint_root}/{run['job_id']}/checkpoints/best.pt"
+    out_json = f"{args.eval_root}/{run['job_id']}.fusion.shared10_diag.json"
+    return " ".join(
+        [
+            "python scripts/eval_metrics.py",
+            "--dataset rhd",
+            f"--ckpt {quote(ckpt)}",
+            f"--root {quote(args.root)}",
+            "--split evaluation",
+            "--hand right",
+            "--prediction-mode fusion",
+            "--shared-10-eval",
+            "--with-fusion-diagnostics",
+            f"--out-json {quote(out_json)}",
+        ]
+    )
+
+
 def write_text(path: Path, lines):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
@@ -206,13 +229,16 @@ def main():
     train_commands = [build_train_command(run, args) for run in runs]
     eval_commands = []
     benchmark_commands = []
+    shared10_diag_eval_commands = []
     for run in runs:
         eval_commands.extend(build_eval_commands(run, args))
         benchmark_commands.extend(build_benchmark_commands(run, args))
+        shared10_diag_eval_commands.append(build_shared10_diag_eval_command(run, args))
 
     write_text(out_dir / "train_commands.txt", train_commands)
     write_text(out_dir / "eval_commands.txt", eval_commands)
     write_text(out_dir / "benchmark_commands.txt", benchmark_commands)
+    write_text(out_dir / "shared10_diag_eval_commands.txt", shared10_diag_eval_commands)
 
 
 if __name__ == "__main__":

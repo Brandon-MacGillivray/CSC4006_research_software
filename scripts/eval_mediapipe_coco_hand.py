@@ -1,3 +1,9 @@
+"""Evaluate the MediaPipe baseline on a COCO-style hand dataset.
+
+This script is used for RH8 and related COCO-style datasets to generate
+repository-style baseline JSON outputs for comparison and aggregation.
+"""
+
 import argparse
 import json
 import time

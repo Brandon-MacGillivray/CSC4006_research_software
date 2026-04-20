@@ -1,3 +1,9 @@
+"""Path and split-resolution helpers for COCO-style hand datasets.
+
+This module resolves annotation and image locations for HK26K, RH8, and other
+COCO-style hand datasets used in the repository.
+"""
+
 from pathlib import Path
 
 

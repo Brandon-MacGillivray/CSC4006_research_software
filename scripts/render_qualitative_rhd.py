@@ -1,3 +1,9 @@
+"""Render qualitative prediction figures for selected RHD samples.
+
+This script compares preserved checkpoints and the MediaPipe baseline on RHD
+examples and writes paper/report-facing qualitative figures.
+"""
+
 import argparse
 import math
 from pathlib import Path

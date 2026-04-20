@@ -1,3 +1,5 @@
+"""Public data-layer exports for the supported hand-pose datasets."""
+
 from handpose.data.dataset import COCOHandKeypointsDataset, RHDDatasetCoords
 from handpose.data.factory import (
     AUTO_DATASET,

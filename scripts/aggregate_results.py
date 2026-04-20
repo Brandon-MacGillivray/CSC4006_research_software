@@ -1,3 +1,9 @@
+"""Aggregate evaluation and benchmark outputs into summary CSV tables.
+
+This script converts individual JSON and CSV run artefacts into repository-style
+aggregated summaries used by the paper and software report.
+"""
+
 import argparse
 import csv
 import json

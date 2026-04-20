@@ -1,3 +1,9 @@
+"""Dataset-selection helpers shared across loaders and evaluation code.
+
+This module validates keypoint subsets and re-exports hand-selection helpers
+used by dataset-aware parts of the repository.
+"""
+
 from handpose.data.rhd.parsing import find_uv_key, select_hand
 
 

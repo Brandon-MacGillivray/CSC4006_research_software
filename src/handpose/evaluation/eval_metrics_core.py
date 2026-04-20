@@ -1,3 +1,9 @@
+"""Core metric computation for checkpoint evaluation.
+
+This module implements the low-level evaluation loop used to score checkpoints
+against supported datasets and prediction modes.
+"""
+
 import sys
 import time
 

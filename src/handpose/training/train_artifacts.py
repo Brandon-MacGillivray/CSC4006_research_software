@@ -1,3 +1,9 @@
+"""Helpers for training artefact logging and DataLoader construction.
+
+This module writes per-run CSV logs and builds seeded training and validation
+loaders for the repository training pipeline.
+"""
+
 import csv
 import os
 import random

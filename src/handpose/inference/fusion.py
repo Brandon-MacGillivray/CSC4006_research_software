@@ -1,3 +1,9 @@
+"""Fusion and heatmap-decoding helpers for hand pose inference.
+
+This module implements the geometry and selection logic used to combine branch
+predictions in fused inference mode.
+"""
+
 import torch
 
 from handpose.data.keypoints import TIP_BASE_KEYPOINT_INDICES

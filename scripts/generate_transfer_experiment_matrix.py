@@ -1,3 +1,9 @@
+"""Generate transfer-learning experiment matrices and command templates.
+
+This script writes the checked-in CSV, JSON, and command files used to define
+the transfer experiment family for training, evaluation, and benchmarking.
+"""
+
 import argparse
 import csv
 import json
@@ -11,14 +17,12 @@ DEFAULT_BENCHMARK_DATASETS = ["rhd", "coco_hand"]
 DEFAULT_BENCHMARK_PREDICTION_MODES = ["fusion"]
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-HOME_ROOT = REPO_ROOT.parent
-DEFAULT_RHD_ROOT = HOME_ROOT / "data" / "RHD_published_v2"
-DEFAULT_COCO_ROOT = HOME_ROOT / "data" / "hand_keypoint_dataset"
-DEFAULT_SHARED_ROOT = HOME_ROOT / "sharedscratch"
-DEFAULT_CHECKPOINT_ROOT = DEFAULT_SHARED_ROOT / "transfer_training_results"
-DEFAULT_EVAL_ROOT = DEFAULT_SHARED_ROOT / "transfer_eval_results"
-DEFAULT_BENCHMARK_ROOT = DEFAULT_SHARED_ROOT / "transfer_benchmark_results"
-DEFAULT_BENCHMARK_SUMMARY_CSV = DEFAULT_BENCHMARK_ROOT / "transfer_summary.csv"
+DEFAULT_RHD_ROOT = "<RHD_ROOT>"
+DEFAULT_COCO_ROOT = "<HK26K_ROOT>"
+DEFAULT_CHECKPOINT_ROOT = "<TRANSFER_CHECKPOINT_ROOT>"
+DEFAULT_EVAL_ROOT = "<TRANSFER_EVAL_ROOT>"
+DEFAULT_BENCHMARK_ROOT = "<TRANSFER_BENCHMARK_ROOT>"
+DEFAULT_BENCHMARK_SUMMARY_CSV = "<TRANSFER_BENCHMARK_ROOT>/transfer_summary.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "experiments" / "transfer"
 SUPPORTED_DATASETS = ("rhd", "coco_hand")
 

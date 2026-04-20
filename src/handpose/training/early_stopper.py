@@ -2,6 +2,12 @@
 # Posted by isle_of_gods, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-02-05, License - CC BY-SA 4.0
 
+"""Early-stopping helper for validation-loss tracking.
+
+This adapted utility is used by the training pipeline to stop stage-1 and
+stage-2 optimisation when validation loss plateaus.
+"""
+
 
 class EarlyStopper:
     def __init__(self, patience=1, min_delta=0):

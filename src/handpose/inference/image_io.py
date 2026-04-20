@@ -1,3 +1,9 @@
+"""Image-loading helpers for repository inference workflows.
+
+This module converts input images into the tensor format expected by the hand
+pose prediction pipeline.
+"""
+
 from pathlib import Path
 
 import numpy as np

@@ -1,3 +1,9 @@
+"""Prediction helpers for fused, heatmap-only, and coord-only inference.
+
+This module provides the shared inference logic used by evaluation, benchmarking,
+single-image prediction, and qualitative rendering scripts.
+"""
+
 import torch
 
 from handpose.inference.fusion import (

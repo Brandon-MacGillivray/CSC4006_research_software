@@ -1,3 +1,9 @@
+"""Add the local ``src/`` directory to ``sys.path`` for script entry points.
+
+This helper keeps the command-line scripts runnable from the repository root
+without requiring an installed package build.
+"""
+
 from pathlib import Path
 import sys
 

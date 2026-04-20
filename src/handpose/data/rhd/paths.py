@@ -1,3 +1,9 @@
+"""Path and split-resolution helpers for the RHD dataset layout.
+
+This module resolves annotation and image locations for the RHD dataset used by
+training, evaluation, and qualitative rendering scripts.
+"""
+
 from pathlib import Path
 
 

@@ -1,3 +1,9 @@
+"""Tests for HandPoseNet output-shape contracts.
+
+These tests verify the expected heatmap and coordinate tensor shapes for the
+supported 21-keypoint and 10-keypoint model configurations.
+"""
+
 import pytest
 import torch
 

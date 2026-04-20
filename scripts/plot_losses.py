@@ -1,3 +1,9 @@
+"""Plot per-epoch training and validation losses from run CSV logs.
+
+This utility renders simple loss curves from the ``losses.csv`` files produced
+by the training pipeline.
+"""
+
 import argparse
 import os
 import csv

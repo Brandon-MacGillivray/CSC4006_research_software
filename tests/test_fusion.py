@@ -1,3 +1,9 @@
+"""Tests for fusion logic and heatmap decoding helpers.
+
+These tests cover the keypoint-layout handling and argmax coordinate decoding
+used by fused inference.
+"""
+
 import pytest
 import torch
 

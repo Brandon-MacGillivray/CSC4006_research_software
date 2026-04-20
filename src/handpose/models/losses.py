@@ -1,3 +1,9 @@
+"""Loss functions used by the hand-pose training pipeline.
+
+This module provides the heatmap and coordinate regression losses used during
+the two-stage optimisation process.
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

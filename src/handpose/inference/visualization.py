@@ -1,3 +1,9 @@
+"""Overlay rendering helpers for visualising predicted hand keypoints.
+
+This module writes simple image overlays used by single-image prediction and
+qualitative figure generation.
+"""
+
 from pathlib import Path
 
 from PIL import Image, ImageDraw

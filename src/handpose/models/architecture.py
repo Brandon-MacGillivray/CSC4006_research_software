@@ -1,3 +1,9 @@
+"""Backbone and branch definitions for the DRHand-inspired architecture.
+
+This module defines the feature extractor and the heatmap and coordinate
+regression branches used by the hand pose model.
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

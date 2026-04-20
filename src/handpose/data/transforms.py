@@ -1,3 +1,9 @@
+"""Image and keypoint preprocessing helpers for dataset pipelines.
+
+This module resizes full images and converts coordinates into the tensor format
+used by training, evaluation, and inference.
+"""
+
 from pathlib import Path
 
 import numpy as np

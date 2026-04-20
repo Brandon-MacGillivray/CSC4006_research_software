@@ -1,3 +1,9 @@
+"""Evaluate the MediaPipe baseline on the RHD dataset.
+
+This script runs the bundled MediaPipe hand-landmarker asset against RHD and
+exports repository-style JSON payloads for comparison and aggregation.
+"""
+
 import argparse
 import json
 import time

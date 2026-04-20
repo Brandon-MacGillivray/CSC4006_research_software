@@ -1,3 +1,9 @@
+"""MediaPipe baseline helpers for image loading and landmark inference.
+
+This module wraps the bundled MediaPipe hand-landmarker asset so that baseline
+comparisons can be run through the repository evaluation scripts.
+"""
+
 from pathlib import Path
 
 import numpy as np

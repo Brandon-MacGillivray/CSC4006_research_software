@@ -1,3 +1,9 @@
+"""Train DRHand-style hand pose models with the two-stage repository pipeline.
+
+This script is the main training entry point for ablation and transfer runs and
+writes per-run checkpoints and loss logs under the selected checkpoint root.
+"""
+
 import argparse
 import os
 import random

@@ -1,3 +1,9 @@
+"""PyTorch dataset wrapper for the Rendered Handpose Dataset.
+
+This module loads RHD samples, applies repository preprocessing, and exposes
+the tensors used by training and evaluation pipelines.
+"""
+
 import torch
 from torch.utils.data import Dataset
 

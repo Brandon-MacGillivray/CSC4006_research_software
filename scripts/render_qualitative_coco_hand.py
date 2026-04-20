@@ -1,3 +1,9 @@
+"""Render qualitative prediction figures for COCO-style hand datasets.
+
+This script is used for RH8 and related COCO-style datasets to generate
+comparison figures from preserved checkpoints and the MediaPipe baseline.
+"""
+
 import argparse
 import json
 import math

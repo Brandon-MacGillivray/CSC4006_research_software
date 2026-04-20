@@ -1,3 +1,9 @@
+"""Benchmark end-to-end checkpoint inference on supported datasets.
+
+This script records latency and runtime metadata for preserved or regenerated
+checkpoints and writes per-run summaries for later aggregation.
+"""
+
 import argparse
 import csv
 import json

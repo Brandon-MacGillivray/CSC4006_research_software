@@ -1,3 +1,9 @@
+"""Normalize title bands on exported qualitative figure panels.
+
+This helper script post-processes rendered comparison figures to make their
+titles consistent for paper or report inclusion.
+"""
+
 import argparse
 from pathlib import Path
 

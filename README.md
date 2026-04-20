@@ -28,6 +28,53 @@ as the assessment artefact for CSC4006. The repository contains the cleaned
 software, supporting documentation, curated artefacts, and preserved final
 checkpoints required for assessment and reproducibility.
 
+## Read This Repository In This Order
+
+If you are assessing the submission, the intended reading and execution order is:
+
+1. `README.md`
+   use this file to understand what is in the repository and which parts are
+   already bundled
+2. `INSTALL.md`
+   use this file to create the Conda environment, install dependencies, and
+   confirm the repository loads correctly
+3. `REPLICATION_GUIDE.md`
+   use this file to rerun the cheapest bundled checks first, then move on to
+   external-dataset evaluation, retraining, and aggregation if required
+
+The repository is designed so that the first meaningful rerun does not require
+external datasets: the bundled `RH8` artefact and preserved final checkpoints
+are enough to perform a real evaluation pass and compare the result against a
+submitted reference JSON.
+
+## Fastest Validation Route
+
+The fastest practical route for an assessor is:
+
+1. create and activate the Conda environment described in `INSTALL.md`
+2. run the lightweight test suite
+3. run one bundled `RH8` evaluation with a preserved checkpoint
+4. compare the generated JSON against the preserved reference output
+
+Sanity check:
+
+```bash
+python -m pytest tests -q
+```
+
+Cheapest real rerun:
+
+```bash
+python scripts/eval_metrics.py --dataset coco_hand --ckpt docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt --root docs/artefacts/datasets/rh8 --split val --prediction-mode fusion --shared-10-eval --out-json out/rh8/drh-b0-k21-right-s101.fusion.shared10.rh8.json
+```
+
+Compare the regenerated file against:
+
+- `docs/artefacts/results/rh8/drh-b0-k21-right-s101.fusion.shared10.rh8.json`
+
+If both steps succeed, the repository is in a good state for deeper checking.
+The next document to use is `REPLICATION_GUIDE.md`.
+
 ## Included and External Artefacts
 
 Included in this repository:
@@ -42,68 +89,26 @@ Included in this repository:
 Provided separately where required:
 
 - the full external RHD source dataset
+- the full external `HK26K / coco_hand` source dataset
 - hardware-specific benchmark environments, including Jetson-based runtime setups
 - any local cluster or scheduler infrastructure needed for Slurm-based execution
 
-## Quick Start
+## What To Check Next
 
-After creating a Miniconda-managed Conda environment with the required
-dependencies, the quickest way to verify the repository is to run the
-lightweight automated tests:
+After the fastest validation route above, the normal assessor progression is:
 
-```bash
-conda create -n torch python=3.12
-conda activate torch
-```
+1. inspect the submitted result artefacts under `docs/artefacts/results/`
+2. inspect the preserved checkpoint archive under `docs/artefacts/checkpoints/`
+3. rerun selected `RH8` and external-dataset evaluations from `REPLICATION_GUIDE.md`
+4. compare regenerated outputs against the submitted JSON and CSV artefacts
 
-Then run:
+The main result locations are:
 
-```bash
-python -m pytest tests -q
-```
-
-The main command-line entry points can then be checked directly:
-
-```bash
-python scripts/train.py --help
-python scripts/eval_metrics.py --help
-python scripts/predict_image.py --help
-```
-
-Expected result:
-
-- the test suite completes without failures
-- each command prints its usage information and exits successfully
-
-This quick-start path validates the core Python environment, the local import
-layout, and the main runnable scripts before attempting dataset-dependent
-training or evaluation workflows.
-
-PyTorch itself should be installed using the official selector at
-`https://pytorch.org/get-started/locally/` so that the chosen build matches the
-target platform and CUDA configuration.
-
-## Validation
-
-Validation of the software artefact is intended to happen at three levels.
-
-1. Environment validation:
-   the lightweight `pytest` suite checks checkpoint schema handling, fusion
-   logic, and core model output contracts without requiring external datasets.
-
-2. Script-entry validation:
-   the main runnable scripts should execute successfully with `--help`, showing
-   that the repository import layout and command-line interfaces are intact.
-
-3. Workflow validation:
-   dataset-dependent training, evaluation, benchmarking, and qualitative
-   rendering workflows should produce outputs consistent with the curated
-   artefacts preserved under `docs/artefacts/results/` and
-   `docs/figures/qualitative/`.
-
-For full experimental validation, the preserved checkpoints in
-`docs/artefacts/checkpoints/` can be used together with the relevant datasets
-to rerun evaluation and comparison workflows.
+- `docs/artefacts/results/paper_tables/`
+- `docs/artefacts/results/aggregated/`
+- `docs/artefacts/results/rh8/`
+- `docs/artefacts/results/mediapipe_rhd/`
+- `docs/artefacts/results/benchmarks/`
 
 ## Repository Structure
 
@@ -175,11 +180,13 @@ reference artefacts:
 - `INSTALL.md`
   environment setup, dependency installation, and first-run validation steps
 - `REPLICATION_GUIDE.md`
-  replication pathways for bundled artefacts and external-dataset reruns
+  step-by-step result reproduction from bundled checks through retraining
 - `LICENSE`
   MIT licence for the submitted repository contents unless otherwise noted
 - `docs/README.md`
   overview of the non-code documentation and artefact layout under `docs/`
+- `experiments/README.md`
+  placeholder reference for the checked-in portable experiment command templates
 - `docs/paper/hand_pose_article.tex`
   submitted research article source
 - `docs/paper/hand_pose_article.pdf`

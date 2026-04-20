@@ -1,3 +1,9 @@
+"""Dataset selection and split-resolution helpers for supported datasets.
+
+This module maps dataset names and aliases to the concrete dataset loaders used
+throughout training, evaluation, and inference.
+"""
+
 from pathlib import Path
 
 from handpose.data.coco_hand.dataset import COCOHandKeypointsDataset

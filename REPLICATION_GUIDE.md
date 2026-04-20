@@ -1,39 +1,26 @@
 # Replication Guide
 
-## What This Document Is For
+## Purpose
 
-This repository can be used in three different ways:
+This document is written for an assessor who wants to work through the
+repository in a practical order and verify that the submitted results are
+traceable and reproducible.
 
-1. inspect the submitted paper outputs that are already bundled in the repo
-2. run evaluation again using the preserved final checkpoints
-3. retrain the models and recreate the checkpoints from scratch
+The intended progression is:
+
+1. confirm that the repository loads correctly
+2. inspect the submitted artefacts already bundled in the repo
+3. run the cheapest real rerun using bundled data and preserved checkpoints
+4. rerun selected external-dataset evaluations
+5. retrain models if deeper reproduction is required
+6. aggregate regenerated outputs and compare them against the submitted CSVs
 
 This guide assumes that the external `RHD` and `HK26K / coco_hand` datasets
-already exist outside the repository and can be passed in as local dataset
-roots.
+already exist outside the repository and can be supplied as local dataset roots.
 
-## What Is Already In The Repository
+## Step 1: Confirm That The Repository Loads
 
-You do not need to recreate everything from zero to understand the project.
-The repository already includes:
-
-- the paper source and PDF under `docs/paper/`
-- the final preserved checkpoints under `docs/artefacts/checkpoints/`
-- the bundled `RH8` evaluation dataset under `docs/artefacts/datasets/rh8/`
-- the final result tables under `docs/artefacts/results/paper_tables/`
-- aggregated CSV summaries under `docs/artefacts/results/aggregated/`
-- RH8 evaluation JSONs under `docs/artefacts/results/rh8/`
-- MediaPipe baseline outputs under `docs/artefacts/results/mediapipe_rhd/`
-
-So the repo already contains both:
-
-- the final outputs
-- the code needed to regenerate them
-
-## Before You Start
-
-Prepare the Conda environment described in `INSTALL.md`, then confirm the repo
-loads correctly:
+First prepare the Conda environment described in `INSTALL.md`, then run:
 
 ```bash
 python -m pytest tests -q
@@ -42,200 +29,347 @@ python scripts/eval_metrics.py --help
 python scripts/predict_image.py --help
 ```
 
-If those commands work, the repo is ready for replication work.
+Success means:
 
-## Choose What You Want To Do
+- the lightweight test suite completes without failures
+- the main command-line entry points print their usage information and exit cleanly
 
-### A. Just Check The Submitted Results
+If these commands fail, stop here and resolve the environment issue before
+attempting replication.
 
-If the goal is simply to inspect what was submitted, start here:
+## Step 2: Inspect The Submitted Artefacts
 
-- `docs/artefacts/results/paper_tables/`
-- `docs/artefacts/results/aggregated/`
+Before rerunning anything expensive, inspect the artefacts that are already
+bundled in the repository:
+
+- `docs/artefacts/checkpoints/`
 - `docs/artefacts/results/rh8/`
 - `docs/artefacts/results/mediapipe_rhd/`
+- `docs/artefacts/results/aggregated/`
+- `docs/artefacts/results/paper_tables/`
 - `docs/artefacts/results/benchmarks/`
 
-This path requires no retraining and no checkpoint regeneration.
+These folders provide the submitted reference outputs that regenerated files
+should be compared against.
 
-### B. Run Evaluation On The Bundled RH8 Dataset
+## Step 3: Run The Cheapest Real Rerun
 
-This is the easiest real rerun because both the dataset and the final
-checkpoints are already in the repo.
+The easiest meaningful rerun uses the bundled `RH8` dataset together with the
+preserved checkpoints in `docs/artefacts/checkpoints/`.
 
-Example: evaluate the baseline `B0` checkpoint on `RH8`.
+### RH8 Baseline Check
+
+Purpose:
+verify that a preserved learned checkpoint can still be evaluated against the
+bundled real-image artefact and reproduce a submitted JSON result.
+
+Inputs:
+
+- dataset root: `docs/artefacts/datasets/rh8`
+- checkpoint: `docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt`
+
+Command:
 
 ```bash
 python scripts/eval_metrics.py --dataset coco_hand --ckpt docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt --root docs/artefacts/datasets/rh8 --split val --prediction-mode fusion --shared-10-eval --out-json out/rh8/drh-b0-k21-right-s101.fusion.shared10.rh8.json
 ```
 
-Example: evaluate the reduced `B1` checkpoint on `RH8`.
+Writes:
+
+- `out/rh8/drh-b0-k21-right-s101.fusion.shared10.rh8.json`
+
+Compare against:
+
+- `docs/artefacts/results/rh8/drh-b0-k21-right-s101.fusion.shared10.rh8.json`
+- `docs/artefacts/results/rh8/rh8_family_summary.csv`
+
+### RH8 Reduced Shared-10 Check
+
+Purpose:
+verify the reduced `B1` configuration on the bundled real-image artefact.
+
+Inputs:
+
+- dataset root: `docs/artefacts/datasets/rh8`
+- checkpoint: `docs/artefacts/checkpoints/drh-b1-k10-right-s101.best.pt`
+
+Command:
 
 ```bash
 python scripts/eval_metrics.py --dataset coco_hand --ckpt docs/artefacts/checkpoints/drh-b1-k10-right-s101.best.pt --root docs/artefacts/datasets/rh8 --split val --prediction-mode fusion --out-json out/rh8/drh-b1-k10-right-s101.fusion.native10.rh8.json
 ```
 
-Example: run the MediaPipe baseline on `RH8`.
+Writes:
+
+- `out/rh8/drh-b1-k10-right-s101.fusion.native10.rh8.json`
+
+Compare against:
+
+- `docs/artefacts/results/rh8/drh-b1-k10-right-s101.fusion.native10.rh8.json`
+
+### RH8 MediaPipe Check
+
+Purpose:
+verify the MediaPipe baseline on the same bundled real-image artefact.
+
+Inputs:
+
+- dataset root: `docs/artefacts/datasets/rh8`
+- model asset: `src/handpose/models/hand_landmarker.task`
+
+Command:
 
 ```bash
 python scripts/eval_mediapipe_coco_hand.py --model-asset-path src/handpose/models/hand_landmarker.task --root docs/artefacts/datasets/rh8 --split val --dataset-name rh8 --hand auto --shared-10-eval --out-json out/rh8/mediapipe.rh8.shared10.json
 ```
 
-Compare your outputs against:
+Writes:
 
-- `docs/artefacts/results/rh8/`
+- `out/rh8/mediapipe.rh8.shared10.json`
 
-The full RH8 command set is also preserved in:
+Compare against:
+
+- `docs/artefacts/results/rh8/mediapipe.rh8.shared10.json`
+
+The full checked-in RH8 command set is also available in:
 
 - `docs/artefacts/commands/qual_eval_rh8_commands.sh`
 
-### C. Re-run Evaluation On The External Datasets
+## Step 4: Re-run Selected External-Dataset Evaluations
 
-If you already have the external datasets, you can rerun the main evaluations.
+Once the bundled RH8 pass works, the next level is to rerun selected evaluations
+that depend on the external datasets.
 
-#### RHD Ablation Evaluation
+### RHD Ablation Evaluation
 
-Example: rerun one ablation checkpoint on `RHD`.
+Purpose:
+rerun a representative learned model on `RHD` and compare the output against the
+submitted RHD result families.
+
+Inputs:
+
+- dataset root: `<RHD_ROOT>`
+- checkpoint: `docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt`
+
+Command:
 
 ```bash
 python scripts/eval_metrics.py --ckpt docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt --root <RHD_ROOT> --split evaluation --hand right --prediction-mode fusion --out-json out/eval/drh-b0-k21-right-s101.fusion.native.json
 ```
 
-Other ablation command templates are stored under:
+Writes:
+
+- `out/eval/drh-b0-k21-right-s101.fusion.native.json`
+
+Compare against:
+
+- `docs/artefacts/results/paper_tables/table_01_core_accuracy_rhd.csv`
+- `docs/artefacts/results/paper_tables/table_02_branch_ablation_rhd.csv`
+- `docs/artefacts/results/paper_tables/table_06_fusion_diagnostics.csv`
+- `docs/artefacts/results/paper_tables/table_07_hyperparameter_sensitivity.csv`
+- `docs/artefacts/results/aggregated/aggregated_accuracy.csv`
+- `docs/artefacts/results/aggregated/aggregated_branch_ablation.csv`
+- `docs/artefacts/results/aggregated/aggregated_fusion_diagnostics.csv`
+
+Further ablation command templates:
 
 - `experiments/ablation/eval_commands.txt`
 - `experiments/ablation/shared10_diag_eval_commands.txt`
 
-#### Transfer Evaluation
+### Transfer Evaluation
 
-Example: evaluate a transfer checkpoint on `HK26K / coco_hand`.
+Purpose:
+rerun a representative transfer-learning checkpoint on both external datasets.
+
+Inputs:
+
+- dataset roots: `<HK26K_ROOT>` and `<RHD_ROOT>`
+- checkpoint: `docs/artefacts/checkpoints/trf-r-to-c-s505.best.pt`
+
+Commands:
 
 ```bash
 python scripts/eval_metrics.py --ckpt docs/artefacts/checkpoints/trf-r-to-c-s505.best.pt --dataset coco_hand --root <HK26K_ROOT> --split evaluation --hand right --prediction-mode fusion --out-json out/transfer/trf-r-to-c-s505.on-coco_hand.fusion.native.json
-```
-
-Example: evaluate the same checkpoint on `RHD`.
-
-```bash
 python scripts/eval_metrics.py --ckpt docs/artefacts/checkpoints/trf-r-to-c-s505.best.pt --dataset rhd --root <RHD_ROOT> --split evaluation --hand right --prediction-mode fusion --out-json out/transfer/trf-r-to-c-s505.on-rhd.fusion.native.json
 ```
 
-Other transfer command templates are stored under:
+Writes:
+
+- `out/transfer/trf-r-to-c-s505.on-coco_hand.fusion.native.json`
+- `out/transfer/trf-r-to-c-s505.on-rhd.fusion.native.json`
+
+Compare against:
+
+- `docs/artefacts/results/paper_tables/table_03_transfer_learning_matrix.csv`
+- `docs/artefacts/results/rh8/rh8_family_summary.csv`
+
+Further transfer command templates:
 
 - `experiments/transfer/eval_commands.txt`
 
-#### MediaPipe Baseline On RHD
+### MediaPipe Baseline On RHD
+
+Purpose:
+rerun the external-dataset MediaPipe baseline that feeds the submitted baseline
+comparison.
+
+Inputs:
+
+- dataset root: `<RHD_ROOT>`
+- model asset: `src/handpose/models/hand_landmarker.task`
+
+Command:
 
 ```bash
 python scripts/eval_mediapipe_rhd.py --model-asset-path src/handpose/models/hand_landmarker.task --root <RHD_ROOT> --split evaluation --hand auto --shared-10-eval --out-json out/mediapipe_rhd/mediapipe_rhd_shared10.json
 ```
 
-Compare regenerated outputs against:
+Writes:
 
-- `docs/artefacts/results/mediapipe_rhd/`
-- `docs/artefacts/results/paper_tables/`
+- `out/mediapipe_rhd/mediapipe_rhd_shared10.json`
 
-## Retraining The Models
+Compare against:
 
-If your goal is to remake the models, use `scripts/train.py`.
+- `docs/artefacts/results/mediapipe_rhd/mediapipe_rhd_shared10.json`
+- `docs/artefacts/results/mediapipe_rhd/mediapipe_summary.csv`
+- `docs/artefacts/results/paper_tables/table_04_mediapipe_baseline_comparison.csv`
 
-The trainer writes outputs to:
+## Step 5: Retrain The Models
+
+If you need to remake the learned models rather than just reevaluate preserved
+checkpoints, use `scripts/train.py`.
+
+For each run, the trainer writes:
 
 - `<checkpoint_root>/<job_id>/losses.csv`
 - `<checkpoint_root>/<job_id>/checkpoints/stage1_best.pt`
 - `<checkpoint_root>/<job_id>/checkpoints/best.pt`
 
-The final stage-2 model is always:
+The final stage-2 model for comparison is always:
 
 - `<checkpoint_root>/<job_id>/checkpoints/best.pt`
 
-### Rebuild The Ablation Models
+### Rebuild One Ablation Model
 
-The ablation experiment family is defined in:
+Purpose:
+recreate a representative model from the ablation family.
 
-- `experiments/ablation/experiment_matrix.csv`
-- `experiments/ablation/train_commands.txt`
+Inputs:
 
-Example: train one baseline `B0` model from scratch on `RHD`.
+- dataset root: `<RHD_ROOT>`
+- checkpoint root: `out/training_results`
+
+Command:
 
 ```bash
 python scripts/train.py --root <RHD_ROOT> --checkpoint-root out/training_results --job-id drh-b0-k21-right-s101 --seed 101 --input-size 256 --batch-size-stage1 64 --batch-size-stage2 64 --accum-steps-stage1 1 --accum-steps-stage2 4 --stage1-epochs 100 --stage2-epochs 100 --lr-stage1 1e-3 --lr-stage2 1e-4 --hand right --lambda-hm 1.0 --lambda-coord 1.0 --heatmap-sigma 2.0 --wing-w 10.0 --wing-epsilon 2.0
 ```
 
-Example: train one reduced `B1` model on the shared-10 layout.
+Compare against:
 
-```bash
-python scripts/train.py --root <RHD_ROOT> --checkpoint-root out/training_results --job-id drh-b1-k10-right-s101 --seed 101 --input-size 256 --batch-size-stage1 64 --batch-size-stage2 64 --accum-steps-stage1 1 --accum-steps-stage2 4 --stage1-epochs 100 --stage2-epochs 100 --lr-stage1 1e-3 --lr-stage2 1e-4 --hand right --lambda-hm 1.0 --lambda-coord 1.0 --heatmap-sigma 2.0 --wing-w 10.0 --wing-epsilon 2.0 --tips-bases-only
-```
+- `docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt`
 
-### Rebuild The Transfer Models
+Full ablation training surfaces:
 
-The transfer experiment family is defined in:
+- `experiments/ablation/experiment_matrix.csv`
+- `experiments/ablation/train_commands.txt`
 
-- `experiments/transfer/experiment_matrix.csv`
-- `experiments/transfer/train_commands.txt`
+### Rebuild One Transfer Model
 
-There are two cases:
+Purpose:
+recreate a representative transfer-learning model from scratch or by fine-tuning.
 
-- direct training on a single dataset, such as `R_ONLY` or `C_ONLY`
-- fine-tuning from a parent checkpoint, such as `C_TO_R` or `R_TO_C`
+Inputs:
 
-Example: train one `R_ONLY` model from scratch.
+- dataset root: `<RHD_ROOT>`
+- checkpoint root: `out/transfer_training_results`
+
+Direct-training example:
 
 ```bash
 python scripts/train.py --dataset rhd --root <RHD_ROOT> --checkpoint-root out/transfer_training_results --job-id trf-r-only-s101 --experiment-id R_ONLY --experiment-family transfer --training-sequence rhd --seed 101 --input-size 256 --batch-size-stage1 64 --batch-size-stage2 64 --accum-steps-stage1 1 --accum-steps-stage2 4 --stage1-epochs 100 --stage2-epochs 100 --lr-stage1 0.001 --lr-stage2 0.0001 --hand right
 ```
 
-Example: fine-tune one `C_TO_R` model from an existing `C_ONLY` checkpoint.
+Fine-tuning example:
 
 ```bash
 python scripts/train.py --dataset rhd --root <RHD_ROOT> --checkpoint-root out/transfer_training_results --job-id trf-c-to-r-s101 --experiment-id C_TO_R --experiment-family transfer --training-sequence coco_hand->rhd --init-ckpt out/transfer_training_results/trf-c-only-s101/checkpoints/best.pt --skip-stage1 --seed 101 --input-size 256 --batch-size-stage1 64 --batch-size-stage2 64 --accum-steps-stage1 1 --accum-steps-stage2 4 --stage1-epochs 100 --stage2-epochs 100 --lr-stage1 0.001 --lr-stage2 0.0001 --hand right
 ```
 
-After training, compare the recreated `best.pt` files against the preserved
-archive under:
+Compare against:
 
-- `docs/artefacts/checkpoints/`
+- `docs/artefacts/checkpoints/trf-r-only-s101.best.pt`
+- `docs/artefacts/checkpoints/trf-c-to-r-s101.best.pt`
 
-## Aggregating Regenerated Outputs
+Full transfer training surfaces:
 
-If you rerun evaluation or benchmarking, aggregate the regenerated files with:
+- `experiments/transfer/experiment_matrix.csv`
+- `experiments/transfer/train_commands.txt`
+
+## Step 6: Aggregate Regenerated Outputs
+
+If you rerun evaluation or benchmarking, aggregate the regenerated files to
+recreate repository-style summary CSVs.
+
+Command:
 
 ```bash
 python scripts/aggregate_results.py --eval-json-dir out/eval --benchmark-csv out/benchmarks/jetson_orin_nano_maxn_summary.csv --out-dir out/aggregated
 ```
 
-This recreates repository-style summary CSVs such as:
+Writes:
 
-- `aggregated_accuracy.csv`
-- `aggregated_branch_ablation.csv`
-- `aggregated_fusion_diagnostics.csv`
-- `aggregated_latency.csv`
-- `aggregated_latency_breakdown.csv`
+- `out/aggregated/aggregated_accuracy.csv`
+- `out/aggregated/aggregated_branch_ablation.csv`
+- `out/aggregated/aggregated_fusion_diagnostics.csv`
+- `out/aggregated/aggregated_latency.csv`
+- `out/aggregated/aggregated_latency_breakdown.csv`
 
-Compare them against:
+Compare against:
 
-- `docs/artefacts/results/aggregated/`
+- `docs/artefacts/results/aggregated/aggregated_accuracy.csv`
+- `docs/artefacts/results/aggregated/aggregated_branch_ablation.csv`
+- `docs/artefacts/results/aggregated/aggregated_fusion_diagnostics.csv`
+- `docs/artefacts/results/aggregated/aggregated_latency.csv`
+- `docs/artefacts/results/aggregated/aggregated_latency_breakdown.csv`
 
-## Optional Benchmark Reproduction
+## Step 7: Benchmark If Required
 
-Benchmarking is the most hardware-dependent part of the project.
+Benchmarking is the most hardware-dependent part of the project. It should be
+checked after the evaluation path is already working.
 
-Example:
+Purpose:
+rerun one representative edge-runtime measurement.
+
+Inputs:
+
+- dataset root: `<RHD_ROOT>`
+- checkpoint: `docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt`
+
+Command:
 
 ```bash
 python scripts/benchmark_pipeline.py --ckpt docs/artefacts/checkpoints/drh-b0-k21-right-s101.best.pt --root <RHD_ROOT> --summary-csv out/benchmarks/jetson_orin_nano_maxn_summary.csv --output-root out/benchmarks --device cuda --prediction-mode fusion --run-label drh-b0-k21-right-s101-fusion
 ```
 
-More benchmark command templates are stored under:
+Writes:
+
+- `out/benchmarks/jetson_orin_nano_maxn_summary.csv`
+
+Compare against:
+
+- `docs/artefacts/results/paper_tables/table_05_edge_runtime_summary.csv`
+- `docs/artefacts/results/paper_tables/table_08_latency_breakdown.csv`
+- `docs/artefacts/results/benchmarks/`
+
+Further benchmark templates:
 
 - `experiments/ablation/benchmark_commands.txt`
 - `experiments/transfer/benchmark_commands.txt`
 
-## Where The Full Command Sets Live
+## Full Command Templates
 
-If you want the exact matrix-style surfaces used in the project, use these
-files:
+If you want the matrix-style command surfaces used throughout the project, use:
 
 - `experiments/ablation/train_commands.txt`
 - `experiments/ablation/eval_commands.txt`
@@ -245,12 +379,13 @@ files:
 - `experiments/transfer/eval_commands.txt`
 - `experiments/transfer/benchmark_commands.txt`
 
-These files still contain historical absolute machine paths, so replace those
-paths before running them on a new system.
+These files are checked in as portable templates. Replace placeholders such as
+`<RHD_ROOT>`, `<HK26K_ROOT>`, `<CHECKPOINT_ROOT>`, and
+`<TRANSFER_CHECKPOINT_ROOT>` before running them on a new system. A short
+placeholder reference is provided in `experiments/README.md`.
 
-## In One Sentence
+## Shortest Useful Path
 
-If you want the simplest real replication path, run evaluation on the bundled
-`RH8` dataset using the preserved checkpoints. If you want to remake the
-models, use `scripts/train.py` together with the experiment matrices under
-`experiments/`.
+If you only want to check one live result, run the bundled `RH8` baseline check
+from Step 3 and compare the generated JSON against the preserved reference
+under `docs/artefacts/results/rh8/`.

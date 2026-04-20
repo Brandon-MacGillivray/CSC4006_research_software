@@ -1,3 +1,9 @@
+"""Checkpoint loading, validation, and persistence helpers.
+
+This module defines the repository checkpoint contract used by training,
+evaluation, inference, and the preserved checkpoint archive.
+"""
+
 import os
 
 import torch

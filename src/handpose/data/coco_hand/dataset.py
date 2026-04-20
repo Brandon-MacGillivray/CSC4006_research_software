@@ -1,3 +1,9 @@
+"""PyTorch dataset wrapper for COCO-style hand-pose datasets.
+
+This module loads HK26K, RH8, and related COCO-style samples into the tensor
+format expected by the repository training and evaluation pipelines.
+"""
+
 import torch
 from torch.utils.data import Dataset
 

@@ -1,3 +1,9 @@
+"""Per-epoch training and validation steps for model optimisation.
+
+This module contains the lower-level loops used by the repository training
+script for stage-1 and stage-2 optimisation.
+"""
+
 import torch
 
 

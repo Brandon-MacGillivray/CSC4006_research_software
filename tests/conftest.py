@@ -1,3 +1,9 @@
+"""Pytest configuration for repository-local imports.
+
+This file ensures that the ``src/`` tree is importable when tests are run from
+the repository root.
+"""
+
 from pathlib import Path
 import sys
 

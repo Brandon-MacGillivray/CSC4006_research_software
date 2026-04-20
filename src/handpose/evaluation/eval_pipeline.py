@@ -1,3 +1,9 @@
+"""Pipeline helpers for checkpoint evaluation.
+
+This module builds the models, loaders, and evaluation subsets required by the
+command-line evaluation scripts.
+"""
+
 import sys
 
 import torch

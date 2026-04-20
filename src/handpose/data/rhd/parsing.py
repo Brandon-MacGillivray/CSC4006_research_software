@@ -1,3 +1,9 @@
+"""Annotation parsing helpers for the RHD dataset.
+
+This module extracts coordinates and hand-selection information from the RHD
+annotation format for dataset loading and evaluation.
+"""
+
 import pickle
 
 

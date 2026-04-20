@@ -1,3 +1,9 @@
+"""Annotation parsing helpers for COCO-style hand datasets.
+
+This module loads COCO-format annotations and converts them into sample
+structures used by the repository dataset wrappers.
+"""
+
 import json
 
 import numpy as np
