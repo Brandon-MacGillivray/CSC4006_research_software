@@ -1,0 +1,71 @@
+job_id,file_name,experiment_family,experiment_group,seed,num_keypoints,size_bytes,sha256,report_usage
+drh-b0-k21-right-s101,drh-b0-k21-right-s101.best.pt,ablation,B0,101,21,30866361,4011753d13102c8c256459d606b68449f140e9e1bd4eb80a284cd02be23b9602,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b0-k21-right-s202,drh-b0-k21-right-s202.best.pt,ablation,B0,202,21,30866361,2523295ee7e54b5df03a0eb98408a55ae0829daa4c871b1e4a79c7a37996b522,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b0-k21-right-s303,drh-b0-k21-right-s303.best.pt,ablation,B0,303,21,30866361,597a4d9e2c688e7707310cf49597f88d5ba78c57f6528c9532f9cb39b76c918d,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b0-k21-right-s404,drh-b0-k21-right-s404.best.pt,ablation,B0,404,21,30866361,03126ea355068e51cc7fe170e531a3f813e3e88c68efa24baf7c78d6eeabe861,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b0-k21-right-s505,drh-b0-k21-right-s505.best.pt,ablation,B0,505,21,30866361,feb249a7e73c22078e6554084fe0851d210ed18342f7c7013b1782d46b0f2822,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b1-k10-right-s101,drh-b1-k10-right-s101.best.pt,ablation,B1,101,10,30834681,f0c03bbbd12a78ff23647f09fb7f6e4b3fca3593c3134012004e4b505830658e,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b1-k10-right-s202,drh-b1-k10-right-s202.best.pt,ablation,B1,202,10,30834681,9e2e4203a1f02a5b4c8dc850350cdce672b22bdd1eee829e5d36ad103f73566e,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b1-k10-right-s303,drh-b1-k10-right-s303.best.pt,ablation,B1,303,10,30834681,bb4e02f9c0de19cf33ef573ff0364f2ed58dceed67c2d7dd748514f48c87cf3f,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b1-k10-right-s404,drh-b1-k10-right-s404.best.pt,ablation,B1,404,10,30834681,497ebc75ae17ca90b4f41ee5f578cb7d7b6b673e38cc99dd948207427a87d246,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-b1-k10-right-s505,drh-b1-k10-right-s505.best.pt,ablation,B1,505,10,30834681,c01b80da5dfe4a1e8b099a3be6269e1fae5abbfabd6ede2ea085775220c08266,Core accuracy; branch ablation; MediaPipe comparison; edge runtime; fusion diagnostics; qualitative baseline
+drh-e1-k21-right-s101,drh-e1-k21-right-s101.best.pt,ablation,E1,101,21,30866361,7bee6fd7f36c0ff219bf9d95182dd69eb8d061044075a8c2049ecf3b1de59e0c,Hyperparameter sensitivity
+drh-e1-k21-right-s202,drh-e1-k21-right-s202.best.pt,ablation,E1,202,21,30866361,15df97303d55131492d65c9c8a4c42b64ac13c6dc7e2ac1cef671cc817fd16ce,Hyperparameter sensitivity
+drh-e1-k21-right-s303,drh-e1-k21-right-s303.best.pt,ablation,E1,303,21,30866361,22ecd6f03e249b1fc94b13082b2fb1cf79ae2e1faa283c7a899dd30098e67109,Hyperparameter sensitivity
+drh-e1-k21-right-s404,drh-e1-k21-right-s404.best.pt,ablation,E1,404,21,30866361,7feb2c4758d56c50240655db9a7b653ee15cf250a10821d7856809bd10e6e242,Hyperparameter sensitivity
+drh-e1-k21-right-s505,drh-e1-k21-right-s505.best.pt,ablation,E1,505,21,30866361,273bcd535dfa6f0d0e0e9a978a2f825bd950ea1e940badef31310931fbcb90ce,Hyperparameter sensitivity
+drh-e2-k21-right-s101,drh-e2-k21-right-s101.best.pt,ablation,E2,101,21,30866361,f0d5bed36cc48077c965539ad7928aa66caf8d709ec6473c9cfa0b1d75312672,Hyperparameter sensitivity
+drh-e2-k21-right-s202,drh-e2-k21-right-s202.best.pt,ablation,E2,202,21,30866361,192d4db5f9d1be729dc3872d63f17ed1f9b4d9f257abafb0656b5c584aa605fb,Hyperparameter sensitivity
+drh-e2-k21-right-s303,drh-e2-k21-right-s303.best.pt,ablation,E2,303,21,30866361,a47ef0162ee21698a128f81223d0950158d11a2e4c128c7815a186ea44304c13,Hyperparameter sensitivity
+drh-e2-k21-right-s404,drh-e2-k21-right-s404.best.pt,ablation,E2,404,21,30866361,f5bbff8075a06cc8cc9e0dcb8bbbbea33a52ce5b0c4a31b970644a04d223bf16,Hyperparameter sensitivity
+drh-e2-k21-right-s505,drh-e2-k21-right-s505.best.pt,ablation,E2,505,21,30866361,eec1bf0e4343628e47cfebad61fdfd9560f0bc34d66705211e6dd55265076b27,Hyperparameter sensitivity
+drh-l1-k21-right-s101,drh-l1-k21-right-s101.best.pt,ablation,L1,101,21,30866361,cabd3eb41897162f28aa604d4e174ce0bf0389eeac90cfea8c3d572648c52ebb,Hyperparameter sensitivity
+drh-l1-k21-right-s202,drh-l1-k21-right-s202.best.pt,ablation,L1,202,21,30866361,d3a1161374c7098853537f68d37c5978c3c3e34019388d79c566c6c55e5dd79e,Hyperparameter sensitivity
+drh-l1-k21-right-s303,drh-l1-k21-right-s303.best.pt,ablation,L1,303,21,30866361,d32846d81957aadb4c51e7da8d9c5689b9e61706f70ca760ea53be3f4bbc22fa,Hyperparameter sensitivity
+drh-l1-k21-right-s404,drh-l1-k21-right-s404.best.pt,ablation,L1,404,21,30866361,e3b673fc8d74b8f41f1ed2c1bdf534e0a5c47123668df99af57547f4fd6bc04e,Hyperparameter sensitivity
+drh-l1-k21-right-s505,drh-l1-k21-right-s505.best.pt,ablation,L1,505,21,30866361,68fa844fc9667bf92ab12d1e67c3643c89d1ea5cfde101a9aa947fd189f03a57,Hyperparameter sensitivity
+drh-l2-k21-right-s101,drh-l2-k21-right-s101.best.pt,ablation,L2,101,21,30866361,09475bce54eb1bcdef8d2fce6f1232b5cc5fa287b6aa1bd1871eda147e3ab2fe,Hyperparameter sensitivity
+drh-l2-k21-right-s202,drh-l2-k21-right-s202.best.pt,ablation,L2,202,21,30866361,cfccba10de7147d3cfd5be9dd675fe8d585eb13159570b1c62841a74a8288d66,Hyperparameter sensitivity
+drh-l2-k21-right-s303,drh-l2-k21-right-s303.best.pt,ablation,L2,303,21,30866361,1906808bdd2846736dc6f90742c18d0ec877f3338e5fa5f73652ffe2c5dcc766,Hyperparameter sensitivity
+drh-l2-k21-right-s404,drh-l2-k21-right-s404.best.pt,ablation,L2,404,21,30866361,8bfb3807cb095a6c8250652fdf037ad0397dc0768ebdca6ef5c69fe90356c332,Hyperparameter sensitivity
+drh-l2-k21-right-s505,drh-l2-k21-right-s505.best.pt,ablation,L2,505,21,30866361,bdb23b89fd54f3cc3dd9c5cc99181b859232222f7d15732c2840a36c3b22ea07,Hyperparameter sensitivity
+drh-s1-k21-right-s101,drh-s1-k21-right-s101.best.pt,ablation,S1,101,21,30866361,7a4dec8731e4059fc7ddd6c5fdec7093df4234545f5336497694d33301542228,Hyperparameter sensitivity
+drh-s1-k21-right-s202,drh-s1-k21-right-s202.best.pt,ablation,S1,202,21,30866361,7574d6b6770d3686f4f7f37ec2265891f5411a103ad9bdd659ae3d1bb7db7925,Hyperparameter sensitivity
+drh-s1-k21-right-s303,drh-s1-k21-right-s303.best.pt,ablation,S1,303,21,30866361,a60c8ae85eff51c00aa7acee1ff5457b78a880949fa9d84b187ac58ea9945603,Hyperparameter sensitivity
+drh-s1-k21-right-s404,drh-s1-k21-right-s404.best.pt,ablation,S1,404,21,30866361,3994fa125bbb49e33bf06b9fb126746ec5e492f6a50eed211a9cd8a71d3d975a,Hyperparameter sensitivity
+drh-s1-k21-right-s505,drh-s1-k21-right-s505.best.pt,ablation,S1,505,21,30866361,93e4d2a83a4b03b93b84459fdab5fb040bf09a3b87142e24804bf6a083bc0925,Hyperparameter sensitivity
+drh-s2-k21-right-s101,drh-s2-k21-right-s101.best.pt,ablation,S2,101,21,30866361,19c469ba1318382048c83a9210c2f58671f84bd8dfc7862b322bbe0fda9df7bb,Hyperparameter sensitivity
+drh-s2-k21-right-s202,drh-s2-k21-right-s202.best.pt,ablation,S2,202,21,30866361,1df9e1242f4f800bd87233da305cca9e383a088675c65aba2ac9384717173e7c,Hyperparameter sensitivity
+drh-s2-k21-right-s303,drh-s2-k21-right-s303.best.pt,ablation,S2,303,21,30866361,1c4ff8917241383f836a554faa79d06a862026c5e29dfbd45921cdc038d4ceda,Hyperparameter sensitivity
+drh-s2-k21-right-s404,drh-s2-k21-right-s404.best.pt,ablation,S2,404,21,30866361,0de27aab80de297deb2408fd17f0803e6e2d4b7b1c153aaeab73b0e724a461ab,Hyperparameter sensitivity
+drh-s2-k21-right-s505,drh-s2-k21-right-s505.best.pt,ablation,S2,505,21,30866361,f8ab0edc581613e3c24168a3f2d561dbf6182c453a41c3ecc85cd7876c67c5e9,Hyperparameter sensitivity
+drh-w1-k21-right-s101,drh-w1-k21-right-s101.best.pt,ablation,W1,101,21,30866361,399f98ec236af825eb5c2a6b40f15cc7ad72d76a544d37d6e71729d2c8b600fa,Hyperparameter sensitivity
+drh-w1-k21-right-s202,drh-w1-k21-right-s202.best.pt,ablation,W1,202,21,30866361,1910cafd2e8795ef869f3f2d33487d733743957fecf769f740f4aad72a29b4e6,Hyperparameter sensitivity
+drh-w1-k21-right-s303,drh-w1-k21-right-s303.best.pt,ablation,W1,303,21,30866361,71829f3c94b1a80f92cea0f353c94071043da5fe91611dc3a54b1b0543a5387f,Hyperparameter sensitivity
+drh-w1-k21-right-s404,drh-w1-k21-right-s404.best.pt,ablation,W1,404,21,30866361,06cf0dc39694cac52a909d1d79fc95a9c7a30125b5147656e08ea9d183800d6f,Hyperparameter sensitivity
+drh-w1-k21-right-s505,drh-w1-k21-right-s505.best.pt,ablation,W1,505,21,30866361,f2f46eefb395f510a6472df58543adbbf8919d5924856fa5b8d1f77af1b90322,Hyperparameter sensitivity
+drh-w2-k21-right-s101,drh-w2-k21-right-s101.best.pt,ablation,W2,101,21,30866361,b6f59980c6d0e02fc8a8a94ce281936b1338456ce9a00799a5bad50856c5d821,Hyperparameter sensitivity
+drh-w2-k21-right-s202,drh-w2-k21-right-s202.best.pt,ablation,W2,202,21,30866361,e8ee3f2e4d8d8bdc43c8867d1b7f4b2bf3412b0d4ff9d4127e22d58d1efef7bc,Hyperparameter sensitivity
+drh-w2-k21-right-s303,drh-w2-k21-right-s303.best.pt,ablation,W2,303,21,30866361,46f492155b579eb9fd01d8a620090f08a73a79ba1726a31b82eccc33c8b438bf,Hyperparameter sensitivity
+drh-w2-k21-right-s404,drh-w2-k21-right-s404.best.pt,ablation,W2,404,21,30866361,8372f9e817eb964411bcafd06b3f9cf0858417a2756935b38f0b7f4015f9f120,Hyperparameter sensitivity
+drh-w2-k21-right-s505,drh-w2-k21-right-s505.best.pt,ablation,W2,505,21,30866361,2ddbda08e6e930491856e928bbff9f324dc11f0fddc55ae87aaf830830583d08,Hyperparameter sensitivity
+trf-c-only-s101,trf-c-only-s101.best.pt,transfer,C_ONLY,101,21,30866873,93e22da5bc4b07e17529256b3953d09682647094c1296003cf61032ee282def3,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-c-only-s202,trf-c-only-s202.best.pt,transfer,C_ONLY,202,21,30866873,96c894c8be7a1b38af16b9bea32f3ab886022e1ae2e9647fd510d04667b9caa0,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-c-only-s303,trf-c-only-s303.best.pt,transfer,C_ONLY,303,21,30866873,bbce6080d4f9db87fc1109890cdd6503832b1b15cae1a93f037ae9b074bdab4c,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-c-only-s404,trf-c-only-s404.best.pt,transfer,C_ONLY,404,21,30866873,fb444923a76d23ad50464947d6c2c6dac8a40b26396c35430119e46cf82716d9,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-c-only-s505,trf-c-only-s505.best.pt,transfer,C_ONLY,505,21,30866873,9dac2d094c31e2dbe2f2ec62d35c348f659e76a3ed1667002a73f55b931dc4d2,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-c-to-r-s101,trf-c-to-r-s101.best.pt,transfer,C_TO_R,101,21,30867065,c4535793cc6cc535ff5fcddfe812be82bda56e16e92f49ed85ab01f6c27c3723,Transfer learning matrix; RH8 pilot
+trf-c-to-r-s202,trf-c-to-r-s202.best.pt,transfer,C_TO_R,202,21,30867065,12acd63d0e249af9a7179fca5abd74219d313fbcf2b238aa65a1fadbfeddf220,Transfer learning matrix; RH8 pilot
+trf-c-to-r-s303,trf-c-to-r-s303.best.pt,transfer,C_TO_R,303,21,30867065,e22474e558f2dbb71b9619157f773b0f5ced7fd2d189c5782aa4eeab68a131c6,Transfer learning matrix; RH8 pilot
+trf-c-to-r-s404,trf-c-to-r-s404.best.pt,transfer,C_TO_R,404,21,30867065,13f65864e364cee180a0544a0bd063db636c983a3041589cd31e0da4f949ca20,Transfer learning matrix; RH8 pilot
+trf-c-to-r-s505,trf-c-to-r-s505.best.pt,transfer,C_TO_R,505,21,30867065,6ef0a19c230d13f6256a694f896088f46d61b1fa7b6aeb588ad555017da4f47f,Transfer learning matrix; RH8 pilot
+trf-r-only-s101,trf-r-only-s101.best.pt,transfer,R_ONLY,101,21,30866873,959330bf26985089d8e17d9033cd6ac0f8fd19ce311a8a2f3fe238400bb301ea,Transfer learning matrix; RH8 pilot
+trf-r-only-s202,trf-r-only-s202.best.pt,transfer,R_ONLY,202,21,30866873,9e41fdd0a40db5b7fd3ec1d6a613b6c2b4cc49bd763fc65712249f6a00f64de3,Transfer learning matrix; RH8 pilot
+trf-r-only-s303,trf-r-only-s303.best.pt,transfer,R_ONLY,303,21,30866873,4755c175c3a9ccc763b5f6350cae5f4b9141447043ee721ff60bc0a9b001f153,Transfer learning matrix; RH8 pilot
+trf-r-only-s404,trf-r-only-s404.best.pt,transfer,R_ONLY,404,21,30866873,f73c389bf6bcea1de5d53242ae030f5ce0e46efc6c164cc8b9fa9c279f905f56,Transfer learning matrix; RH8 pilot
+trf-r-only-s505,trf-r-only-s505.best.pt,transfer,R_ONLY,505,21,30866873,bde14c71b6f16553e6c549ed0eab9bf1e0c23747748385a9a6bcac2a80880d1b,Transfer learning matrix; RH8 pilot
+trf-r-to-c-s101,trf-r-to-c-s101.best.pt,transfer,R_TO_C,101,21,30867001,b5690ce953fcba0e17c7bccbe28b66db880bc2f3a6a4418da3cf8426270ef225,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-r-to-c-s202,trf-r-to-c-s202.best.pt,transfer,R_TO_C,202,21,30867001,51af5d28dfaef95c8a3df9e90e1331c202eac4dea175e9b56adba4b5e81a39bd,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-r-to-c-s303,trf-r-to-c-s303.best.pt,transfer,R_TO_C,303,21,30867001,8be904d378cf527b6c0ceb42dd4e5d89c175b929c0feca99cd324f51b093140f,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-r-to-c-s404,trf-r-to-c-s404.best.pt,transfer,R_TO_C,404,21,30867001,17c8ead0f205e4f9f9ff5c5e39ab25734f8ff2d7eefeb606161b9e960b52c8a7,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
+trf-r-to-c-s505,trf-r-to-c-s505.best.pt,transfer,R_TO_C,505,21,30867001,0fa4a6b4f3eaa20f61ff840cf6ca4bcf833b55d59adf0a74f3f2504ac0b94035,Transfer learning matrix; RH8 pilot; qualitative real-image comparison
