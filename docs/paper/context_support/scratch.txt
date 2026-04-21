@@ -1,0 +1,70 @@
+Preamble
+Acknowledgements
+Table of contents
+Introduction
+
+Purpose, operation and validation
+    What is the software intended to do?
+    How does a user run or operate it?
+    What inputs does it take and what outputs does it produce?
+    How can the user tell it is working correctly?
+    What evidence shows it performs its intended purpose?
+
+Design and implementation
+    How is the software designed overall?
+    How is that design implemented in code?
+    What are the main parts of the system and how do they work together?
+
+Design and implementation: Significant assumptions made for the design and implementation
+    What key assumptions were made when designing the software?
+    How do those assumptions affect how the software works or is used?
+
+Design and implementation: Languages, packages, frameworks, and libraries used
+    What technologies were used to build the software?
+    Why were these choices used in this project?
+
+Design and implementation: Overall architecture / system design and interfaces between components
+    What are the main components of the system?
+    How do those components communicate with each other?
+
+Design and implementation: Data model(s), including in-memory structures and persistent storage
+    What data does the system store or process?
+    How is that data represented in memory or saved persistently?
+
+Design and implementation: Significant methods, functions, or other lower-level elements
+    What lower-level parts of the implementation are most important?
+    What does each important method or function do?
+
+Design and implementation: Important errors and their conditions
+    What important errors can occur?
+    Under what conditions do those errors happen?
+    How does the software respond to them?
+
+Design and implementation: User interface design
+    How does the user interact with the software?
+    What interface choices were made and why?
+
+Design and implementation: Quality assurance steps
+    What steps were taken to improve software quality?
+    How was the software checked for correctness, reliability, and maintainability?
+
+Quality assurance: Version control and versioning
+    How was version control used during development?
+    How were changes tracked and managed?
+
+Quality assurance: Code style and convention
+    What code style or conventions were followed?
+    How did those conventions help keep the code clear and consistent?
+
+Quality assurance: Automated testing
+    What automated tests were implemented?
+    What parts of the software do those tests verify?
+
+Appendices
+
+
+###
+
+pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report.tex
+
+###
