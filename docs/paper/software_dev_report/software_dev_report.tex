@@ -38,218 +38,151 @@
 
 \section{Introduction}
 
-Hand pose estimation is an important computer-vision task for touchless
-human-computer interaction, especially in edge-oriented settings such as
-AR/VR, public displays, and other real-time interactive systems where
-accuracy must be balanced against limited compute resources. This project
-focuses on lightweight 2D RGB hand pose estimation and implements a
+This project focuses on lightweight 2D RGB hand pose estimation and implements a
 DRHand-inspired dual-branch approach in a form suitable for training,
 evaluation, inference, benchmarking, and reproducible experiment reruns.
 
 \medskip
 
-
-The software artefact is structured as a research-oriented repository rather
-than an end-user application. It combines a reusable Python package for the
-core hand-pose pipeline with command-line scripts, experiment definitions,
-preserved checkpoints, and supporting documentation. This report describes the
-purpose and operation of the software, its design and implementation, the main
-architectural components and interfaces, the data representations it uses, and
-the quality-assurance steps taken during development.
+The software artefact is structured as a research-oriented repository. It combines a reusable Python package for the core hand-pose pipeline with command-line scripts, experiment definitions, preserved checkpoints, and supporting documentation. This report describes the purpose and operation of the software, its design and implementation, the main architectural components and interfaces, the data representations it uses, and the quality-assurance steps taken during development.
 
 \section{Purpose, Operation and Validation}
-\begin{itemize}
-    \item What is the software intended to do?
-    \item How does a user run or operate it?
-    \item What inputs does it take and what outputs does it produce?
-    \item How can the user tell it is working correctly?
-    \item What evidence shows it performs its intended purpose?
-\end{itemize}
 
 The software is intended to implement and evaluate a lightweight 2D hand pose estimation pipeline for edge HCI, with a DRHand-inspired dual-branch model that predicts hand keypoints from RGB images and supports training, inference, benchmarking, and reproducible experiment reruns.
 
 \medskip
 
-
 A user operates the software from the command line by setting up the documented Python environment, then running the repository scripts for the required workflow, such as \texttt{scripts/train.py} for training, \texttt{scripts/eval\_metrics.py} for checkpoint evaluation, and \texttt{scripts/predict\_image.py} for single-image inference, with inputs and options supplied as command-line arguments.
 
 \medskip
-
 
 The software takes inputs such as dataset roots, checkpoint files, single RGB images, model and evaluation settings passed through command-line arguments, and it produces outputs such as trained checkpoint files, evaluation JSON metrics, aggregated CSV result tables, benchmark summaries, and qualitative prediction overlays or rendered figures.
 
 \medskip
 
-
 A user can tell the software is working correctly when the lightweight test suite passes, the main command-line scripts load and print valid help output, and training, evaluation, inference, or benchmarking workflows execute successfully and produce outputs in the expected format that can be compared against the preserved reference JSON, CSV, checkpoint, and qualitative artefacts bundled in the repository.
 
 \section{Design and Implementation}
-\begin{itemize}
-    \item How is the software designed overall?
-    \item How is that design implemented in code?
-    \item What are the main parts of the system and how do they work together?
-\end{itemize}
 
 The software is designed as a modular research artefact with a reusable Python package under \texttt{src/} for the core hand-pose pipeline, a set of command-line scripts under \texttt{scripts/} for running workflows such as training, evaluation, inference, and benchmarking, experiment definitions under \texttt{experiments/}, and curated documentation and preserved artefacts under \texttt{docs/}, allowing the same core implementation to support both development and reproducible assessment workflows.
 
 \medskip
 
-
 The overall design is implemented as a structured Python package in which dataset handling is separated under \texttt{handpose.data}, model architecture and losses are defined under \texttt{handpose.models}, reusable training logic is kept under \texttt{handpose.training}, evaluation logic under \texttt{handpose.evaluation}, inference and fusion logic under \texttt{handpose.inference}, and checkpoint persistence under \texttt{handpose.checkpoints}, while thin command-line scripts call these modules to run complete workflows.
 
 \medskip
 
-
 The main parts of the system are the dataset layer, the DRHand-inspired model, the inference and fusion layer, the training and evaluation pipelines, checkpoint management, and the command-line workflow scripts, and they work together by loading image and annotation data into a consistent format, passing that data through the model to generate heatmap and coordinate predictions, optionally fusing those predictions for final output, saving or loading checkpoints to preserve model state, and exposing these capabilities through scripts for training, evaluation, benchmarking, qualitative rendering, and single-image prediction.
 
 \subsection{Significant Assumptions Made for the Design and Implementation}
-\begin{itemize}
-    \item What key assumptions were made when designing the software?
-    \item How do those assumptions affect how the software works or is used?
-\end{itemize}
 
 Framework equivalence. The software assumes that the DRHand method can be reimplemented in PyTorch even though the original paper describes a TensorFlow implementation. As a result, this repository should be understood as a DRHand-inspired reconstruction rather than a strict reproduction, so exact numerical agreement with the original paper should not be expected.
 
 \medskip
 
-
-Dataset substitution. The software assumes that the dual-branch DRHand idea can be studied meaningfully on RHD, HK26K / \texttt{coco\_hand}, and RH8 even though the original paper used YouTube2D Hands, GANerated Hands, STB, and RHD. This means the software evaluates the method under a different data regime, so its results support the reconstructed pipeline used in this project rather than the original paperâ€™s exact benchmark setup.
+Dataset substitution. The software assumes that the dual-branch DRHand idea can be studied meaningfully on RHD, HK26K / \texttt{coco\_hand}, and RH8 even though the original paper used YouTube2D Hands, GANerated Hands, STB, and RHD. This means the software evaluates the method under a different data regime, so its results support the reconstructed pipeline used in this project rather than the original exact benchmark setup.
 
 \medskip
-
 
 Prepared input assumption. The software assumes that each input image already contains a clearly visible hand region and therefore does not implement a separate hand detector or crop-normalisation stage. This affects use because users must provide images or datasets where the hand is already reasonably framed, otherwise performance may degrade when the full image is simply resized to the network input size.
 
 \medskip
 
-
 Fixed preprocessing strategy. The software assumes that full-image resize to 256 x 256 is an acceptable preprocessing strategy because the paper specifies the input size but does not define a more detailed input-normalisation pipeline. This makes the system simpler and easier to reproduce, but it also means the model is sensitive to changes in hand scale, position, and framing within the input image.
 
 \medskip
-
 
 Coordinate representation. The software assumes that keypoints are represented internally as normalized (x, y) coordinates in the resized image space. This affects how the system works because training, inference, fusion, and evaluation all depend on this normalized representation, and conversion back to original pixel coordinates is only done when exporting predictions for human inspection or downstream use.
 
 \medskip
 
-
 Heatmap supervision reconstruction. The software assumes Gaussian target heatmaps for heatmap regression because the paper defines an L2 heatmap loss but does not specify exactly how target heatmaps are constructed. This affects optimisation because the heatmap branch is trained to match smooth Gaussian peaks rather than some other target representation, which changes convergence behaviour and localisation sharpness.
 
 \medskip
-
 
 Heatmap width assumption. The baseline system assumes \texttt{heatmap\_sigma = 2.0} because the original paper does not state a fixed Gaussian width. This matters because the spread of the target heatmap changes the difficulty and smoothness of the heatmap prediction task, so reproducing results depends on keeping this value consistent.
 
 \medskip
 
-
 Wing-loss parameter assumption. The software assumes baseline Wing-loss values of w = 10.0 and epsilon = 2.0 because the paper gives the formula but not the actual parameter settings. This directly affects how the coordinate branch is trained, since different values change the relative penalty for small, medium, and large localisation errors.
 
 \medskip
-
 
 Stage-2 optimisation assumption. The software assumes that stage 2 should jointly optimise both the heatmap and coordinate branches after the coordinate branch is added. This means the second training stage is not treated as coordinate-only fine-tuning, and the final model behaviour reflects continued interaction between both branches during optimisation.
 
 \medskip
 
-
 Loss-weighting assumption. The baseline implementation assumes equal stage-2 loss weights for heatmap and coordinate supervision because the paper does not specify how the two losses should be balanced. This affects performance because the default behaviour gives both branches equal influence, while changing these weights shifts training emphasis toward one branch or the other.
 
 \medskip
-
 
 Parameter update policy. The default implementation assumes that the backbone and heatmap branch remain trainable during stage 2 unless freezing is explicitly requested. This affects how the model learns because the full network can continue adapting in the second stage instead of treating stage-1 features as fixed.
 
 \medskip
 
-
-Effective batch-size reconstruction. The software assumes that the paperâ€™s stage-2 batch size of 256 can be approximated using batch size 64 with gradient accumulation on different hardware. This makes the training pipeline usable on more limited systems, but it also means the repository reproduces the paperâ€™s intended effective batch size only approximately rather than literally.
+Effective batch-size reconstruction. The software assumes that the paper's stage-2 batch size of 256 can be approximated using batch size 64 with gradient accumulation on different hardware. This makes the training pipeline usable on more limited systems, but it also means the repository reproduces the paper's intended effective batch size only approximately rather than literally.
 
 \medskip
-
 
 Convergence assumption. The paper states that stage 1 runs until convergence and mentions 11 epochs in its original setup, but it does not define a complete stopping rule for this implementation context. The software therefore assumes a larger epoch budget together with early stopping, which means training duration is reconstructed pragmatically rather than copied exactly from the paper.
 
 \medskip
 
-
-No explicit augmentation policy. The software assumes a simple deterministic preprocessing pipeline because the paper does not specify a detailed augmentation strategy. This improves clarity and reproducibility, but it also means robustness is achieved without relying on a strong augmentation regime unless a user adds one manually.
+No explicit augmentation policy. The software assumes a simple deterministic preprocessing pipeline because the paper does not specify a detailed augmentation strategy.
 
 \medskip
-
 
 Single-hand target assumption. The software assumes one target hand per sample, selecting the requested or most visible hand where needed rather than jointly predicting multiple hands. This affects use because the repository is designed for single-hand pose estimation workflows rather than general multi-hand scene understanding.
 
 \medskip
 
-
 Fusion threshold definition. The paper says fusion uses the median predicted knuckle length as the adaptive threshold alpha, but it does not fully formalise the exact skeleton edges in text. The implementation therefore assumes explicit edge lists for supported skeleton layouts, which means the behaviour of fusion depends partly on this code-level reconstruction.
 
 \medskip
-
 
 Reduced 10-keypoint extension. The software assumes that the same overall DRHand-style architecture can be reused for a reduced 10-keypoint fingertip-and-base layout even though the original paper is written for 21 keypoints. This allows the project to test whether a smaller output space is sufficient for edge-HCI use, but it also means the reduced model is an adaptation introduced by this project rather than something directly defined in the paper.
 
 \medskip
 
-
-Reduced-layout fusion assumption. Because the original paper does not define how fusion should work for a reduced keypoint layout, the implementation assumes a simplified edge set for the 10-keypoint model. This affects behaviour because the reduced fusion rule is a project-specific extension and therefore its outputs depend on an additional design decision beyond the original paper.
-
-\medskip
-
-
 Visibility-aware evaluation assumption. The software assumes that evaluation should mask invisible joints when visibility information is available. This affects the reported metrics because performance is measured primarily on visible landmarks, which may differ from alternative evaluation protocols.
 
 \medskip
 
-
 Reduced-layout EPE root assumption. The reduced shared-10 layout does not include the same root structure as the full 21-keypoint skeleton, so the implementation assumes an alternative root for root-relative EPE when necessary. This keeps EPE usable for reduced-layout experiments, but it means that reduced-layout EPE is not a perfectly identical measurement setup to the full-layout case.
 
 \subsection{Languages, Packages, Frameworks, and Libraries Used}
-\begin{itemize}
-    \item What technologies were used to build the software?
-    \item Why were these choices used in this project?
-\end{itemize}
 
 Python. The software was built primarily in Python because it provides a practical and widely used language for machine-learning research, rapid experimentation, data processing, and command-line workflow development. This made it suitable for implementing a research artefact that needed to support training, evaluation, inference, benchmarking, and reproducibility in a consistent codebase.
 
 \medskip
 
-
 PyTorch. The main hand-pose pipeline was implemented in PyTorch because the project required a flexible deep-learning framework for defining custom model architectures, losses, and training procedures. PyTorch was particularly suitable for this DRHand-inspired implementation because it allowed the original dual-branch idea to be reconstructed clearly while remaining easy to debug and adapt for the reduced 10-keypoint and transfer-learning experiments.
 
 \medskip
-
 
 Conda. A Conda-managed environment was used because the project depended on a mix of machine-learning, image-processing, and benchmarking packages that needed to be installed consistently across systems. Conda was chosen to reduce dependency conflicts and to make the installation and replication process more reliable for assessment.
 
 \medskip
 
-
 NumPy. NumPy was used for numerical array processing because the software required lightweight handling of coordinates, image-derived data, and intermediate structured values outside the main tensor-training code. It was a natural choice because it integrates well with Python-based scientific and machine-learning workflows.
 
 \medskip
-
 
 Pillow. Pillow was used for image loading and resizing because the project processes RGB hand images during training, evaluation, and inference. It was chosen as a simple and dependable library for image I/O and preprocessing without introducing unnecessary complexity.
 
 \medskip
 
-
 MediaPipe. MediaPipe was used because the project included an explicit baseline comparison against a strong lightweight hand-tracking system and also relied on MediaPipe-related assets for pseudo-labelled or baseline-oriented workflows. This choice was important because it gave the project a practical reference point against a widely used real-time hand-pose system.
 
 \medskip
-
 
 Matplotlib. Matplotlib was used for plotting and qualitative rendering because the project required visual inspection of predictions, generation of qualitative examples, and support for report-ready analysis figures. It was chosen because it is a standard and effective library for producing these outputs in Python.
 
 \medskip
 
-
 PyTest. PyTest was used for automated testing because the repository needed a lightweight way to verify important behaviour such as model output shapes, fusion logic, and checkpoint validation. It was chosen to support software quality assurance and to provide a quick validation route for assessors and future users of the artefact.
 
 \medskip
-
 
 psutil. The \texttt{psutil} package was used in benchmarking workflows because the project included deployment-oriented runtime analysis and needed process-level resource measurements in addition to model accuracy. It was chosen to support practical evaluation of the software on edge-oriented hardware settings.
 
@@ -257,19 +190,19 @@ psutil. The \texttt{psutil} package was used in benchmarking workflows because t
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.6\textwidth]{4006_software_report-Page-2.drawio.png}
+\includegraphics[width=0.7\textwidth]{4006_software_report-Page-2.drawio.png}
 \caption{High-level architecture.}
 \label{fig:software-architecture}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\begin{minipage}[t]{0.55\textwidth}
+\begin{minipage}[t]{0.60\textwidth}
 \centering
 \includegraphics[width=\linewidth]{4006_software_report-comp_train_view.drawio.png}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.40\textwidth}
+\begin{minipage}[t]{0.50\textwidth}
 \centering
 \includegraphics[width=\linewidth]{4006_software_report-comp_eval_view .drawio.png}
 \end{minipage}
@@ -296,12 +229,10 @@ single-image inference.
 
 \medskip
 
-
 External datasets and generated artefacts sit at the system boundary, while
 the internal package provides the common services used by all workflows.
 
 \medskip
-
 
 At the highest level, the user interacts with the software by running scripts
 such as \texttt{scripts/train.py}, \texttt{scripts/eval\_metrics.py}, and
@@ -311,7 +242,6 @@ responsible for data loading, model execution, training, inference, evaluation,
 and checkpoint handling.
 
 \medskip
-
 
 The core modules read dataset files from disk and produce new artefacts such as
 trained checkpoints, evaluation JSON files, aggregated CSV tables, benchmark
@@ -329,19 +259,11 @@ and updates the model parameters.
 
 \medskip
 
-
 The data layer provides a shared interface for loading and preprocessing
 supported datasets into normalized tensor representations. During training, the
 checkpoint manager validates and saves model state together with metadata,
 while the training pipeline also writes logs and loss histories to the
 artefact store.
-
-\medskip
-
-
-This reflects the repository's two-stage optimisation design, in which the
-same model is first trained through the heatmap branch and then refined with
-joint heatmap and coordinate supervision.
 
 \subsubsection*{Evaluation and Inference View}
 
@@ -353,13 +275,11 @@ predictions from the inference and fusion module.
 
 \medskip
 
-
 That module runs the DRHand model, decodes heatmap outputs, uses the
 coordinate branch predictions, and applies the fusion rule when fused
 inference is requested.
 
 \medskip
-
 
 The resulting predictions are then used by the evaluation pipeline to compute
 metrics such as SSE, EPE, PCK, timing information, and optional fusion
@@ -376,12 +296,6 @@ checkpoint export, while evaluation and inference move from checkpoint loading
 and sample preparation to prediction, fusion, metric computation, and output
 generation.
 
-\medskip
-
-
-This figure is useful because it shows not only which components exist, but
-also how control and data move through them during actual use.
-
 \subsubsection*{Interfaces Between Components}
 
 The interfaces between these components are mainly file-based and tensor-based.
@@ -391,19 +305,11 @@ files, and rendered \texttt{.png} figures.
 
 \medskip
 
-
 In-memory interfaces are primarily PyTorch tensors representing images,
 keypoint coordinates, visibility values, heatmaps, and predicted coordinates.
 Checkpoint metadata provides an additional interface between workflows by
 preserving information such as training stage, epoch, keypoint layout, and
 other configuration details needed to reload and evaluate a model correctly.
-
-\medskip
-
-
-Together, these interfaces allow the software to move cleanly from raw dataset
-input to trained models, reusable checkpoints, and reproducible evaluation
-outputs.
 
 \subsection{Data Model(s), Including In-Memory Structures and Persistent Storage}
 
@@ -422,12 +328,6 @@ keypoint-coordinate tensors of shape \texttt{(K,2)}, visibility tensors of
 shape \texttt{(K)}, predicted heatmaps of shape \texttt{(K,64,64)}, and
 predicted coordinate tensors of shape \texttt{(K,2)}.
 
-\medskip
-
-
-This common representation allows the same pipeline to operate with either the
-standard 21-keypoint layout or the reduced 10-keypoint layout.
-
 \subsubsection*{Persistent Storage}
 
 Persistent storage in the repository is file-based. Source datasets remain on
@@ -437,13 +337,11 @@ saved as experiment artefacts. Training checkpoints are written as PyTorch
 stored as CSV, evaluation outputs are written as JSON, aggregated summaries are
 stored as CSV, and qualitative overlays or rendered figures are exported as
 \texttt{.png}.
-
 This design supports reproducibility because trained states, metrics, and
 generated figures can all be reloaded or compared directly from the
 filesystem.
 
 \medskip
-
 
 \begin{table}[htbp]
 \centering
@@ -470,10 +368,6 @@ Result summaries & Scalar metrics and aggregated experiment statistics & CSV tab
 \end{table}
 
 \subsection{Significant Methods, Functions, or Other Lower-Level Elements}
-\begin{itemize}
-    \item What lower-level parts of the implementation are most important?
-    \item What does each important method or function do?
-\end{itemize}
 
 \subsubsection*{Core Model}
 
@@ -482,7 +376,6 @@ in \texttt{src/handpose/models/hand\_pose\_model.py}, which acts as the main
 wrapper around the learned model.
 
 \medskip
-
 
 It combines the shared backbone, heatmap regression head, and coordinate
 regression head into one interface and provides the forward paths used during
@@ -498,13 +391,11 @@ definitions in \texttt{src/handpose/models/block.py}.
 
 \medskip
 
-
 These classes implement the shared feature extractor, the heatmap branch, the
 coordinate branch, and the depthwise-separable and upsampling building blocks
 from which the DRHand-inspired model is assembled.
 
 \medskip
-
 
 The most important optimisation-related functions are
 \texttt{coords\_to\_heatmaps}, \texttt{HeatmapMSELoss}, and \texttt{WingLoss}
@@ -524,15 +415,10 @@ and dataset-loading code. The dataset factory and dataset classes in
 COCO-style hand datasets, while preprocessing helpers in
 \texttt{src/handpose/data/transforms.py} resize images, convert them to
 tensors, and rescale keypoint coordinates.
-
-\medskip
-
-
 These functions are significant because all training, evaluation, and
 inference workflows depend on the same shared input format.
 
 \medskip
-
 
 The lower-level functions implementing branch fusion are also particularly
 important. In \texttt{src/handpose/inference/fusion.py}, functions such as
@@ -540,10 +426,6 @@ important. In \texttt{src/handpose/inference/fusion.py}, functions such as
 and \texttt{fuse\_coords} define how heatmap predictions are decoded and how
 the final fused prediction is selected from the heatmap and coordinate
 branches.
-
-\medskip
-
-
 These functions are central because the fusion rule is one of the defining
 design features of the implemented pipeline.
 
@@ -555,16 +437,11 @@ checkpoints are validated, saved, and reloaded, while
 \texttt{evaluate\_checkpoint} in
 \texttt{src/handpose/evaluation/eval\_metrics\_core.py} performs the main
 metric computation for SSE, EPE, PCK, timing, and optional fusion diagnostics.
-
-\medskip
-
-
 These components are important because they make the repository reproducible
 and allow trained models to be reused consistently across training, inference,
 and result generation workflows.
 
 \medskip
-
 
 Finally, the user-facing scripts under \texttt{scripts/} are thin but
 important workflow connectors. Scripts such as \texttt{train.py},
@@ -575,11 +452,6 @@ the lower-level implementation for complete training, evaluation, inference,
 and benchmarking tasks.
 
 \subsection{Important Errors and Their Conditions}
-\begin{itemize}
-    \item What important errors can occur?
-    \item Under what conditions do those errors happen?
-    \item How does the software respond to them?
-\end{itemize}
 
 \subsubsection*{Input and Configuration Errors}
 
@@ -591,10 +463,6 @@ indices, or uses an unsupported checkpoint version. Similar validation errors
 occur when invalid keypoint subsets are requested, when unsupported dataset
 names or split aliases are supplied, or when an invalid prediction mode or
 negative PCK threshold is passed on the command line.
-
-\medskip
-
-
 In these cases, the software responds by raising a clear \texttt{ValueError}
 and stopping execution rather than continuing with inconsistent state.
 
@@ -606,7 +474,6 @@ files, empty evaluation image folders, failed imports of optional dependencies
 such as MediaPipe, or requesting CUDA on a machine where it is not available.
 These conditions are handled through exceptions such as
 \texttt{FileNotFoundError} or \texttt{RuntimeError}.
-
 The software does not silently ignore these problems; instead, it fails early
 and reports the missing dependency, missing path, or unsupported device
 condition so that the user can correct the environment before rerunning the
@@ -623,7 +490,6 @@ providing an initial checkpoint.
 
 \medskip
 
-
 Evaluation and qualitative-rendering workflows can also fail when no samples
 match the requested dataset split or when the selected checkpoint does not
 contain the keypoints required for shared-10 evaluation or fusion. In these
@@ -632,10 +498,6 @@ message, which helps prevent silent misuse of the repository and makes
 debugging more straightforward.
 
 \subsection{User Interface Design}
-\begin{itemize}
-    \item How does the user interact with the software?
-    \item What interface choices were made and why?
-\end{itemize}
 
 \subsubsection*{Command-Line Interaction}
 
@@ -646,7 +508,6 @@ single-image inference, qualitative rendering, and result aggregation.
 
 \medskip
 
-
 In practice, the user runs these scripts from the repository root, supplies
 the required paths and options as command-line arguments, and receives outputs
 such as checkpoints, JSON result files, CSV summaries, printed metrics, or
@@ -654,14 +515,12 @@ rendered visualisations.
 
 \medskip
 
-
 This command-line design was chosen because the software is a research
 artefact rather than an end-user application. The main tasks involve running
 controlled experiments, reproducing reported results, evaluating checkpoints
 under different conditions, and generating analysis artefacts.
 
 \medskip
-
 
 These activities are better supported by explicit script arguments than by a
 graphical user interface, because command-line workflows are easier to
@@ -674,10 +533,6 @@ Another important interface choice was to separate the reusable implementation
 from the user-facing entry points. The core logic is implemented in the
 \texttt{src/handpose/} package, while the scripts act as thin workflow
 wrappers around that logic.
-
-\medskip
-
-
 This was done so that the user interface remains simple at the script level
 while the lower-level code remains modular and reusable. As a result, users
 can run complete workflows through a small number of documented commands
@@ -685,23 +540,15 @@ without needing to interact directly with the internal package structure.
 
 \subsubsection*{Explicit Runtime Configuration}
 
-The interface also relies on explicit file and path arguments for datasets,
+The interface relies on explicit file and path arguments for datasets,
 checkpoints, and output locations. This choice was made to keep the repository
 portable across different machines and storage layouts, especially since some
 datasets are external and not bundled with the artefact.
-
-\medskip
-
-
 By making these dependencies explicit at runtime, the software avoids
 hard-coding machine-specific paths and makes the execution process clearer for
 assessors and future users.
 
 \subsection{Quality Assurance Steps}
-\begin{itemize}
-    \item What steps were taken to improve software quality?
-    \item How was the software checked for correctness, reliability, and maintainability?
-\end{itemize}
 
 \subsubsection*{Modular Structure}
 
@@ -709,10 +556,6 @@ Several steps were taken to improve software quality throughout the project.
 The repository was organised into a modular structure, with reusable
 implementation code placed under \texttt{src/handpose/} and user-facing
 workflows exposed through separate scripts.
-
-\medskip
-
-
 This separation reduced duplication, made the system easier to understand, and
 improved maintainability by ensuring that training, evaluation, inference, and
 benchmarking all relied on shared core logic rather than separate ad hoc
@@ -725,10 +568,6 @@ error handling. Important interfaces such as checkpoint loading, dataset
 selection, prediction-mode resolution, keypoint-layout handling, and
 preprocessing inputs include checks that raise clear exceptions when invalid
 arguments or inconsistent artefacts are supplied.
-
-\medskip
-
-
 This helped reduce silent failure modes and made incorrect usage easier to
 identify and debug.
 
@@ -738,10 +577,6 @@ Correctness and reliability were checked using the lightweight automated test
 suite under \texttt{tests/}. These tests verify important repository contracts
 such as model output shapes, checkpoint schema validation, and fusion
 behaviour.
-
-\medskip
-
-
 In addition to automated tests, the repository also provides practical
 validation routes through documented commands in \texttt{INSTALL.md} and
 \texttt{REPLICATION\_GUIDE.md}, allowing the software to be checked by running
@@ -754,29 +589,17 @@ Maintainability was further supported through reproducibility-oriented
 documentation and artefact management. The repository includes installation
 instructions, requirement notes, a replication guide, curated experiment
 command files, preserved checkpoints, and saved result artefacts.
-
-\medskip
-
-
 These were important quality-assurance measures because they made the software
 easier to inspect, rerun, and extend, while also ensuring that the reported
 experimental outputs could be traced back to concrete workflows within the
 repository.
 
 \subsubsection{Version Control and Versioning}
-\begin{itemize}
-    \item How was version control used during development?
-    \item How were changes tracked and managed?
-\end{itemize}
 
 Version control was used throughout development by maintaining the project as a
 Git-based repository. This allowed the software, documentation, experiment
 definitions, and preserved artefacts to be developed within a single
 structured history rather than as disconnected files.
-
-\medskip
-
-
 Using version control was important because the project involved repeated
 changes to model design, training configuration, evaluation workflows,
 reporting artefacts, and supporting documentation, all of which needed to
@@ -784,35 +607,22 @@ remain traceable over time.
 
 \medskip
 
-
 Changes were tracked and managed through the normal Git workflow of recording
 edits to the repository as development progressed. This made it possible to
 monitor the evolution of scripts, source modules, experiment files, and paper
 materials, and helped prevent important changes from being lost or mixed
 together without record.
-
-\medskip
-
-
 It also supported safer experimentation, since alternative implementations or
 revised configurations could be introduced while preserving the earlier state
 of the project.
 
 \subsubsection{Code Style and Convention}
-\begin{itemize}
-    \item What code style or conventions were followed?
-    \item How did those conventions help keep the code clear and consistent?
-\end{itemize}
 
 The code follows a consistent Python style based on clear module separation,
 descriptive function names, and lightweight internal documentation. The
 repository is organised by responsibility, with separate modules for data
 loading, model definition, training, inference, evaluation, and checkpoint
 handling.
-
-\medskip
-
-
 Within these modules, functions and classes generally use descriptive
 snake\_case naming for functions and variables, and class-based naming for
 model components such as \texttt{HandPoseNet}. This made the code easier to
@@ -821,30 +631,20 @@ across large scripts.
 
 \medskip
 
-
 A consistent convention was also followed for docstrings and purpose
 statements. Most modules begin with a short summary docstring explaining their
 role in the repository, and most important functions include concise
 docstrings describing what they do.
-
-\medskip
-
-
 This helped keep the code clear because users and future readers can
 understand the role of a file or function without having to infer it entirely
 from implementation details.
 
 \medskip
 
-
 The code also follows a convention of keeping user-facing workflow logic
 separate from reusable implementation logic. Scripts under \texttt{scripts/}
 mainly parse arguments and call functions from the \texttt{src/handpose/}
 package, while the package itself contains the lower-level logic.
-
-\medskip
-
-
 This convention improved consistency because training, evaluation, inference,
 and benchmarking were all built on shared internal code rather than separate
 duplicated implementations.
@@ -857,56 +657,34 @@ error messages at key interfaces. Functions that depend on specific
 assumptions, such as checkpoint schema, prediction modes, dataset names,
 keypoint layouts, or device availability, usually check these conditions
 directly and raise clear exceptions if they are violated.
-
-\medskip
-
-
 This kept the behaviour of the software more predictable and made the codebase
 easier to maintain, since failures tended to occur close to the source of the
 problem rather than emerging later as ambiguous downstream bugs.
 
 \medskip
 
-
-Finally, the repository shows a consistent testing convention in which small
+The repository shows a consistent testing convention in which small
 focused tests are used to protect important contracts such as model output
 shapes, checkpoint validation, and fusion behaviour.
-
-\medskip
-
-
 This helped reinforce code clarity and consistency because the expected
 behaviour of core components was made explicit both in implementation and in
 accompanying tests.
 
 \subsubsection{Automated Testing}
-\begin{itemize}
-    \item What automated tests were implemented?
-    \item What parts of the software do those tests verify?
-\end{itemize}
 
 The repository includes a lightweight automated test suite implemented with
 \texttt{pytest}. The tests are intended as a fast validation layer that checks
 a small number of important software contracts before running more expensive
 workflows such as full training or dataset-based evaluation.
-
-\medskip
-
-
 This makes them useful both during development and as a first confidence check
 for assessors or future users of the repository.
 
 \medskip
 
-
 One group of tests verifies model-shape behaviour. In
 \texttt{tests/test\_model\_shapes.py}, the test suite checks that
 \texttt{HandPoseNet} produces outputs of the expected shape for both the
 standard 21-keypoint configuration and the reduced 10-keypoint configuration.
-
-\medskip
-
-
 These tests verify that the model returns heatmaps of shape \texttt{(N, K, 64,
 64)} and coordinate outputs of shape \texttt{(N, K, 2)}, and also confirm
 that these outputs remain finite. This protects the most basic interface
@@ -914,37 +692,26 @@ contract of the learned model.
 
 \medskip
 
-
 A second group of tests verifies the fusion-related helper functions. In
 \texttt{tests/test\_fusion.py}, the software checks that heatmap argmax
 decoding returns the expected normalized coordinates, that the standard
 21-joint fusion edge definition is resolved correctly, and that the reduced
 tip-and-base 10-joint layout is handled correctly while unsupported layouts
 are rejected.
-
-\medskip
-
-
 These tests verify the correctness of important lower-level logic used in
 fused inference.
 
 \medskip
 
-
 A third group of tests verifies checkpoint schema handling. In
 \texttt{tests/test\_checkpoints.py}, the suite checks that valid checkpoints
 are accepted and normalized correctly, while malformed checkpoints with
 duplicate keypoint indices or inconsistent keypoint metadata are rejected.
-
-\medskip
-
-
 These tests verify the repository's checkpoint contract, which is important
 because the same checkpoint format is used across training, evaluation,
 inference, and preserved artefact reuse.
 
 \medskip
-
 
 Finally, the \texttt{tests/conftest.py} configuration ensures that the
 \texttt{src/} tree is importable when tests are run from the repository root.
@@ -953,14 +720,170 @@ available consistently during test execution.
 
 \medskip
 
+\section{Interactive Demo}
 
-Overall, the automated tests focus on core structural correctness rather than
-full end-to-end experiment reproduction, while the latter is handled through
-the documented validation and replication commands elsewhere in the
-repository.
+\subsection{Purpose and Scope}
+
+Alongside the main hand-pose research artefact, a separate gesture-driven
+demonstrator was also developed for live presentation. This software is not
+part of the core \texttt{src/handpose/} repository implementation described in
+the earlier sections. Instead, it should be understood as a companion
+application whose purpose is to present selected project-related image
+processing outputs through direct hand interaction rather than through
+command-line experiments.
 
 \medskip
 
+This distinction is important because the two software artefacts serve
+different roles. The main system is a reproducible research implementation for
+training, evaluation, benchmarking, and inference, whereas the demonstrator is
+a front-end showcase intended for interactive use in a live setting.
+
+\subsection{Operation and User Workflow}
+
+The demonstrator starts by opening a ZED camera, creating a fullscreen portrait
+PySide6 window, and waiting for a hand to be detected. Once a hand is visible,
+the palm centre is used to control an on-screen cursor and a fist gesture is
+interpreted as a click.
+
+\medskip
+
+The user workflow is deliberately simple. A start screen leads to a menu, from
+which the user can select one of two interactive demonstrations: a
+segmentation view or a tone-mapping view. Navigation between pages is carried
+out entirely through hand movement and fist-based selection, so the system can
+be used without a conventional mouse or keyboard during the demonstration
+session.
+
+\medskip
+
+The interaction logic is implemented explicitly rather than through a generic
+gesture library. The cursor position is derived from the mean position of a
+small set of palm-related landmarks, mirrored horizontally to match user
+expectation, and then smoothed before being displayed so that motion appears
+stable rather than jittery. A fist is detected by comparing fingertip-to-base
+distances against palm width, and clicks are debounced so that one closing
+motion does not trigger repeated activations. If no hand is detected for a
+short timeout period, the interface automatically returns to the start screen,
+which helps recover from tracking loss during live use.
+
+\subsection{Architecture and Main Components}
+
+The demonstrator is implemented primarily as a single PySide6 application
+script. Its design is centred on four main elements.
+First, a dedicated vision thread acquires frames from the ZED camera, rotates
+them into the required portrait orientation, and runs MediaPipe Hands to track
+one hand and estimate its landmarks.
+Second, a transparent overlay widget renders the cursor position and optional
+hand skeleton above the active interface.
+Third, the main window uses a stacked-page layout to switch between the start
+page, menu page, segmentation page, and tone-mapping page.
+Fourth, gesture events are translated into synthetic mouse clicks so that
+standard Qt widgets can be controlled through the hand-tracking interface.
+
+\medskip
+
+This separation between the vision thread and the main window is an important
+design choice. Camera acquisition and hand-tracking are continuous operations
+that would make the interface feel unresponsive if they were executed directly
+in the GUI event loop. Instead, the vision thread emits pose updates to the
+main window through Qt signals, while a timer refreshes the overlay at a steady
+rate. In software-engineering terms, this keeps the latency-sensitive
+interaction path separate from presentation logic and reduces the risk of the
+interface freezing during active use.
+
+\subsection{Demonstration Behaviour}
+
+The first demonstration presents microscopy imagery together with precomputed
+segmentation data. In one mode, a binary mask is converted into connected
+components and the selected component is highlighted when the user clicks on
+the image. In another mode, multiple precomputed RNvU retina masks are loaded
+and the mask covering the selected pixel is revealed.
+
+\medskip
+
+The second demonstration presents tone-mapping results using paired images. A
+baseline image is shown across the whole display, while an improved image is
+revealed only inside a hand-controlled spotlight.
+In both demonstrations, the software does not run segmentation or tone-mapping
+models live. It instead provides an interaction layer for exploring prepared
+outputs visually.
+
+\medskip
+
+The data handling for these demonstrations is simple but explicit. In the
+single-mask segmentation mode, the software loads one base microscopy image and
+one binary mask, computes connected components from the foreground pixels, and
+stores pre-rendered coloured overlays for each selectable region. In the RNvU
+mode, the software instead loads a base image together with several binary
+class masks and combines them into an integer label map so that a click can be
+resolved to a specific tissue class. The tone-mapping view uses fixed pairs of
+baseline and improved images, and the size of the spotlight is derived from
+the tracked palm width so that the reveal area scales with the user's hand.
+
+\subsection{Inputs, Outputs, Dependencies, and Limitations}
+
+The main runtime inputs are live camera frames from the ZED device together
+with local image, mask, and branding assets prepared for the demonstration.
+The main software dependencies are Python 3.10, PySide6, OpenCV, MediaPipe,
+\texttt{pyzed}, Pillow, and NumPy.
+
+\medskip
+
+Unlike the main hand-pose pipeline, this software does not normally generate
+checkpoints, metrics, or reproducibility artefacts. Its outputs are
+interactive visual states only, such as cursor movement, page navigation,
+selected segmentation overlays, and the tone-mapping spotlight.
+
+\medskip
+
+Several simplifying assumptions were made for this demonstrator. It assumes
+that a ZED camera is connected, that a single hand can be tracked reliably
+enough for interaction, and that the application will be used in a fixed
+portrait kiosk-style layout. It is also only loosely coupled to the main
+project implementation, because it does not call the DRHand-inspired training
+or inference pipeline directly and instead visualises precomputed segmentation
+and tone-mapping assets.
+
+\medskip
+
+Some failure conditions are also easy to identify from the implementation. The
+software may fail to start if the ZED camera cannot be opened, and parts of the
+interface may degrade if required image or mask files are missing, unreadable,
+or empty. Because the demonstration assets are referenced through relative
+paths, the application also depends on being launched from the expected working
+directory. These are ordinary engineering limitations for a presentation tool,
+but they are worth documenting because they affect deployability more directly
+than the main research pipeline does.
+
+\subsection{Practical Validation}
+
+Validation of the demonstrator is practical rather than benchmark-oriented.
+The software can be considered to be operating correctly when it starts
+successfully, detects the camera, shows stable cursor motion in response to
+hand movement, registers fist gestures as clicks with acceptable reliability,
+switches between pages correctly, highlights the intended segmentation
+regions, and updates the tone-mapping spotlight in real time.
+
+\medskip
+
+These checks were appropriate for this subsystem because its main purpose is
+interactive presentation rather than quantitative model evaluation.
+
+\medskip
+
+A useful manual acceptance route is to verify the demonstrator in stages:
+first, confirm that startup succeeds and the camera is detected; second,
+confirm that presenting one hand reveals the cursor and allows the menu to be
+selected; third, confirm that a fist activates buttons only once per intended
+selection; fourth, confirm that segmentation clicks reveal the expected region
+or RNvU mask; fifth, confirm that the tone-mapping spotlight follows the hand
+and changes size with palm width; and finally, confirm that removing the hand
+causes the interface to reset after the configured timeout. This sequence gives
+a more precise notion of correctness than a simple statement that the
+application ``works''.
+
+\medskip
 
 \appendix
 
