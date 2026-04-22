@@ -21,11 +21,11 @@
 \centering
 {\LARGE Software Development Report\par}
 \vspace{1.5cm}
-{\large Project Title Placeholder\par}
+{\large An investigation into Lightweight Hand Pose estimation for Edge HCI\par}
 \vspace{1cm}
 {\large Brandon MacGillivray\par}
 \vspace{0.5cm}
-{\large Student ID Placeholder\par}
+{\large 40321491\par}
 \vfill
 {\large \today\par}
 \end{titlepage}
@@ -888,6 +888,171 @@ application ``works''.
 \appendix
 
 \section{Appendices}
+
+\subsection{Supervisor Meeting Minutes}
+
+The following minutes are presented in concise form and record a brief summary
+of each meeting, the matters discussed, and the agreed actions.
+
+\subsubsection*{2025-10-08}
+
+Summary: Initial project-scoping meeting.
+Discussed: lightweight hand pose tracking for real-time HCI on edge hardware,
+possible use of RGB and stereo input, and the need for an early literature
+review.
+Actions agreed: begin literature review, identify core papers, and prepare an
+initial problem statement.
+
+\subsubsection*{2025-10-14}
+
+Summary: Follow-up meeting on early literature findings.
+Discussed: latency versus accuracy on edge devices, candidate hardware, and how
+pose quality would relate to HCI usability.
+Actions agreed: continue literature review, shortlist likely baselines and
+datasets, and start outlining the preliminary article.
+
+\subsubsection*{2025-10-21}
+
+Summary: Reported progress on an exploratory hand-tracking mini project.
+Discussed: using a ZED camera and MediaPipe Hands to gain practical experience
+with hand-tracking behaviour, including lighting, range, and gesture stability.
+Actions agreed: continue the exploratory demo as hands-on domain familiarisation
+while keeping it separate from the main research contribution.
+
+\subsubsection*{2025-10-28}
+
+Summary: Reviewed exploratory demo progress and article direction.
+Discussed: practical constraints observed in camera-based hand interaction and
+how these could inform the motivation for the project.
+Actions agreed: draft the introduction and motivation sections and continue the
+structured literature review.
+
+\subsubsection*{2025-11-04}
+
+Summary: Literature review review meeting.
+Discussed: MediaPipe Hands, lightweight hand-pose approaches, stereo or
+depth-related methods, and how to position the project around edge HCI rather
+than model accuracy alone.
+Actions agreed: deepen the review, organise references, and continue drafting
+the preliminary article.
+
+\subsubsection*{2025-11-11}
+
+Summary: Discussed the developing preliminary article.
+Discussed: project framing around lightweight hand pose tracking for edge
+devices, likely hardware and sensing setup, and the need to state clear
+objectives.
+Actions agreed: refine the abstract and research aim and improve the structure
+of the literature review.
+
+\subsubsection*{2025-11-18}
+
+Summary: Progress review before the preliminary submission.
+Discussed: draft introduction and literature review, possible evaluation themes
+such as latency, stability, and usability, and how much preliminary
+implementation to mention.
+Actions agreed: complete a near-final draft of the preliminary article and
+prepare the progress appendix.
+
+\subsubsection*{2025-12-02}
+
+Summary: Final pre-submission review before the preliminary article deadline.
+Discussed: article structure, wording of the objectives, literature coverage,
+and the role of the exploratory demo as early practical work.
+Actions agreed: make final edits, proofread, and submit the preliminary
+research article by 2025-12-05.
+
+\subsubsection*{2025-12-15}
+
+Summary: Post-submission review after the preliminary article.
+Discussed: lessons from the initial phase, narrowing the project to a more
+deliverable software artefact, and possible next implementation steps.
+Actions agreed: define a clearer implementation plan and prepare for the main
+development phase over the break.
+
+\subsubsection*{2026-01-06}
+
+Summary: Restart meeting after the winter break.
+Discussed: refining scope from a broad stereo/RGB investigation toward a more
+manageable core system with reproducible software and evaluation.
+Actions agreed: define the main implementation scope, organise the repository,
+and begin the next development phase.
+
+\subsubsection*{2026-01-13}
+
+Summary: Reviewed software architecture direction.
+Discussed: reusable package structure, scripts for training, evaluation and
+inference, likely datasets, and the importance of a strong baseline.
+Actions agreed: implement the core project structure and begin assembling the
+training and evaluation workflow.
+
+\subsubsection*{2026-01-20}
+
+Summary: Reported progress on codebase setup.
+Discussed: package organisation, dataset handling, checkpointing, and the need
+to keep the system reproducible and well documented from an early stage.
+Actions agreed: continue the core implementation and validate the basic
+training and inference path.
+
+\subsubsection*{2026-02-03}
+
+Summary: Model-development review meeting.
+Discussed: adopting a DRHand-inspired direction, staged training, loss design,
+and balancing technical ambition with a feasible implementation.
+Actions agreed: proceed with the selected architecture, document assumptions,
+and begin controlled experiments.
+
+\subsubsection*{2026-02-17}
+
+Summary: Reviewed early implementation and evaluation progress.
+Discussed: training behaviour, checkpoint management, evaluation scripts, and
+the importance of preserving reproducible outputs for the final reports.
+Actions agreed: continue experiments, improve workflow robustness, and preserve
+representative outputs.
+
+\subsubsection*{2026-02-24}
+
+Summary: Intermediate results review.
+Discussed: practical performance of the current pipeline, comparison against
+baseline ideas, and how to connect the software work back to the edge-HCI
+motivation.
+Actions agreed: continue evaluation, improve result organisation, and begin
+outlining the final research and software reports.
+
+\subsubsection*{2026-03-03}
+
+Summary: Focus on implementation maturity and supporting infrastructure.
+Discussed: evaluation outputs, benchmarking, reproducibility, and the role of
+supporting software beyond the core model.
+Actions agreed: improve scripts, artefact management, and documentation, and
+prepare report-ready material.
+
+\subsubsection*{2026-03-10}
+
+Summary: Shifted attention toward the Software Development Report.
+Discussed: report structure, architecture description, quality-assurance
+material, and what evidence should be included for testing and documentation.
+Actions agreed: draft software report sections and ensure the repository
+documentation supports installation and reuse.
+
+\subsubsection*{2026-03-16}
+
+Summary: Reviewed final-report and presentation preparation.
+Discussed: research article drafting, software report content, presentation
+planning, and how the earlier interactive demo could be described as a
+companion exploratory artefact.
+Actions agreed: continue writing, refine the software documentation, and
+prepare material suitable for the final demonstration and slides.
+
+\subsubsection*{2026-03-25}
+
+Summary: Final major supervision meeting before the submission run-in.
+Discussed: remaining writing tasks, repository documentation, appendix
+material, and preparation for the 2026-04-27 deadlines for the research
+article, software development report, and presentation slides.
+Actions agreed: complete final experiments and writing, finalise the repository
+documentation set, prepare the presentation, and assemble the appendices for
+submission.
 
 \end{document}
 
