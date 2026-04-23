@@ -67,4 +67,7 @@ Appendices
 
 pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report.tex
 
+pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report_v2_demo.tex
+pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report_v2_research.tex
+
 ###
