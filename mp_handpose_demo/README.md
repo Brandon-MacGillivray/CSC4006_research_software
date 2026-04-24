@@ -33,12 +33,6 @@ ASSET_ATTRIBUTION.md
 LICENSE
 ```
 
-## Obtaining the Artefact
-
-This artefact is intended to be distributed as its own GitLab repository. If
-the repository is private for assessment or demonstration purposes, provide the
-access details alongside the submission materials.
-
 ## Quick Start
 
 1. Install the hardware and software prerequisites described in

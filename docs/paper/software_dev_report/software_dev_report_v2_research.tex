@@ -45,6 +45,32 @@ The software is intended to implement and evaluate a lightweight 2D hand pose es
 
 \medskip
 
+\noindent The source repository for this software is available at
+\url{https://github.com/Brandon-MacGillivray/CSC4006_research_software.git}.
+
+
+\medskip
+
+\noindent The primary persona for this software is a researcher working on
+lightweight hand pose estimation who needs to train, evaluate, and reproduce
+experiments from the repository.
+
+\medskip
+
+\noindent The main user stories for this software are:
+\begin{itemize}
+    \item ``As a researcher, I want to train the DRHand-inspired model on the
+    supported datasets so that I can study its behaviour under different
+    configurations.''
+    \item ``As a researcher, I want to evaluate saved checkpoints and compare
+    metrics so that I can judge model accuracy and robustness.''
+    \item ``As a researcher, I want to rerun experiments from documented
+    commands and preserved artefacts so that I can verify that the reported
+    results are reproducible.''
+    \item ``As a researcher, I want to run inference and generate qualitative
+    outputs so that I can inspect the predicted hand keypoints visually.''
+\end{itemize}
+
 A user operates the software from the command line by setting up the documented Python environment, then running the repository scripts for the required workflow, such as \path{scripts/train.py} for training, \path{scripts/eval_metrics.py} for checkpoint evaluation, and \path{scripts/predict_image.py} for single-image inference, with inputs and options supplied as command-line arguments.
 
 \medskip
@@ -69,23 +95,26 @@ At implementation level, the system is built around a small set of consistent in
 
 \subsection{Significant Assumptions Made for the Design and Implementation}
 
+The software assumes that the user has installed the supporting software
+required for the intended workflow, including core dependencies and any
+optional packages as defined in the documented installation and
+replication instructions.
+
+\medskip
+
+The software assumes that the user has access to the required datasets or
+preserved artefacts in the directory structure expected by the repository
+scripts.
+
+\medskip
+
+The software assumes that the user has sufficient hardware resources for the
+intended task. Smaller inference checks may be possible on CPU, but CUDA GPU acceleration is
+strongly recommended for training and larger evaluation runs.
+
+\medskip
+
 Framework equivalence. The software assumes that the DRHand method can be reimplemented in PyTorch even though the original paper describes a TensorFlow implementation. As a result, this repository should be understood as a DRHand-inspired reconstruction rather than a strict reproduction, so exact numerical agreement with the original paper should not be expected.
-
-\medskip
-
-Dataset substitution. The software assumes that the dual-branch DRHand idea can be studied meaningfully on RHD, HK26K / \texttt{coco\_hand}, and RH8 even though the original paper used YouTube2D Hands, GANerated Hands, STB, and RHD. This means the software evaluates the method under a different data regime, so its results support the reconstructed pipeline used in this project rather than the original exact benchmark setup.
-
-\medskip
-
-Prepared input assumption. The software assumes that each input image already contains a clearly visible hand region and therefore does not implement a separate hand detector or crop-normalisation stage. This affects use because users must provide images or datasets where the hand is already reasonably framed, otherwise performance may degrade when the full image is simply resized to the network input size.
-
-\medskip
-
-Fixed preprocessing strategy. The software assumes that full-image resize to 256 x 256 is an acceptable preprocessing strategy because the paper specifies the input size but does not define a more detailed input-normalisation pipeline. This makes the system simpler and easier to reproduce, but it also means the model is sensitive to changes in hand scale, position, and framing within the input image.
-
-\medskip
-
-Coordinate representation. The software assumes that keypoints are represented internally as normalized (x, y) coordinates in the resized image space. This affects how the system works because training, inference, fusion, and evaluation all depend on this normalized representation, and conversion back to original pixel coordinates is only done when exporting predictions for human inspection or downstream use.
 
 \medskip
 
@@ -93,31 +122,7 @@ Heatmap supervision reconstruction. The software assumes Gaussian target heatmap
 
 \medskip
 
-Heatmap width assumption. The baseline system assumes \texttt{heatmap\_sigma = 2.0} because the original paper does not state a fixed Gaussian width. This matters because the spread of the target heatmap changes the difficulty and smoothness of the heatmap prediction task, so reproducing results depends on keeping this value consistent.
-
-\medskip
-
-Wing-loss parameter assumption. The software assumes baseline Wing-loss values of w = 10.0 and epsilon = 2.0 because the paper gives the formula but not the actual parameter settings. This directly affects how the coordinate branch is trained, since different values change the relative penalty for small, medium, and large localisation errors.
-
-\medskip
-
-Stage-2 optimisation assumption. The software assumes that stage 2 should jointly optimise both the heatmap and coordinate branches after the coordinate branch is added. This means the second training stage is not treated as coordinate-only fine-tuning, and the final model behaviour reflects continued interaction between both branches during optimisation.
-
-\medskip
-
-Loss-weighting assumption. The baseline implementation assumes equal stage-2 loss weights for heatmap and coordinate supervision because the paper does not specify how the two losses should be balanced. This affects performance because the default behaviour gives both branches equal influence, while changing these weights shifts training emphasis toward one branch or the other.
-
-\medskip
-
-Parameter update policy. The default implementation assumes that the backbone and heatmap branch remain trainable during stage 2 unless freezing is explicitly requested. This affects how the model learns because the full network can continue adapting in the second stage instead of treating stage-1 features as fixed.
-
-\medskip
-
 Effective batch-size reconstruction. The software assumes that the paper's stage-2 batch size of 256 can be approximated using batch size 64 with gradient accumulation on different hardware. This makes the training pipeline usable on more limited systems, but it also means the repository reproduces the paper's intended effective batch size only approximately rather than literally.
-
-\medskip
-
-Convergence assumption. The paper states that stage 1 runs until convergence and mentions 11 epochs in its original setup, but it does not define a complete stopping rule for this implementation context. The software therefore assumes a larger epoch budget together with early stopping, which means training duration is reconstructed pragmatically rather than copied exactly from the paper.
 
 \medskip
 
@@ -125,23 +130,7 @@ No explicit augmentation policy. The software assumes a simple deterministic pre
 
 \medskip
 
-Single-hand target assumption. The software assumes one target hand per sample, selecting the requested or most visible hand where needed rather than jointly predicting multiple hands. This affects use because the repository is designed for single-hand pose estimation workflows rather than general multi-hand scene understanding.
-
-\medskip
-
-Fusion threshold definition. The paper says fusion uses the median predicted knuckle length as the adaptive threshold alpha, but it does not fully formalise the exact skeleton edges in text. The implementation therefore assumes explicit edge lists for supported skeleton layouts, which means the behaviour of fusion depends partly on this code-level reconstruction.
-
-\medskip
-
-Reduced 10-keypoint extension. The software assumes that the same overall DRHand-style architecture can be reused for a reduced 10-keypoint fingertip-and-base layout even though the original paper is written for 21 keypoints. This allows the project to test whether a smaller output space is sufficient for edge-HCI use, but it also means the reduced model is an adaptation introduced by this project rather than something directly defined in the paper.
-
-\medskip
-
 Visibility-aware evaluation assumption. The software assumes that evaluation should mask invisible joints when visibility information is available. This affects the reported metrics because performance is measured primarily on visible landmarks, which may differ from alternative evaluation protocols. This is a consequence of the annotation specifics of the RHD dataset. Where often the coordinates of hands outside the image frame are still recorded.
-
-\medskip
-
-Reduced-layout EPE root assumption. The reduced shared-10 layout does not include the same root structure as the full 21-keypoint skeleton, so the implementation assumes an alternative root for root-relative EPE when necessary. This keeps EPE usable for reduced-layout experiments, but it means that reduced-layout EPE is not a perfectly identical measurement setup to the full-layout case.
 
 \subsection{Languages, Packages, Frameworks, and Libraries Used}
 
@@ -149,35 +138,15 @@ Python. The software was built primarily in Python because it provides a practic
 
 \medskip
 
-PyTorch. The main hand-pose pipeline was implemented in PyTorch because the project required a flexible deep-learning framework for defining custom model architectures, losses, and training procedures. PyTorch was particularly suitable for this DRHand-inspired implementation because it allowed the original dual-branch idea to be reconstructed clearly while remaining easy to adapt for the reduced 10-keypoint and transfer-learning experiments.
-
-\medskip
-
-Conda. A Conda-managed environment was used because the project depended on a mix of machine-learning, image-processing, and benchmarking packages that needed to be installed consistently across systems. Conda was chosen to reduce dependency conflicts and to make the installation and replication process more reliable for assessment.
-
-\medskip
-
-NumPy. NumPy was used for numerical array processing because the software required lightweight handling of coordinates, image-derived data, and intermediate structured values outside the main tensor-training code. It was a natural choice because it integrates well with Python-based scientific and machine-learning workflows.
-
-\medskip
-
-Pillow. Pillow was used for image loading and resizing because the project processes RGB hand images during training, evaluation, and inference. It was chosen as a simple and dependable library for image I/O and preprocessing.
-
-\medskip
-
 MediaPipe. MediaPipe was used because the project included an explicit baseline comparison against a strong lightweight hand-tracking system and also relied on MediaPipe-related assets for pseudo-labelled or baseline-oriented workflows. This choice was important because it gave the project a practical reference point against a widely used real-time hand-pose system.
 
 \medskip
 
-Matplotlib. Matplotlib was used for plotting and qualitative rendering because the project required visual inspection of predictions, generation of qualitative examples, and support for report-ready analysis figures. It was chosen because it is a standard and effective library for producing these outputs in Python.
+PyTorch. The main hand-pose pipeline was implemented in PyTorch because the project required a flexible deep-learning framework for defining custom model architectures, losses, and training procedures. PyTorch was particularly suitable for this DRHand-inspired implementation because it allowed the original dual-branch idea to be reconstructed clearly while remaining easy to adapt for the reduced 10-keypoint and transfer-learning experiments.
 
 \medskip
 
 PyTest. PyTest was used for automated testing because the repository needed a lightweight way to verify important behaviour such as model output shapes, fusion logic, and checkpoint validation. It was chosen to support software quality assurance and to provide a quick validation route for assessors and future users of the artefact.
-
-\medskip
-
-psutil. The \texttt{psutil} package was used in benchmarking workflows because the project included deployment-oriented runtime analysis and needed process-level resource measurements in addition to model accuracy. It was chosen to support practical evaluation of the software on edge-oriented hardware settings.
 
 \subsection{Overall Architecture / System Design and Interfaces Between Components}
 
@@ -190,12 +159,12 @@ psutil. The \texttt{psutil} package was used in benchmarking workflows because t
 
 \begin{figure}[htbp]
 \centering
-\begin{minipage}[t]{0.60\textwidth}
+\begin{minipage}[t]{0.8\textwidth}
 \centering
 \includegraphics[width=\linewidth]{4006_software_report-comp_train_view.drawio.png}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.50\textwidth}
+\begin{minipage}[t]{0.7\textwidth}
 \centering
 \includegraphics[width=\linewidth]{4006_software_report-comp_eval_view .drawio.png}
 \end{minipage}
@@ -315,6 +284,11 @@ The main in-memory structures are image tensors of shape \texttt{(C,H,W)},
 keypoint-coordinate tensors of shape \texttt{(K,2)}, visibility tensors of
 shape \texttt{(K)}, predicted heatmaps of shape \texttt{(K,64,64)}, and
 predicted coordinate tensors of shape \texttt{(K,2)}.
+
+Where C denotes the number of image channels, H and W denote image height and
+width, K denotes the number of keypoints, and N denotes batch size. The model
+uses RGB inputs, so typically C = 3, and the predicted heatmaps have spatial
+size 64 x 64.
 
 \subsubsection*{Persistent Storage}
 
@@ -538,39 +512,6 @@ assessors and future users.
 
 \subsection{Quality Assurance Steps}
 
-\subsubsection*{Modular Structure}
-
-Several steps were taken to improve software quality throughout the project.
-The repository was organised into a modular structure, with reusable
-implementation code placed under \path{src/handpose/} and user-facing
-workflows exposed through separate scripts.
-This separation reduced duplication, made the system easier to understand, and
-improved maintainability by ensuring that training, evaluation, inference, and
-benchmarking all relied on shared core logic rather than separate ad hoc
-implementations.
-
-\subsubsection*{Validation and Error Handling}
-
-Software quality was also improved through explicit validation and defensive
-error handling. Important interfaces such as checkpoint loading, dataset
-selection, prediction-mode resolution, keypoint-layout handling, and
-preprocessing inputs include checks that raise clear exceptions when invalid
-arguments or inconsistent artefacts are supplied.
-This helped reduce silent failure modes and made incorrect usage easier to
-identify and debug.
-
-\subsubsection*{Testing and Reproducibility}
-
-Correctness and reliability were checked using the lightweight automated test
-suite under \path{tests/}. These tests verify important repository contracts
-such as model output shapes, checkpoint schema validation, and fusion
-behaviour.
-In addition to automated tests, the repository also provides practical
-validation routes through documented commands in \texttt{INSTALL.md} and
-\texttt{REPLICATION\_GUIDE.md}, allowing the software to be checked by running
-real workflows and comparing regenerated outputs against preserved reference
-artefacts.
-
 \subsubsection*{Documentation and Artefact Management}
 
 Maintainability was further supported through reproducibility-oriented
@@ -649,62 +590,46 @@ This kept the behaviour of the software more predictable and made the codebase
 easier to maintain, since failures tended to occur close to the source of the
 problem rather than emerging later as ambiguous downstream bugs.
 
-\medskip
-
-The repository shows a consistent testing convention in which small
-focused tests are used to protect important contracts such as model output
-shapes, checkpoint validation, and fusion behaviour.
-This helped reinforce code clarity and consistency because the expected
-behaviour of core components was made explicit both in implementation and in
-accompanying tests.
-
 \subsubsection{Automated Testing}
 
 The repository includes a lightweight automated test suite implemented with
-\texttt{pytest}. The tests are intended as a fast validation layer that checks
-a small number of important software contracts before running more expensive
-workflows such as full training or dataset-based evaluation.
-This makes them useful both during development and as a first confidence check
-for assessors or future users of the repository.
+\texttt{pytest}. These tests provide a fast validation layer
+before running more expensive workflows such as full training or dataset-based
+evaluation.
 
 \medskip
 
-One group of tests verifies model-shape behaviour. In
-\path{tests/test_model_shapes.py}, the test suite checks that
-\texttt{HandPoseNet} produces outputs of the expected shape for both the
-standard 21-keypoint configuration and the reduced 10-keypoint configuration.
-These tests verify that the model returns heatmaps of shape \texttt{(N, K, 64,
-64)} and coordinate outputs of shape \texttt{(N, K, 2)}, and also confirm
-that these outputs remain finite. This protects the most basic interface
-contract of the learned model.
+\texttt{test\_hand\_pose\_net\_output\_shapes} in
+\path{tests/test_model_shapes.py}. This test instantiates
+\texttt{HandPoseNet} for both the standard 21-keypoint layout and the reduced
+10-keypoint layout, passes a dummy tensor of shape \texttt{(2,3,256,256)}
+through the model, and checks that the outputs have shapes
+\texttt{(2,K,64,64)} for heatmaps and \texttt{(2,K,2)} for coordinates. It
+also checks that the returned tensors contain only finite values. This
+verifies the most basic output-shape contract of the model.
 
 \medskip
 
-A second group of tests verifies the fusion-related helper functions. In
-\path{tests/test_fusion.py}, the software checks that heatmap argmax
-decoding returns the expected normalized coordinates, that the standard
-21-joint fusion edge definition is resolved correctly, and that the reduced
-tip-and-base 10-joint layout is handled correctly while unsupported layouts
-are rejected.
-These tests verify the correctness of important lower-level logic used in
-fused inference.
+\texttt{test\_heatmaps\_to\_coords\_argmax\_decodes\_normalized\_xy} in
+\path{tests/test_fusion.py}. This test constructs a small heatmap with a known
+maximum location and checks that \texttt{heatmaps\_to\_coords\_argmax}
+returns the expected normalized coordinate. The same file also includes
+\texttt{test\_resolve\_fusion\_bone\_edges\_supports\_tip\_base\_10\_and\_rejects\_other\_layouts},
+which checks that supported keypoint layouts are accepted while unsupported
+layouts raise a \texttt{ValueError}. These tests verify both correct fusion
+behaviour and correct rejection of invalid inputs.
 
 \medskip
 
-A third group of tests verifies checkpoint schema handling. In
-\path{tests/test_checkpoints.py}, the suite checks that valid checkpoints
-are accepted and normalized correctly, while malformed checkpoints with
-duplicate keypoint indices or inconsistent keypoint metadata are rejected.
-These tests verify the repository's checkpoint contract, which is important
-because the same checkpoint format is used across training, evaluation,
-inference, and preserved artefact reuse.
-
-\medskip
-
-Finally, the \path{tests/conftest.py} configuration ensures that the
-\path{src/} tree is importable when tests are run from the repository root.
-This supports the automated test workflow by making the repository package
-available consistently during test execution.
+\texttt{test\_validate\_checkpoint\_accepts\_and\_normalizes\_valid\_schema} in
+\path{tests/test_checkpoints.py}. This test supplies checkpoint metadata with
+string values for stage and epoch and checks that validation normalizes them
+correctly. The same file also includes
+\texttt{test\_validate\_checkpoint\_rejects\_duplicate\_keypoint\_indices} and
+\texttt{test\_validate\_checkpoint\_rejects\_inconsistent\_num\_keypoints},
+which confirm that malformed checkpoint metadata is rejected. These tests
+protect the checkpoint contract used by training, evaluation, and inference
+workflows.
 
 \end{document}
 

@@ -10,11 +10,9 @@ This document describes the expected environment for the standalone
 - A USB 3.x port suitable for the camera
 - A display that can comfortably present a portrait layout
   - preferred: 1080 x 1920 fullscreen
-  - acceptable for development: windowed 1080 x 1920
 
 ## Software Requirements
 
-- Operating system: Windows 10 or Windows 11, 64-bit, for this packaged setup
 - Python 3.10
 - StereoLabs ZED SDK with the Python API (`pyzed`)
 - The Python packages listed in `requirements.txt`
@@ -22,7 +20,7 @@ This document describes the expected environment for the standalone
 ## Python Package Notes
 
 - `pyzed` is not installed from `requirements.txt`; it is provided by the ZED
-  SDK installation.
+  SDK installation. https://www.stereolabs.com/en-gb/developers/release
 - The application depends on PySide6, OpenCV, MediaPipe, Pillow, and NumPy.
 
 ## Storage Requirements
