@@ -70,4 +70,9 @@ pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_de
 pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report_v2_demo.tex
 pdflatex -output-directory=docs\paper\software_dev_report docs\paper\software_dev_report\software_dev_report_v2_research.tex
 
+docs\paper\hand_pose_article.tex
+
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=docs\paper docs\paper\hand_pose_article.tex
+
+
 ###

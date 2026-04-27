@@ -104,7 +104,7 @@ The realism and domain characteristics of training data are important determinan
 The literature leaves open whether full 21-keypoint hand representations are always necessary for lightweight edge-HCI use. Existing lightweight hand-pose systems such as MediaPipe Hands~\cite{mediapipe}, Attention!~\cite{attentionlite}, and SPLite Hand~\cite{splitehand} primarily focus on reducing model complexity while still predicting a complete hand structure. This suggests that prior work has concentrated more on compressing the model than on questioning whether the full landmark target is required for practical HCI interaction. This gap directly motivates the present study's comparison between reduced 10-keypoint and standard 21-keypoint prediction.
 
 \medskip
-These gaps motivate three main research questions:
+The three main research questions:
 \begin{enumerate}
     \item Is a reduced 10-keypoint representation sufficient for lightweight edge-HCI use?
     \item Does dual-branch fusion provide enough benefit to justify its added complexity?
@@ -259,9 +259,9 @@ Thus, fusion is performed independently for each joint. When the two branches ag
 
 \subsection{Datasets}
 
-The Rendered Handpose Dataset (RHD)~\cite{rhd} is used as the main synthetic benchmark in this study. It provides 41,258 training samples and 2,728 testing samples. Each sample contains a Blender-rendered $320 \times 320$ RGB hand image, together with 21 hand keypoints with image-space coordinates and visibility labels. The standard training/evaluation split is used.
+The Rendered Handpose Dataset (RHD)~\cite{rhd} is used as the main synthetic benchmark in this study. It provides 41,258 training samples and 2,728 testing samples. Each sample contains a Blender-rendered $320 \times 320$ RGB hand image, together with 21 hand keypoints with image-space coordinates and visibility labels. The provided training/evaluation split is used.
 
-The second dataset, HK26K (Kaggle)~\cite{hk26k}, is the more realistic image domain for transfer learning. It contains 18,776 training images and 7,992 validation images. The images are drawn from hand-photo and gesture datasets such as 11K Hands~\cite{hands11k}, 2000 Hand Gestures~\cite{giridhar_hand_gestures}, and the Gesture Recognition Dataset~\cite{gesture_recognition_kaggle}, and include both hand-only views and realistic photographed scenes. The annotations are generated using MediaPipe and act as pseudo-labels. The standard training/evaluation split is used.
+The second dataset, HK26K (Kaggle)~\cite{hk26k}, is the more realistic image domain for transfer learning. It contains 18,776 training images and 7,992 validation images. The images are drawn from hand-photo and gesture datasets such as 11K Hands~\cite{hands11k}, 2000 Hand Gestures~\cite{giridhar_hand_gestures}, and the Gesture Recognition Dataset~\cite{gesture_recognition_kaggle}, and include both hand-only views and realistic photographed scenes. The annotations are generated using MediaPipe and act as pseudo-labels. The provided training/evaluation split is used.
 
 A pre-defined subset of an 8-image real-hand evaluation set (RH8) is also used for evaluation. This set contains 8 original real RGB hand images showing basic single-hand gestures on a white background, with annotations initialized from MediaPipe predictions and then manually corrected.
 
@@ -590,7 +590,7 @@ The current fusion heuristic is useful but clearly imperfect. In Table~\ref{tab:
 \begin{table}
 \centering
 \footnotesize
-\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. HM sel. reports the heatmap-selection rate, and the coordinate-selection rate is its complement. The table includes all currently available diagnostic exports, including a shared 10-keypoint row for Baseline-21.}
+\caption{Fusion diagnostics for the dual-regression post-processing rule. The oracle-match rate measures how often the final fusion choice matches the lower-error branch for visible joints. HM sel. reports the heatmap-selection rate, and the coordinate-selection rate is its complement.}
 \label{tab:fusion_diagnostics}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{llccc}
